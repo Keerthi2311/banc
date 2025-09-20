@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmPassthru.msgnode="ComIbmPassthru.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:mbmonitor="http://www.ibm.com/wbi/2008/eflow_mbmonitor" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common2/adapter/LoggingAdapter.subflow" nsPrefix="core_common2_adapter_LoggingAdapter.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Level" name="Level" lowerBound="1" defaultValueLiteral="INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventType" name="EventType" lowerBound="1" defaultValueLiteral="REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventDescription" name="EventDescription" defaultValueLiteral="description">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Platform" name="Platform" defaultValueLiteral="ACE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EnvironmentTrx" name="EnvironmentTrx" lowerBound="1" defaultValueLiteral="Local">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ExecutionEnvironment" name="ExecutionEnvironment" defaultValueLiteral="OCP">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ServiceVersion" name="ServiceVersion" defaultValueLiteral="1.0">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BodyTrace" name="BodyTrace" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="LoggingAdapter" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Adapter/icons/full/obj16/LoggingAdapter.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Adapter/icons/full/obj30/LoggingAdapter.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="20,20">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="309,21">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="140,20" computeExpression="esql://routine/core.common2.adapter#InfoEvent.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="InfoEvent"/>
+      </nodes>
+      <nodes xmi:type="ComIbmPassthru.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="281,131">
+        <translation xmi:type="utility:ConstantString" string="Loggin_Info"/>
+        <monitorEvents eventSourceDescription="In terminal" eventSourceName="Loggin_Info.terminal.in" eventIdentity="Loggin_Info.InTerminal">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent" eventUOW="independent">
+            <applicationData dataLocation="$Environment/monitoringEvent" isXPath="true" complexData="true"/>
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator/>
+            <bitStreamData encoding="base64Binary" bitstreamContent="body"/>
+            <eventName literal="Loggin_Info.InTerminal"/>
+            <eventFilter dataLocation="true()" isXPath="true"/>
+          </eventXMLDoc>
+        </monitorEvents>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_6" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.Level">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.Level" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EventType">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.EventType" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EventDescription">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.EventDescription" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.Platform">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.Platform" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EnvironmentTrx">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.EnvironmentTrx" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ExecutionEnvironment">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.ExecutionEnvironment" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ServiceVersion">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.ServiceVersion" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.BodyTrace">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.BodyTrace" bundleName="core/common2/adapter/LoggingAdapter" pluginId="Core_Common_Adapter"/>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

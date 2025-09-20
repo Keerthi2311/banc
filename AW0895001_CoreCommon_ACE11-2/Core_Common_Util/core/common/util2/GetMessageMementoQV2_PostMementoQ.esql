@@ -1,0 +1,20 @@
+BROKER SCHEMA core.common.util2
+
+
+CREATE COMPUTE MODULE GetMessageMementoQV2_PostMementoQ
+		
+		CREATE FUNCTION Main() RETURNS BOOLEAN
+		BEGIN
+			CALL CopyEntireMessage();
+			-- Recuperar el correlId original
+			SET OutputRoot.MQMD.CorrelId = Environment.Variables.IOriginMsgCorrelId;
+			SET Environment.Variables.IOriginMsgCorrelId = NULL;
+			SET Environment.Variables.IOriginMsg = NULL;
+			RETURN TRUE;
+			END;
+
+			CREATE PROCEDURE CopyEntireMessage() BEGIN
+				SET OutputRoot = InputRoot;
+			END;
+END MODULE;
+

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><mappingRoot xmlns="http://www.ibm.com/2008/ccl/Mapping" domainID="com.ibm.msl.mapping.xml" domainIDExtension="mb" mainMap="true" targetNamespace="core.common.iast" version="8.0.5.0" xmlns:map="core.common.iast">
+    <inlinedXMLSchema><![CDATA[<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">             
+        <xsd:element name="Consumer-Id" type="xsd:string"/>           
+    <xsd:element name="Message-Id" type="xsd:string"/>             
+      </xsd:schema>]]></inlinedXMLSchema>
+    <input path="jar:file://!com/ibm/etools/mft/map/xsds/predefined/JsonDomainMsg.xsd" var="var"/>
+    <input inlinedXMLSchema="true" path="../schema_0.xsd" var="var1"/>
+    <output path="/IAST_Especification/IAST.xsd"/>
+    <imports>
+        <import kind="esql" namespace="/core/common/iast/Util.esql"/>
+    </imports>
+    <namespaces>
+        <namespace kind="supplement" prefix="in" uri="http://www.ibm.com/iib/msl/json"/>
+        <namespace kind="supplement" prefix="out" uri="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0"/>
+        <namespace kind="extension" prefix="Util" uri="/core/common/iast/Util.esql"/>
+        <namespace kind="extension" prefix="fn" uri="http://www.w3.org/2005/xpath-functions"/>
+    </namespaces>
+    <generation engine="xquery"/>
+    <mappingDeclaration name="IAST">
+        <input namespace="http://www.ibm.com/iib/msl/json" path="$var/mb:msg(JSON,assembly,JSON,Properties,HTTPInputHeader)" var="MessageAssembly">
+            <cast castType="userDefined" path="$MessageAssembly/JSON/Data/type('anyType')" qualifier="{http://www.ibm.com/iib/msl/json}JSONObject" ref="var"/>
+            <cast castType="userDefined" path="$MessageAssembly/HTTPInputHeader/any" qualifier="Message-Id" ref="var1"/>
+            <cast castType="userDefined" path="$MessageAssembly/HTTPInputHeader/any" qualifier="Consumer-Id" ref="var1"/>
+        </input>
+        <output namespace="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0" path="mb:msg(IAST,assembly,DFDL,Properties)" var="MessageAssembly1"/>
+        <move>
+            <input path="$MessageAssembly/Properties"/>
+            <output path="$MessageAssembly1/Properties"/>
+            <override>
+                <assign value="{http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0}:IAST">
+                    <output path="$MessageAssembly1/Properties/MessageType"/>
+                </assign>
+            </override>
+        </move>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/ID_SERVIDOR"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_ID_SERVIDOR')</code>
+        </expression>
+        <customFunction lang="esql" ref="Util:ConfigurableServiceGetValue">
+            <input path="$MessageAssembly/HTTPInputHeader/Consumer-Id" var="Consumer-Id"/>
+            <output path="$MessageAssembly1/IAST/Header/ID_APLICATIVO"/>
+            <param name="policyType" value="iib:getUserDefinedProperty('UDP_POLICY_TYPE')"/>
+            <param name="policyProject" value="iib:getUserDefinedProperty('UDP_POLICY_PROJECT')"/>
+            <param name="key" value="iib:getUserDefinedProperty('UDP_UDCS_CMSTI_CATALOG')"/>
+            <param name="element" value="$Consumer-Id"/>
+        </customFunction>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/REQUIERE_RESPUESTA"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_REQUIERE_RESPUESTA')</code>
+        </expression>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/MENSAJE"/>
+        </assign>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/DTQ_RESP"/>
+        </assign>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/LIBDTQ"/>
+        </assign>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/ORIENTACION"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_ORIENTACION')</code>
+        </expression>
+        <assign value="0">
+            <output path="$MessageAssembly1/IAST/Header/HORACLIREQ"/>
+        </assign>
+        <assign value="0">
+            <output path="$MessageAssembly1/IAST/Header/HORACLIRES"/>
+        </assign>
+        <assign value="0">
+            <output path="$MessageAssembly1/IAST/Header/HORASRVREQ"/>
+        </assign>
+        <assign value="0">
+            <output path="$MessageAssembly1/IAST/Header/HORASRVRES"/>
+        </assign>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/LONGITUD_CARGA"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_LONGITUD_CARGA')</code>
+        </expression>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/NUM_SEGMENT"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_NUM_SEGMENT')</code>
+        </expression>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/POSSEGMENT"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_POSSEGMENT')</code>
+        </expression>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/FIILL1"/>
+        </assign>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/TIPO_MENSAJE"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_TIPO_MENSAJE')</code>
+        </expression>
+        <expression>
+            <output path="$MessageAssembly1/IAST/Header/CODIGO_RESP"/>
+            <code lang="xpath">iib:getUserDefinedProperty('UDP_CODIGO_RESP')</code>
+        </expression>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/DESCRIPCION_RESP"/>
+        </assign>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/FILL0"/>
+        </assign>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/SEC_TRANSACCION"/>
+        </assign>
+        <assign value="">
+            <output path="$MessageAssembly1/IAST/Header/COD_TRANSACCION"/>
+        </assign>
+        <assign value=" ">
+            <output path="$MessageAssembly1/IAST/Header/TEMPORIZADOR"/>
+        </assign>
+    </mappingDeclaration>
+</mappingRoot>

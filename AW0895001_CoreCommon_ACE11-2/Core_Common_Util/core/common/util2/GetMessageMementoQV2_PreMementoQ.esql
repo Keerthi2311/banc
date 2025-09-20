@@ -1,0 +1,29 @@
+BROKER SCHEMA core.common.util2
+
+DECLARE nsIL NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+DECLARE INF_ERROR_G CONSTANT CHARACTER 
+				'Error de infraestructura en el llamado al GetMessageMementoQ.';
+DECLARE UDP_CORREL_FROM_ROUTING_STACK EXTERNAL BOOLEAN FALSE;
+
+CREATE COMPUTE MODULE GetMessageMementoQV2_PreMementoQ
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyEntireMessage();
+		-- guardar correl id original
+		SET Environment.Variables.IOriginMsgCorrelId = InputRoot.MQMD.CorrelId;
+		-- MMGG 16/Oct/2012: Se respalda el mensaje original
+		SET Environment.Variables.IOriginMsg = InputRoot;
+
+		IF UDP_CORREL_FROM_ROUTING_STACK THEN
+			SET OutputRoot.MQMD.CorrelId = CAST(InputRoot.XMLNSC.
+	  nsIL:esbXML.Header.routingStack.route[<].ReplyTo.correlationId AS BLOB);
+		ELSE
+			SET OutputRoot.MQMD.CorrelId = InputRoot.MQMD.CorrelId;
+		END IF;
+		RETURN TRUE;
+		END;
+
+		CREATE PROCEDURE CopyEntireMessage() BEGIN
+			SET OutputRoot = InputRoot;
+		END;
+END MODULE;

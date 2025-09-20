@@ -1,0 +1,159 @@
+BROKER SCHEMA core.common.per.json
+
+CREATE PROCEDURE PerRequest(IN output REFERENCE, IN outLocalEnv REFERENCE, IN env REFERENCE, IN header REFERENCE, IN codIdioma CHARACTER, IN estadoRespuesta CHARACTER, IN codProveedor CHARACTER, IN codRespuestaProveedor CHARACTER, IN codGeneralProveedor CHARACTER, IN descGeneralProveedor CHARACTER) 
+BEGIN
+	DELETE FIELD env.PER.cache;
+	CREATE FIELD env.PER.cache;
+	DECLARE refEnvCachePer REFERENCE TO env.PER.cache;
+
+	-- Asegurar que el parametro de entrada "codRespuestaProveedor" de entrada no contenga espacio ni a la derecha ni a su izquierda
+	SET codRespuestaProveedor = TRIM(codRespuestaProveedor);
+	
+	SET refEnvCachePer.key = codProveedor || codRespuestaProveedor;
+	CALL GetCachePer(env);
+	
+	IF refEnvCachePer.exists THEN
+		SET output.Properties = env.PropertiesOrig;
+		CALL CreateBusinessException(outLocalEnv, output, env, refEnvCachePer.codigo, refEnvCachePer.descripcion, refEnvCachePer.httpcode);		
+	ELSE
+		SET refEnvCachePer.codGeneralProveedor = TRIM(codGeneralProveedor);
+		SET refEnvCachePer.descGeneralProveedor = TRIM(descGeneralProveedor);
+		
+		SET output.Properties = env.PropertiesOrig;
+		
+		DELETE FIELD output.HTTPInputHeader;
+		-- Por intermedio del parametro de entrada "httpHeader" se debe recibir los datos de la cabecera a enviar al SPR.
+		CREATE FIELD output.HTTPRequestHeader;
+		DECLARE refOutHTTPHeader REFERENCE TO output.HTTPRequestHeader;
+		SET refOutHTTPHeader."Message-Id" = header.messageId;
+		SET refOutHTTPHeader."Consumer-Id" = header.consumerId;
+		SET refOutHTTPHeader."Application-Id" = header.applicationId;
+	
+		DELETE FIELD output.JSON;	
+		CREATE LASTCHILD OF output DOMAIN 'JSON';
+		CREATE FIELD output.JSON.Data;
+		DECLARE refOutJsonData REFERENCE TO output.JSON.Data;
+				
+		CREATE FIELD refOutJsonData.data;
+		DECLARE refData REFERENCE TO refOutJsonData.data;
+
+		SET refData.codigoIdioma."codigo-ISO-639-1" = codIdioma;
+		SET refData.codigoProveedorServicio 		= codProveedor;
+		SET refData.codigoRespuestaProveedor 		= codRespuestaProveedor;
+		SET refData.estadoRespuesta 				= estadoRespuesta;
+		
+		-- Variable utilizada como bandera al generarse un error y capturada por el flujo de catch
+		-- esto para complementar el error identificando al objeto
+		SET env.handler.object = 'SPR';
+		
+	END IF;
+END;
+
+CREATE PROCEDURE GetCachePer(IN env REFERENCE)
+BEGIN ATOMIC
+	DECLARE refEnvCachePer REFERENCE TO env.PER.cache;
+	SET refEnvCachePer.exists = EXISTS(CACHE_PER.{refEnvCachePer.key}[]);
+	
+	IF refEnvCachePer.exists THEN
+		DECLARE refCache REFERENCE TO CACHE_PER.{refEnvCachePer.key};
+		SET refEnvCachePer.codigo = refCache.codigo;
+		SET refEnvCachePer.descripcion = refCache.descripcion;
+		SET refEnvCachePer.httpcode = refCache.httpcode;
+	END IF;
+END;
+
+CREATE PROCEDURE PutCachePer(IN env REFERENCE, IN codigo CHARACTER, IN descripcion CHARACTER, IN httpcode INTEGER)
+BEGIN ATOMIC
+	DECLARE refEnvCachePer REFERENCE TO env.PER.cache;
+
+	CREATE FIELD CACHE_PER.{refEnvCachePer.key};
+	DECLARE refCache REFERENCE TO CACHE_PER.{refEnvCachePer.key};
+	SET refCache.codigo 	 = codigo;
+	SET refCache.descripcion = descripcion;
+	set refCache.httpcode    = httpcode;
+END;
+
+CREATE PROCEDURE CreateBusinessException(IN outLocalEnv REFERENCE, IN output REFERENCE, IN env REFERENCE, IN cod CHARACTER, IN des CHARACTER, IN httpCode INTEGER)
+BEGIN	
+	SET output.HTTPResponseHeader = env.HttpHeaderRs;
+	
+	CREATE LASTCHILD OF output DOMAIN('JSON');
+	CREATE FIELD output.JSON.Data;
+
+	DECLARE refData REFERENCE TO output.JSON.Data;
+	SET refData.meta = env.HttpMeta;
+	SET refData.status = httpCode;
+	SET refData.title = 'BusinessException';
+
+	CREATE FIELD refData.errors IDENTITY(JSON.Array)errors;
+	CREATE LASTCHILD OF refData.errors NAME 'Item';
+    DECLARE RefJsonErrorsItem REFERENCE TO refData.errors.Item[<];
+
+	SET RefJsonErrorsItem.code = cod;
+	SET RefJsonErrorsItem.detail= des;
+	
+	SET outLocalEnv.Destination.HTTP.ReplyStatusCode = httpCode;
+END;
+
+CREATE PROCEDURE ConfigurableServiceGetValue(IN policyType CHARACTER, IN policyProject CHARACTER, IN key CHARACTER, IN element CHARACTER)
+RETURNS CHARACTER 
+BEGIN
+	DECLARE result CHARACTER GetPerUDCSCache(key, element);
+	IF result = 'UDCS_NO_CACHE' THEN
+		SET result = ConfigurableServiceGetValueJava(policyType, policyProject, key, element);
+		IF NOT COALESCE(result,'') = '' THEN 
+			CALL PutPerUDCSCache(key, element, result);
+		END IF;
+	END IF;
+	
+	RETURN result; 
+END;
+
+
+CREATE PROCEDURE ConfigurableServiceGetValueJava(IN policyType CHARACTER, IN policyProject CHARACTER, IN key CHARACTER, IN element CHARACTER)
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "core.common.util2.ConfigurableServiceMultiton.getValue"; 
+
+
+CREATE PROCEDURE PutPerUDCSCache(IN name CHARACTER, IN key CHARACTER, IN value CHARACTER)
+BEGIN ATOMIC
+	SET CACHE_PER_UDCS.{name}.{key} = value;
+END;
+
+
+CREATE PROCEDURE GetPerUDCSCache(IN name CHARACTER, IN key CHARACTER)
+RETURNS CHARACTER
+BEGIN ATOMIC
+	RETURN COALESCE(CACHE_PER_UDCS.{name}.{key},'UDCS_NO_CACHE');
+END;
+
+
+CREATE PROCEDURE EvalPERcodeHttpCodePolicy(IN cod REFERENCE, IN des REFERENCE, IN httpCode REFERENCE)
+BEGIN	
+	IF (UseHttpCodeCatalog) THEN
+		IF (TRIM(ConfigurableServiceCatalog) = '') THEN
+			THROW USER EXCEPTION MESSAGE 500 VALUES ('Debe especificar un ConfigurableServiceCatalog');
+		END IF;
+		IF (TRIM(CAST(DefaultHttpCodeCatalog AS CHARACTER))='') THEN
+			THROW USER EXCEPTION MESSAGE 500 VALUES ('Debe especificar un DefaultHttpCodeCatalog');
+		END IF;
+		IF (TRIM(DefaultDetailDescriptionCatalog) = '') THEN
+			THROW USER EXCEPTION MESSAGE 500 VALUES ('Debe especificar un DefaultDetailDescriptionCatalog');
+		END IF;
+		
+		DECLARE result CHARACTER ConfigurableServiceGetValue(UDP_POLICY_TYPE, UDP_POLICY_PROJECT, ConfigurableServiceCatalog, 'C' || cod);
+				
+		IF (COALESCE(result,'') = '') THEN
+			SET httpCode = DefaultHttpCodeCatalog;
+			SET cod = DefaultCharExceptionCodeCatalog || cod;
+			SET des = DefaultDetailDescriptionCatalog;
+		ELSE
+			SET cod = TRIM(SUBSTRING(result FROM 4 FOR 2)) || cod;
+			SET httpCode = TRIM(SUBSTRING(result FROM 1 FOR 3));
+		END IF;
+	ELSE
+		SET httpCode = DefaultHttpCodeSuccessResponse;
+		SET cod = DefaultCharExceptionCode || cod;
+	END IF;
+END;

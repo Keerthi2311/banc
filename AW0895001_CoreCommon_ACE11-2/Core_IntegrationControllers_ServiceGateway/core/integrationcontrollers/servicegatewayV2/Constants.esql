@@ -1,0 +1,31 @@
+BROKER SCHEMA core.integrationcontrollers.servicegatewayV2
+
+/*******************************************************************************
+* File Name: Constants.esql													   *
+* Description: Este archivo contiene la declaracion de las constantes y UDP    *
+* requeridas por el componente.							 					   *
+* 																			   *
+* Version  Date          Author             Description 					   *
+* ======== ===========   ================== ===================================*
+* 1.00     03-Sept-2018  Julian Restrepo    Versión inicial                    *
+*******************************************************************************/
+
+--Declaracion NameSpace
+DECLARE il     NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+DECLARE eai    NAMESPACE 'http://grupobancolombia.com/intf/EAI/esbXML/V1.0';
+DECLARE p244    NAMESPACE 'http://www.ibm.com/xmlns/prod/serviceregistry/6/0/ws/sdo';
+DECLARE sdo_1   NAMESPACE 'http://www.ibm.com/xmlns/prod/serviceregistry/6/0/sdo';
+DECLARE soapns NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/';
+DECLARE sdo  NAMESPACE 'commonj.sdo';
+
+
+--Declarar constantes
+DECLARE FAILED_STATUS_RESP			    CONSTANT CHARACTER 'FAILED';
+
+--UDPs 
+DECLARE UDP_REGISTRY_URL_V2				EXTERNAL CHARACTER '';
+DECLARE UDP_BANCOLOMBIA_WSRRLOOKUP 		EXTERNAL CHARACTER '';
+DECLARE UDP_USE_AUTHENTICATION 			EXTERNAL BOOLEAN FALSE;
+DECLARE UDP_USER						EXTERNAL CHARACTER '';
+DECLARE UDP_TOKEN						EXTERNAL CHARACTER '';
+DECLARE UDP_SOAP_ACTION            	    EXTERNAL CHARACTER '';

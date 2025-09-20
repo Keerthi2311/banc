@@ -1,0 +1,53 @@
+BROKER SCHEMA core.integrationcontrollers.servicegatewayV2
+
+
+CREATE COMPUTE MODULE ServiceGatewayV2Request_MF_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL RestoreEnvelope();
+		
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	
+	CREATE PROCEDURE RestoreEnvelope() BEGIN
+		
+		DECLARE output REFERENCE TO OutputRoot;
+		DECLARE env REFERENCE TO Environment;
+		DECLARE refHeader REFERENCE TO env.RequestOrigin.XMLNSC.il:esbXML.Header;
+		CREATE FIELD OutputRoot.Properties FROM env.RequestOrigin.Properties;
+		CREATE FIELD OutputRoot.MQMD FROM env.RequestOrigin.MQMD;
+		CREATE LASTCHILD OF OutputRoot AS output DOMAIN 'XMLNSC'  FROM env.RequestOrigin.XMLNSC;
+		
+		DECLARE refHeaderOut REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		
+		SET InputLocalEnvironment = null;
+		SET InputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = env.DestinationParameter.QueueRequest;
+		
+		IF LENGTH(env.DestinationParameter.dataDomainOrigin) > 0 AND 
+			LENGTH(env.DestinationParameter.systemaOrigin) > 0 THEN
+			
+			CALL core.common.util.esbXML.il.AddMessageContextProperty(refHeaderOut, 'WSRR:' || refHeader.requestData.destination.name || ':SistemaOrigen', env.DestinationParameter.systemaOrigin);
+			CALL core.common.util.esbXML.il.AddMessageContextProperty(refHeaderOut, 'WSRR:' || refHeader.requestData.destination.name || ':DominioDatosOrigen', env.DestinationParameter.dataDomainOrigin);
+			
+		END IF;
+		
+		IF LENGTH(env.DestinationParameter.queueDestinationCMSTI) > 0 THEN
+			CALL core.common.util.esbXML.il.AddMessageContextProperty(refHeaderOut, 'WSRR:' || refHeader.requestData.destination.name || ':ColasSTIDestino', env.DestinationParameter.queueDestinationCMSTI);
+		END IF;
+		
+	END;
+END MODULE;

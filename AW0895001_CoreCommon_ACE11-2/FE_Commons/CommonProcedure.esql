@@ -1,0 +1,949 @@
+DECLARE ns1944 NAMESPACE 'http://www.finacle.com/fixml';
+DECLARE ns559 NAMESPACE 'http://grupobancolombia.com/ents/Operacion/Integrador/FINACLE/DatosTransaccion/V1.0';
+DECLARE ns48 NAMESPACE 'http://grupobancolombia.com/intf/EAI/esbXML/V1.0';
+DECLARE ns623 NAMESPACE 'http://grupobancolombia.com/ents/common/GenericException/V2.0';
+DECLARE ns330 NAMESPACE 'http://grupobancolombia.com/intf/Canales/SucursalVirtualEmpresas/CambiarClaveSVE/V1.0';
+DECLARE ns NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+-- Declaracion de Constantes
+DECLARE COD_ESTADO_EXCEPCION_SISTEMA CONSTANT CHARACTER 'SystemException';
+DECLARE COD_ESTADO_EXITOSO CONSTANT CHARACTER 'Success';
+DECLARE SEVERIDAD_ERROR CONSTANT CHARACTER 'ERROR';
+DECLARE CODIGO_INT_9999 CONSTANT CHARACTER 'INT9999';
+DECLARE COD_ESTADO_EXCEP_NEGOCIO CONSTANT CHARACTER 'BusinessException';
+DECLARE NOMBRE_EXCEP_NEGOCIO CONSTANT CHARACTER 'canalException';
+DECLARE TIPO_ERROR_SISTEMA CONSTANT CHARACTER 'System';
+DECLARE MENSAJE_POR_DEFECTO_ES CONSTANT CHARACTER 'Se presentaron problemas procesando la solicitud';
+DECLARE MENSAJE_POR_DEFECTO_IN CONSTANT CHARACTER 'Problems processing the request';
+DECLARE FLAG_RESPUESTA_F CONSTANT CHARACTER 'F';
+DECLARE FLAG_RESPUESTA_E CONSTANT CHARACTER 'E';
+DECLARE COD_LENG_ESP CONSTANT CHARACTER 'ES';
+DECLARE COD_ESTADO_EXCEPCION_PROVEEDOR CONSTANT CHARACTER 'ProviderException';
+DECLARE COD_SIST_PROVEEDOR_SERVICIO CONSTANT CHARACTER 'INT';
+DECLARE SEVERIDAD_INFO CONSTANT CHARACTER 'INFO';
+DECLARE CODIGO_OK CONSTANT CHARACTER '0000';
+DECLARE MENSAJE_IN CONSTANT CHARACTER 'Transaction Successful';
+DECLARE MENSAJE_ES CONSTANT CHARACTER 'Transaccion Satisfactoria';
+--############### HEADER FINACLE PROCEDURE ###################
+CREATE PROCEDURE FinacleHeader (IN ApiName CHARACTER,IN FIXML_Ref REFERENCE )
+BEGIN
+
+	CREATE FIELD FIXML_Ref.Header.RequestHeader;
+	DECLARE FIXMLRequestHeader REFERENCE TO FIXML_Ref.Header.RequestHeader;
+
+	DECLARE MessageDateTime CHARACTER;
+
+	SET MessageDateTime = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss.SSS');		
+	--Header set
+	-- Empety field because is completed via IA
+	SET FIXMLRequestHeader.MessageKey.RequestUUID='';
+	-- ApiName is the dynamic value of the procedure, that need be completed when you call the procedure, with the mapping of your interface
+	SET FIXMLRequestHeader.MessageKey.ServiceRequestId=ApiName;
+	-- Finacle Version, actually is 10.2
+	SET FIXMLRequestHeader.MessageKey.ServiceRequestVersion='10.2';
+	SET FIXMLRequestHeader.MessageKey.*:ChannelId='';
+	
+	SET FIXMLRequestHeader.RequestMessageInfo.BankId='';
+	SET FIXMLRequestHeader.RequestMessageInfo.TimeZone='';
+	SET FIXMLRequestHeader.RequestMessageInfo.EntityId='';
+	SET FIXMLRequestHeader.RequestMessageInfo.EntityType='';
+	SET FIXMLRequestHeader.RequestMessageInfo.ArmCorrelationId='';
+	SET FIXMLRequestHeader.RequestMessageInfo.MessageDateTime=MessageDateTime;
+	
+	SET FIXMLRequestHeader.Reversal.ParentRequestUUID='';
+	
+	SET FIXMLRequestHeader.Security.Token.Certificate='';
+	SET FIXMLRequestHeader.Security.Token.PasswordToken.UserId='';
+	SET FIXMLRequestHeader.Security.Token.PasswordToken.Password='';
+	SET FIXMLRequestHeader.Security.FICertToken='';
+	SET FIXMLRequestHeader.Security.RealUserLoginSessionId='';
+	SET FIXMLRequestHeader.Security.RealUser='';
+	SET FIXMLRequestHeader.Security.RealUserPwd='';
+	SET FIXMLRequestHeader.Security.SSOTransferToken='';
+	
+	SET FIXMLRequestHeader.CustomInfo.table.key='';
+	SET FIXMLRequestHeader.CustomInfo.table.value='';
+END;
+
+CREATE FUNCTION FinacleErrorTrans(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE)RETURNS BOOLEAN
+BEGIN
+	-- Referencias utilizadas en FINACLE Error Translation
+	DECLARE Error BOOLEAN;
+	DECLARE entradaRespFinacleHeader REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Header;
+	DECLARE entradaBodyResponseHeader REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body.ns1944:FIXML.Header.ResponseHeader.HostTransaction.Status;
+	-- Integration Layer Error
+	IF UPPER(entradaRespFinacleHeader.responseData.status.statusCode) = 'SYSTEMEXCEPTION' THEN
+		SET OutputRoot = InputRoot;
+		SET Error = TRUE;
+		RETURN Error;		
+		-- No Error
+	ELSEIF UPPER(entradaRespFinacleHeader.responseData.status.statusCode) = 'SUCCESS' AND UPPER(entradaBodyResponseHeader) = 'SUCCESS' THEN
+		SET Error = FALSE;
+		RETURN Error;
+		-- Finacle Error
+	ELSEIF UPPER(entradaRespFinacleHeader.responseData.status.statusCode) = 'SUCCESS' AND UPPER(entradaBodyResponseHeader) <> 'SUCCESS' THEN
+		-- Constantes utilizadas en FINACLE Error Translation
+		DECLARE TAG_FISYSTEM_EXCEPCION CONSTANT CHARACTER 'FISystemException';
+		DECLARE TAG_FIBUSINESS_EXCEPCION CONSTANT CHARACTER 'FIBusinessException';
+		DECLARE COD_SIST_PROVEEDOR_SERV_FINACLE CONSTANT CHARACTER 'FIN001';
+		DECLARE TIPO_ERROR_NEGOCIO CONSTANT CHARACTER 'Business';
+		-- Variables utilizadas en FINACLE Error Translation
+		DECLARE finacleErrorCode CHARACTER;
+		DECLARE finacleErrorDesc CHARACTER;
+		DECLARE finacleErrorType CHARACTER;
+		-- Creacion de referencias.
+		DECLARE entradaRespFinacleBody REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body;
+		DECLARE excepcion REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body.ns1944:FIXML.Body.Error;
+		
+
+
+		SET finacleErrorCode = excepcion.*.ErrorDetail.ErrorCode;
+		SET finacleErrorDesc = excepcion.*.ErrorDetail.ErrorDesc;
+		-- Compruebo si es una excepcion de sistema o de negocio
+		IF FIELDNAME(excepcion) = TAG_FISYSTEM_EXCEPCION THEN
+
+			SET finacleErrorType = TIPO_ERROR_SISTEMA;
+
+		ELSEIF FIELDNAME(excepcion) = TAG_FIBUSINESS_EXCEPCION THEN
+
+			SET finacleErrorType = TIPO_ERROR_NEGOCIO;
+
+		END IF;
+
+		CALL setearEnvironment (entorno, COD_SIST_PROVEEDOR_SERV_FINACLE, finacleErrorCode, FLAG_RESPUESTA_F);
+		-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+		PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+		-- Creacion de la estructura y refencia de salida HEADER
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Header;
+		DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Header;
+
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body.ns:canalException;
+		DECLARE salidaRespBody REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Body.ns:canalException;
+		-- Asignaciones comunes cuando el llamado al SP sea exitoso o no
+		SET salidaRespHeader.responseData.status.statusCode = COD_ESTADO_EXCEP_NEGOCIO;
+		SET salidaRespHeader.responseData.status.businessExceptionName = NOMBRE_EXCEP_NEGOCIO;
+		SET salidaRespBody.genericException.code = finacleErrorCode;
+		SET salidaRespBody.genericException.description = finacleErrorDesc;
+		SET salidaRespBody.tipoExcepcion = finacleErrorType;
+		-- Asignaciones utilizadas cuando el llamado al SP es exitoso
+		IF entorno.Variables.FLAG = 'Y' THEN
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = entorno.Variables.CDRESPTACHN;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = finacleErrorDesc;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = entorno.Variables.DESCNEGOCIO;
+
+		ELSE
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = CODIGO_INT_9999;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			-- TODO VER COMO OBTENEMOS EL MENSAJE TECNICO DEL SP. SI VIENE VACIO ASIGNARLE un valor por defecto.
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = MENSAJE_POR_DEFECTO_ES;
+
+			IF entorno.Variables.CDIDIOMA = 'ES' THEN
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_ES;
+			ELSE
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_IN;
+			END IF;
+
+		END IF;
+		SET Error = TRUE;
+		RETURN Error;
+	END IF;
+END;
+-- ################## The same funciton but with paramenters to check the NS #############################
+-- ################## Se actualiza la funcion para que funcione con los nuevos NS ########################
+CREATE FUNCTION FinacleErrorTransNew(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE,IN ns_body REFERENCE)RETURNS BOOLEAN
+BEGIN
+	
+	-- declare the esbXML-IL namespace on the function level cause the ns value is changing on runtime
+	DECLARE ns NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+	-- Referencias utilizadas en FINACLE Error Translation
+	DECLARE Error BOOLEAN FALSE;
+	DECLARE NSBody NAMESPACE ns_body; 
+	DECLARE StatusHeader CHARACTER '';
+	DECLARE StatusBody CHARACTER '';
+	DECLARE entradaRespFinacleHeader REFERENCE TO InputRoot.XMLNSC.*:esbXML.Header;
+	DECLARE entradaBodyResponseHeader REFERENCE TO InputRoot.XMLNSC.*:esbXML.Body.*:FIXML.*:Header;
+		
+		SET OutputRoot.XMLNSC.ns:esbXML.Header = entradaRespFinacleHeader;
+		-- Integration Layer Error
+		
+		-- StatusCode Header y Body 
+		SET StatusHeader = UPPER(entradaRespFinacleHeader.responseData.status.statusCode);
+		SET StatusBody = UPPER(entradaBodyResponseHeader.*:ResponseHeader.*:HostTransaction.*:Status);
+		
+		IF StatusHeader = 'SYSTEMEXCEPTION' THEN
+			SET OutputRoot = InputRoot;
+			IF InputRoot.XMLNSC.ns:esbXML.Body IS NULL THEN
+				CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body;
+			END IF;
+			SET Error = TRUE;
+			RETURN Error;		
+			-- No Error
+		ELSEIF StatusHeader = 'SUCCESS' AND StatusBody = 'SUCCESS' THEN
+			SET Error = FALSE;
+			RETURN Error;
+			-- Finacle Error
+		ELSEIF StatusHeader = 'SUCCESS' AND StatusBody <> 'SUCCESS' THEN
+			
+		-- Constantes utilizadas en FINACLE Error Translation
+		DECLARE TAG_FISYSTEM_EXCEPCION CONSTANT CHARACTER 'FISystemException';
+		DECLARE TAG_FIBUSINESS_EXCEPCION CONSTANT CHARACTER 'FIBusinessException';
+		DECLARE COD_SIST_PROVEEDOR_SERV_FINACLE CONSTANT CHARACTER 'FIN001';
+		DECLARE TIPO_ERROR_NEGOCIO CONSTANT CHARACTER 'Business';
+		-- Variables utilizadas en FINACLE Error Translation
+		DECLARE finacleErrorCode CHARACTER;
+		DECLARE finacleErrorDesc CHARACTER;
+		DECLARE finacleErrorType CHARACTER;
+		-- Creacion de referencias.
+		DECLARE entradaRespFinacleBody REFERENCE TO InputRoot.XMLNSC.*:esbXML.Body;
+
+		DECLARE excepcion REFERENCE TO InputRoot.XMLNSC.*:esbXML.Body.*:FIXML.*:Body.*:Error;
+		
+		SET finacleErrorCode = excepcion.[1].ns1944:ErrorDetail.ns1944:ErrorCode;
+		SET finacleErrorDesc = excepcion.[1].ns1944:ErrorDetail.ns1944:ErrorDesc;
+			
+		
+		-- Compruebo si es una excepcion de sistema o de negocio
+		IF FIELDNAME(excepcion) = TAG_FISYSTEM_EXCEPCION THEN
+
+			SET finacleErrorType = TIPO_ERROR_SISTEMA;
+
+		ELSEIF FIELDNAME(excepcion) = TAG_FIBUSINESS_EXCEPCION THEN
+
+			SET finacleErrorType = TIPO_ERROR_NEGOCIO;
+
+		END IF;
+
+		CALL setearEnvironment (entorno, COD_SIST_PROVEEDOR_SERV_FINACLE, finacleErrorCode, FLAG_RESPUESTA_F);
+		-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+		PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+		-- Creacion de la estructura y refencia de salida HEADER
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Header;
+		DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.*:esbXML.Header;
+
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body.NSBody:canalException;
+		DECLARE salidaRespBody REFERENCE TO OutputRoot.XMLNSC.*:esbXML.Body.*:canalException;
+		-- Asignaciones comunes cuando el llamado al SP sea exitoso o no
+		SET salidaRespHeader.responseData.status.statusCode = COD_ESTADO_EXCEP_NEGOCIO;
+		SET salidaRespHeader.responseData.status.businessExceptionName = NOMBRE_EXCEP_NEGOCIO;
+		SET salidaRespBody.genericException.code = finacleErrorCode;
+		SET salidaRespBody.genericException.description = finacleErrorDesc;
+		SET salidaRespBody.tipoExcepcion = finacleErrorType;
+		-- Asignaciones utilizadas cuando el llamado al SP es exitoso
+		IF entorno.Variables.FLAG = 'Y' THEN
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = entorno.Variables.CDRESPTACHN;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = finacleErrorDesc;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = entorno.Variables.DESCNEGOCIO;
+
+		ELSE
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = CODIGO_INT_9999;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			-- TODO VER COMO OBTENEMOS EL MENSAJE TECNICO DEL SP. SI VIENE VACIO ASIGNARLE un valor por defecto.
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = MENSAJE_POR_DEFECTO_ES;
+
+			IF entorno.Variables.CDIDIOMA = 'ES' THEN
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_ES;
+			ELSE
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_IN;
+			END IF;
+
+		END IF;
+		SET Error = TRUE;
+		RETURN Error;
+	END IF;
+END;
+
+CREATE PROCEDURE FinacleErrorTranslation(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE )
+BEGIN
+	-- Referencias utilizadas en FINACLE Error Translation
+	DECLARE entradaRespFinacleHeader REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Header;
+	DECLARE entradaBodyResponseHeader REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body.ns1944:FIXML.Header.ResponseHeader.HostTransaction.Status;
+	-- Integration Layer Error
+	IF entradaRespFinacleHeader.responseData.status.statusCode = COD_ESTADO_EXCEPCION_SISTEMA THEN
+		SET OutputRoot = InputRoot;
+		RETURN;
+	END IF;
+	-- No Error
+	IF entradaRespFinacleHeader.responseData.status.statusCode = COD_ESTADO_EXITOSO AND entradaBodyResponseHeader = COD_ESTADO_EXITOSO THEN
+		RETURN;
+	END IF;
+	-- Constantes utilizadas en FINACLE Error Translation
+	DECLARE TAG_FISYSTEM_EXCEPCION CONSTANT CHARACTER 'FISystemException';
+	DECLARE TAG_FIBUSINESS_EXCEPCION CONSTANT CHARACTER 'FIBusinessException';
+	DECLARE COD_SIST_PROVEEDOR_SERV_FINACLE CONSTANT CHARACTER 'FIN001';
+	DECLARE TIPO_ERROR_NEGOCIO CONSTANT CHARACTER 'Business';
+	-- Variables utilizadas en FINACLE Error Translation
+	DECLARE finacleErrorCode CHARACTER;
+	DECLARE finacleErrorDesc CHARACTER;
+	DECLARE finacleErrorType CHARACTER;
+	-- Creacion de referencias.
+	DECLARE entradaRespFinacleBody REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body;
+	DECLARE excepcion REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body.ns1944:FIXML.Body.Error;
+	-- Finacle Error
+	IF entradaRespFinacleHeader.responseData.status.statusCode = COD_ESTADO_EXITOSO AND entradaBodyResponseHeader <> COD_ESTADO_EXITOSO THEN
+
+		SET finacleErrorCode = excepcion.*.ErrorDetail.ErrorCode;
+		SET finacleErrorDesc = excepcion.*.ErrorDetail.ErrorDesc;
+		-- Compruebo si es una excepcion de sistema o de negocio
+		IF FIELDNAME(excepcion) = TAG_FISYSTEM_EXCEPCION THEN
+
+			SET finacleErrorType = TIPO_ERROR_SISTEMA;
+
+		ELSEIF FIELDNAME(excepcion) = TAG_FIBUSINESS_EXCEPCION THEN
+
+			SET finacleErrorType = TIPO_ERROR_NEGOCIO;
+
+		END IF;
+
+		CALL setearEnvironment (entorno, COD_SIST_PROVEEDOR_SERV_FINACLE, finacleErrorCode, FLAG_RESPUESTA_F);
+		-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+		PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+		-- Creacion de la estructura y refencia de salida HEADER
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Header;
+		DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Header;
+
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body.ns:canalException;
+		DECLARE salidaRespBody REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Body.ns:canalException;
+		-- Asignaciones comunes cuando el llamado al SP sea exitoso o no
+		SET salidaRespHeader.responseData.status.statusCode = COD_ESTADO_EXCEP_NEGOCIO;
+		SET salidaRespHeader.responseData.status.businessExceptionName = NOMBRE_EXCEP_NEGOCIO;
+		SET salidaRespBody.genericException.code = finacleErrorCode;
+		SET salidaRespBody.genericException.description = finacleErrorDesc;
+		SET salidaRespBody.tipoExcepcion = finacleErrorType;
+		-- Asignaciones utilizadas cuando el llamado al SP es exitoso
+		IF entorno.Variables.FLAG = 'Y' THEN
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = entorno.Variables.CDRESPTACHN;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = finacleErrorDesc;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = entorno.Variables.DESCNEGOCIO;
+
+		ELSE
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = CODIGO_INT_9999;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			-- TODO VER COMO OBTENEMOS EL MENSAJE TECNICO DEL SP. SI VIENE VACIO ASIGNARLE un valor por defecto.
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = MENSAJE_POR_DEFECTO_ES;
+
+			IF entorno.Variables.CDIDIOMA = 'ES' THEN
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_ES;
+			ELSE
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_IN;
+			END IF;
+
+		END IF;
+
+	END IF;
+
+END;	
+
+
+
+CREATE PROCEDURE IAMErrorTranslation(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE)
+
+BEGIN
+	-- Constantes
+	DECLARE COD_ESTADO_ADVERTENCIA CONSTANT CHARACTER 'warning';
+	DECLARE ESTADO_NIVEL_EXITOSO CHARACTER 'success';
+	DECLARE ESTADO_NIVEL_ERROR CONSTANT CHARACTER 'error';
+	DECLARE ESTADO_NIVEL_FATAL CONSTANT CHARACTER 'fatal';
+	DECLARE ESTADO_NIVEL_REINTENTAR CONSTANT CHARACTER 'retry';
+	DECLARE SEVERIDAD_FATAL CONSTANT CHARACTER 'FATAL';
+	DECLARE COD_SIST_PROVEEDOR_SERV_IAM CONSTANT CHARACTER 'AW0628';
+	DECLARE TIPO_EXCEP_GENERICO CONSTANT CHARACTER 'Generic';
+	DECLARE CODIGO_9999 CONSTANT CHARACTER '9999';
+
+	DECLARE AUXErrorCode CHARACTER;
+	DECLARE IAMErrorCode CHARACTER;
+	DECLARE IAMErrorMessage CHARACTER;
+	DECLARE IAMErrorSeverity CHARACTER;
+	---------------------------- Crear estructura de salida HEADER -----------------------------------------
+	CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Header;
+	DECLARE SalRespHeader REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Header;
+	---------------------------- Crear estructura de salida BODY ------------------------------------------
+	CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body;
+	DECLARE SalRespBody REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Body;
+	---------------------------- Crear las referencias de Entrada para el HEADER y el BODY ----------------
+
+	CREATE FIELD InputRoot.XMLNS.ns:esbXML.Header;
+	DECLARE EntraRespHeader REFERENCE TO InputRoot.XMLNS.ns:esbXML.Header;
+	CREATE FIELD InputRoot.XMLNS.ns:esbXML.Body;
+	DECLARE EntraBody REFERENCE TO InputRoot.XMLNS.ns:esbXML.Body;		
+
+
+	IF EntraRespHeader.responseData.status.statusCode = 'SystemException' THEN
+		-- Integration Layer error
+		SET OutputRoot = InputRoot;
+
+	ELSE ---- IAM Error -----
+
+		IF UPPER(EntraRespHeader.responseData.status.statusCode) = 'SUCCESS' AND (EntraBody.output.status.level <> 'warning' OR
+			EntraBody.output.status.level <> 'success') THEN -- IAM Error
+			------------------- IAMErrorCode ---- IAMErrorSeverity ---IAMErrorMessage -------------------------------
+			IF EntraBody.output.status.level = 'error' THEN
+
+				SET AUXErrorCode = (substring(EntraBody.output.status AFTER '(' ));
+
+				SET IAMErrorCode = substring(AUXErrorCode BEFORE ')' );
+
+				SET IAMErrorMessage = substring(EntraBody.output.status AFTER ')' );
+				SET IAMErrorSeverity = 'ERROR';
+			END IF;
+
+			IF EntraBody.output.status.level = 'fatal'
+				OR EntraBody.output.status.level = 'retry' THEN
+
+				SET IAMErrorSeverity = 'FATAL';
+				SET IAMErrorCode = 'INT9999';
+
+			END IF;
+
+			CALL setearEnvironment(entorno, COD_SIST_PROVEEDOR_SERV_IAM, IAMErrorCode, FLAG_RESPUESTA_F);
+			-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+
+			PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+
+			SET SalRespHeader.responseData.status.statusCode = 'BusinessException';
+			SET SalRespHeader.responseData.status.businessExceptionName = 'canalException';
+			SET SalRespBody.ns:canalException.genericException.code = IAMErrorCode;
+			SET SalRespBody.ns:canalException.genericException.description = IAMErrorMessage;
+
+			IF entorno.Variables.FLAG = 'Y' THEN
+				-------------------***LLamado al SP Exitoso***------------------------
+
+				IF EntraBody.output.status.level <> 'error' THEN
+					SET IAMErrorMessage = entorno.Variables.DESCNEGOCIO;
+				END IF;
+
+				SET SalRespBody.ns:canalException.tipoExcepcion = 'Generic';
+				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.codigo = entorno.Variables.CDRESPTACHN;
+				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.severidad = IAMErrorSeverity;
+				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeTecnico = IAMErrorMessage;
+				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeUsuario = entorno.Variables.DESCNEGOCIO;
+				-------------------***LLamado al SP No Exitoso***------------------------
+			ELSE
+
+				SET SalRespBody.ns:canalException.tipoExcepcion = 'System';
+				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.codigo = '9999';
+				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.severidad = 'ERROR';
+				-- TODO Ver de donde obtenemos el mensaje tecnico del error. SI VIENE VACIO hardcodear el mensaje (MENSAJE_POR_DEFECTO_ES)
+--				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeTecnico = 'Se presentaron Problemas procesando la solicitud';
+				SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeTecnico = MENSAJE_POR_DEFECTO_ES;
+				---****************************el lenguaje esta hard code cambiar cuando se defina ***********************-------
+				IF entorno.Variables.CDIDIOMA = 'ES' THEN
+--					SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeUsuario = 'Se presentaron Problemas procesando la solicitud';
+					SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_ES;
+				ELSE
+--					SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeUsuario = 'Problems processing the request';
+					SET SalRespBody.ns:canalException.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_IN;
+				END IF;
+
+			END IF;
+
+		END IF; -- IAM Error
+
+	END IF; --systemException---
+
+END;	
+
+CREATE PROCEDURE IAMErrorTranslationNew(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE, IN ns_body REFERENCE)
+
+BEGIN
+	-- Constantes
+	DECLARE COD_ESTADO_ADVERTENCIA CONSTANT CHARACTER 'warning';
+	DECLARE ESTADO_NIVEL_EXITOSO CHARACTER 'success';
+	DECLARE ESTADO_NIVEL_ERROR CONSTANT CHARACTER 'error';
+	DECLARE ESTADO_NIVEL_FATAL CONSTANT CHARACTER 'fatal';
+	DECLARE ESTADO_NIVEL_REINTENTAR CONSTANT CHARACTER 'retry';
+	DECLARE SEVERIDAD_FATAL CONSTANT CHARACTER 'FATAL';
+	DECLARE COD_SIST_PROVEEDOR_SERV_IAM CONSTANT CHARACTER 'AW0628';
+	DECLARE TIPO_EXCEP_GENERICO CONSTANT CHARACTER 'Generic';
+	DECLARE CODIGO_9999 CONSTANT CHARACTER '9999';
+	DECLARE NSBody NAMESPACE ns_body;
+
+	DECLARE AUXErrorCode CHARACTER;
+	DECLARE IAMErrorCode CHARACTER;
+	DECLARE IAMErrorMessage CHARACTER;
+	DECLARE IAMErrorSeverity CHARACTER;
+	---------------------------- Crear estructura de salida HEADER -----------------------------------------
+	CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Header;
+	DECLARE SalRespHeader REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Header;
+	---------------------------- Crear las referencias de Entrada para el HEADER y el BODY ----------------
+--	CREATE FIELD InputRoot.XMLNS.ns:esbXML.Header;
+	DECLARE EntraRespHeader REFERENCE TO InputRoot.XMLNS.ns:esbXML.Header;
+--	CREATE FIELD InputRoot.XMLNS.ns:esbXML.Body;
+	DECLARE EntraBody REFERENCE TO InputRoot.XMLNS.ns:esbXML.Body;		
+
+
+	IF EntraRespHeader.responseData.status.statusCode = 'SystemException' THEN
+		-- Integration Layer error
+--		SET OutputRoot = InputRoot;
+		SET SalRespHeader = EntraRespHeader;
+		
+
+	ELSE ---- IAM Error -----
+
+		IF UPPER(EntraRespHeader.responseData.status.statusCode) = 'SUCCESS' AND (EntraBody.output.status.level <> 'warning' OR
+			EntraBody.output.status.level <> 'success') THEN -- IAM Error
+			------------------- IAMErrorCode ---- IAMErrorSeverity ---IAMErrorMessage -------------------------------
+			IF EntraBody.output.status.level = 'error' THEN
+
+				SET AUXErrorCode = (substring(EntraBody.output.status AFTER '(' ));
+
+				SET IAMErrorCode = substring(AUXErrorCode BEFORE ')' );
+
+				SET IAMErrorMessage = substring(EntraBody.output.status AFTER ')' );
+				SET IAMErrorSeverity = 'ERROR';
+			END IF;
+
+			IF EntraBody.output.status.level = 'fatal'
+				OR EntraBody.output.status.level = 'retry' THEN
+
+				SET IAMErrorSeverity = 'FATAL';
+				SET IAMErrorCode = 'INT9999';
+
+			END IF;
+
+			CALL setearEnvironment(entorno, COD_SIST_PROVEEDOR_SERV_IAM, IAMErrorCode, FLAG_RESPUESTA_F);
+			-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+
+			PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+			---------------------------- Crear estructura de salida BODY ------------------------------------------
+			CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body;
+			DECLARE SalRespBody REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Body;			
+
+			SET SalRespHeader.responseData.status.statusCode = 'BusinessException';
+			SET SalRespHeader.responseData.status.businessExceptionName = 'canalException';
+			SET SalRespBody.NSBody:canalException.genericException.code = IAMErrorCode;
+			SET SalRespBody.NSBody:canalException.genericException.description = IAMErrorMessage;
+
+			IF entorno.Variables.FLAG = 'Y' THEN
+				-------------------***LLamado al SP Exitoso***------------------------
+
+				IF EntraBody.output.status.level <> 'error' THEN
+					SET IAMErrorMessage = entorno.Variables.DESCNEGOCIO;
+				END IF;
+
+				SET SalRespBody.NSBody:canalException.tipoExcepcion = 'Generic';
+				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.codigo = entorno.Variables.CDRESPTACHN;
+				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.severidad = IAMErrorSeverity;
+				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeTecnico = IAMErrorMessage;
+				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeUsuario = entorno.Variables.DESCNEGOCIO;
+				-------------------***LLamado al SP No Exitoso***------------------------
+			ELSE
+
+				SET SalRespBody.NSBody:canalException.tipoExcepcion = 'System';
+				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.codigo = '9999';
+				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.severidad = 'ERROR';
+				-- TODO Ver de donde obtenemos el mensaje tecnico del error. SI VIENE VACIO hardcodear el mensaje (MENSAJE_POR_DEFECTO_ES)
+--				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeTecnico = 'Se presentaron Problemas procesando la solicitud';
+				SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeTecnico = MENSAJE_POR_DEFECTO_ES;
+				---****************************el lenguaje esta hard code cambiar cuando se defina ***********************-------
+				IF entorno.Variables.CDIDIOMA = 'ES' THEN
+--					SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeUsuario = 'Se presentaron Problemas procesando la solicitud';
+					SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_ES;
+				ELSE
+--					SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeUsuario = 'Problems processing the request';
+					SET SalRespBody.NSBody:canalException.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_IN;
+				END IF;
+
+			END IF;
+
+		END IF; -- IAM Error
+
+	END IF; --systemException---
+
+END;	
+CREATE PROCEDURE HubErrorTranslation(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE,IN ns_body REFERENCE)RETURNS BOOLEAN
+BEGIN
+	-- Referencias utilizadas en FINACLE Error Translation
+	DECLARE Error BOOLEAN;
+	DECLARE NSBody NAMESPACE ns_body;
+	DECLARE entradaRespHubHeader REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Header;
+	-- Integration Layer Error
+	IF UPPER(entradaRespHubHeader.responseData.status.statusCode) = 'SYSTEMEXCEPTION' THEN
+		SET OutputRoot = InputRoot;
+		SET Error = TRUE;
+		RETURN Error;		
+		-- No Error
+	ELSEIF UPPER(entradaRespHubHeader.responseData.status.statusCode) = 'SUCCESS' THEN
+		SET Error = FALSE;
+		RETURN Error;
+		-- Finacle Error
+	ELSEIF UPPER(entradaRespHubHeader.responseData.status.statusCode) = 'BUSINESSEXCEPTION' OR 
+		UPPER(entradaRespHubHeader.responseData.status.statusCode) = 'PROVIDEREXCEPTION' THEN
+		-- Constantes utilizadas en FINACLE Error Translation
+		DECLARE COD_SIST_PROVEEDOR_SERV_HUB CONSTANT CHARACTER 'AW0555';
+		DECLARE TIPO_ERROR_NEGOCIO CONSTANT CHARACTER 'Business';
+		-- Variables utilizadas en FINACLE Error Translation
+		DECLARE HubErrorCode CHARACTER;
+		DECLARE HubErrorDesc CHARACTER;
+		DECLARE HubErrorType CHARACTER;
+		-- Creacion de referencias.
+		DECLARE entradaRespHubBody REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body;
+		DECLARE excepcion REFERENCE TO entradaRespHubHeader.responseData.status.statusCode;
+		
+
+
+		SET HubErrorCode = entradaRespHubBody.*.genericException.code;
+		SET HubErrorDesc = entradaRespHubBody.*.genericException.description;
+		-- Compruebo si es una excepcion de sistema o de negocio
+		IF UPPER(excepcion) = 'PROVIDEREXCEPTION' THEN
+
+			SET HubErrorType = TIPO_ERROR_SISTEMA;
+
+		ELSEIF UPPER(excepcion) = 'BUSINESSEXCEPTION' THEN
+
+			SET HubErrorType = TIPO_ERROR_NEGOCIO;
+
+		END IF;
+
+		CALL setearEnvironment (entorno, COD_SIST_PROVEEDOR_SERV_HUB, HubErrorCode, FLAG_RESPUESTA_F);
+		-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+		PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+		-- Creacion de la estructura y refencia de salida HEADER
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Header;
+		DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Header;
+
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body.NSBody:canalException;
+		DECLARE salidaRespBody REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Body.NSBody:canalException;
+		-- Asignaciones comunes cuando el llamado al SP sea exitoso o no
+		SET salidaRespHeader.responseData.status.statusCode = COD_ESTADO_EXCEP_NEGOCIO;
+		SET salidaRespHeader.responseData.status.businessExceptionName = NOMBRE_EXCEP_NEGOCIO;
+		SET salidaRespBody.genericException.code = HubErrorCode;
+		SET salidaRespBody.genericException.description = HubErrorDesc;
+		SET salidaRespBody.tipoExcepcion = HubErrorType;
+		-- Asignaciones utilizadas cuando el llamado al SP es exitoso
+		IF entorno.Variables.FLAG = 'Y' THEN
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = entorno.Variables.CDRESPTACHN;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = HubErrorDesc;
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = entorno.Variables.DESCNEGOCIO;
+
+		ELSE
+
+			SET salidaRespBody.excepcionTraducidaParaCanal.codigo = CODIGO_INT_9999;
+			SET salidaRespBody.excepcionTraducidaParaCanal.severidad = SEVERIDAD_ERROR;
+			-- TODO VER COMO OBTENEMOS EL MENSAJE TECNICO DEL SP. SI VIENE VACIO ASIGNARLE un valor por defecto.
+			SET salidaRespBody.excepcionTraducidaParaCanal.mensajeTecnico = MENSAJE_POR_DEFECTO_ES;
+
+			IF entorno.Variables.CDIDIOMA = 'ES' THEN
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_ES;
+			ELSE
+				SET salidaRespBody.excepcionTraducidaParaCanal.mensajeUsuario = MENSAJE_POR_DEFECTO_IN;
+			END IF;
+
+		END IF;
+		SET Error = TRUE;
+		RETURN Error;
+	END IF;
+END;
+
+/*
+* Procedimiento "privado" encargado de armar el OutputRoot en caso de que haya una excepcion del tipo
+* System y adicionalmente se debe cumplir la llamada a la subrutina "INT_SP_CONV_RESPTA_SERVICIOS" haya
+* sido exitosa
+*/
+CREATE PROCEDURE mapeoExcepcionPorSistemaSubrutinaExitosa (IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE)
+BEGIN
+
+	CREATE FIELD OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+	DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+	DECLARE mensaje REFERENCE TO InputRoot.XMLNSC.SCT.ESB.ns48:esbXML.Header.responseData.status.systemException.faultstring;
+
+	SET salidaRespHeader.(XMLNSC.Attribute)CODE = entorno.Variables.CDRESPTACHN;
+	SET salidaRespHeader.(XMLNSC.Attribute)SEVERITY = SEVERIDAD_ERROR;
+	SET salidaRespHeader.(XMLNSC.Attribute)MESSAGE = mensaje;
+	SET salidaRespHeader.(XMLNSC.Attribute)DESC = entorno.Variables.DESCNEGOCIO;
+END;
+
+/*
+* Procedimiento "privado" encargado de armar el OutputRoot en caso de que
+* la llamada a la subrutina "INT_SP_CONV_RESPTA_SERVICIOS" NO haya
+* sido exitosa
+*/
+CREATE PROCEDURE mapeoExcepcionSubrutinaNoExitosa (IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE)
+BEGIN
+	CREATE FIELD OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+	DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+
+	DECLARE mensaje REFERENCE TO InputRoot.XMLNSC.SCT.ESB.ns48:esbXML.Header.responseData.status.systemException.faultstring;
+
+	SET salidaRespHeader.(XMLNSC.Attribute)CODE = CODIGO_INT_9999 ;
+	SET salidaRespHeader.(XMLNSC.Attribute)SEVERITY = SEVERIDAD_ERROR;
+	SET salidaRespHeader.(XMLNSC.Attribute)MESSAGE = MENSAJE_POR_DEFECTO_ES;
+
+	if (entorno.Variables.CDIDIOMA = COD_LENG_ESP) THEN
+		SET salidaRespHeader.(XMLNSC.Attribute)DESC = MENSAJE_POR_DEFECTO_ES;
+	ELSE
+		SET salidaRespHeader.(XMLNSC.Attribute)DESC = MENSAJE_POR_DEFECTO_IN;
+	END IF;
+END;
+
+/*
+* Procedimiento "privado" encargado de armar el OutputRoot si
+* nos encontramos en un caso de BusinessException o ProviderException siempre dentro
+* de un escenario de tipo "1" (esto es que exista una excepcion del tipo "canalException"
+* y que la llamada a la subrutina "INT_SP_CONV_RESPTA_SERVICIOS" NO haya
+* sido exitosa
+*/
+CREATE PROCEDURE mapeoExcepcionEscenario1 (IN InputRoot REFERENCE, IN OutputRoot REFERENCE)
+BEGIN
+
+	CREATE FIELD OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+	DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+	--DECLARE canalExcepcion REFERENCE TO InputRoot.XMLNSC.ns48:esbXML.Body.ns330:canalException.excepcionTraducidaParaCanal;
+	DECLARE canalExcepcion REFERENCE TO InputRoot.XMLNSC.SCT.ESB.ns48:esbXML.Body.*.excepcionTraducidaParaCanal;
+	SET salidaRespHeader.(XMLNSC.Attribute)CODE = canalExcepcion.codigo;
+	SET salidaRespHeader.(XMLNSC.Attribute)SEVERITY = canalExcepcion.severidad;
+	SET salidaRespHeader.(XMLNSC.Attribute)MESSAGE = canalExcepcion.mensajeTecnico;
+	SET salidaRespHeader.(XMLNSC.Attribute)DESC = canalExcepcion.mensajeUsuario;
+END;	
+
+
+/*
+* Procedimiento "privado" encargado de armar el OutputRoot si
+* nos encontramos en un caso de BusinessException o ProviderException,
+* que estemos en un escenario de tipo "2"
+* y que la llamada a la subrutina "INT_SP_CONV_RESPTA_SERVICIOS" haya
+* sido exitosa
+*/
+CREATE PROCEDURE mapeoEscenario2SubrutinaExitosa (IN OutputRoot REFERENCE, IN entorno REFERENCE, IN serviceErrorDesc CHARACTER)
+BEGIN
+	CREATE FIELD OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+	DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+
+	SET salidaRespHeader.(XMLNSC.Attribute)CODE = entorno.Variables.CDRESPTACHN;
+	SET salidaRespHeader.(XMLNSC.Attribute)SEVERITY = SEVERIDAD_ERROR;
+	SET salidaRespHeader.(XMLNSC.Attribute)MESSAGE = serviceErrorDesc;
+	SET salidaRespHeader.(XMLNSC.Attribute)DESC = entorno.Variables.DESCNEGOCIO;
+END;
+
+/*
+* Procedimiento privado que se encarga de mapear el mensaje de respuesta en
+* TCFX en caso de que el status sea "Success"
+*/
+
+CREATE PROCEDURE mapeoExito (IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE)
+BEGIN
+
+	CREATE FIELD OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+	DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS;
+
+	IF (entorno.Variables.FLAG = 'Y') THEN
+		SET salidaRespHeader.(XMLNSC.Attribute)CODE = entorno.Variables.CDRESPTACHN;
+		SET salidaRespHeader.(XMLNSC.Attribute)SEVERITY = SEVERIDAD_INFO;
+		SET salidaRespHeader.(XMLNSC.Attribute)MESSAGE = entorno.Variables.DESCNEGOCIO;
+		SET salidaRespHeader.(XMLNSC.Attribute)DESC = entorno.Variables.DESCNEGOCIO;
+	ELSE
+		SET salidaRespHeader.(XMLNSC.Attribute)CODE = CODIGO_OK;
+		SET salidaRespHeader.(XMLNSC.Attribute)SEVERITY = SEVERIDAD_INFO;
+		SET salidaRespHeader.(XMLNSC.Attribute)MESSAGE = MENSAJE_IN;
+
+		IF (entorno.Variables.CDIDIOMA = COD_LENG_ESP) THEN
+			SET salidaRespHeader.(XMLNSC.Attribute)DESC = MENSAJE_ES;
+		ELSE
+			SET salidaRespHeader.(XMLNSC.Attribute)DESC = MENSAJE_IN;
+		END IF;
+	END IF;
+END;	
+
+
+/*
+* Procedimiento "Publico" que dependiendo de si el statusCode es Success, System Exception, BusinessException o
+* ProviderException incorpora en OutputRoot.XMLNSC.TCFX.HeaderRs.STATUS un mensaje segun sea el caso
+* Parametros de entrada:
+* ----------------------
+* -InputRoot que contiene el mensaje original
+* -OutputRoot: IMPORTANTE: (1) Como resutado se deja en el OutputRoot SOLO los mapeos necesarios con la respuesta
+* dentro del tag TCFX.HeaderRs.STATUS el resto del mensaje de Salida debe armarlo quien invoque a este procedimiento
+* (2) La terminal "Out4" debe estar conectada al subflujo encargado de realizar el procedimiento INT_SP_CONV_RESPTA_SERVICIOS
+* -Entorno: Se debe pasar por parÃ¡metro el Environment, este deberÃ¡ contener:
+* Environment.Variables.CDIDIOMA : Codigo de Idioma [ES|IN}
+* Environment.Variables.CDCANAL : Codigo de Canal
+* Environment.Variables.CDSPS: Codigo de Sistema del Proveedor de servicio, este dato es obligatorio en caso de que el status sea NO SEA "SystemException"
+* y se puede obtener de la tabla que se corresponde con el siguiente documento excel (columna â€œSistema Proveedorâ€�):
+* http://bc-gubu-scm-ubu.dyn.webahead.ibm.com/frente-todo1/main/dev/ConsumerAdapter_TODO1/main/doc/docs/ParametrosTraduccionExitoConsumerAdapterV1.1.xlsx
+* Environment.Variables.CDRESPTA:Constante Codigo Exito especifico de la interfaz que se puede obtener de la tabla siguiente (columna â€œCodigo Ã‰xitoâ€�).
+*
+* -resultado: Retorna 'S' en caso de que no haya excepcion (InputRoot.XMLNSC.ns48:esbXML.Header.responseData.status.statusCode es "Success")
+* y 'F' para el caso de que el statusCode sea distinto de "Success"
+* -CodigoEscenario : Necesario para saber si nos encontramos dentro de un escenario de tipo 1 o 2 en el caso
+* que haya una ProviderException o un BusinessException. Este parametro se toma del documento excel
+* http://bc-gubu-scm-ubu.dyn.webahead.ibm.com/frente-todo1/main/dev/ConsumerAdapter_TODO1/main/doc/docs/EscenariosMapChannelExceptionV1.0.xls.
+*
+* ---Autor--- : "vconte" ( contevan@ar.ibm.com )
+*/
+CREATE PROCEDURE traduccionStatusExito (IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE,IN resultado REFERENCE, IN codigoEscenario INTEGER)
+BEGIN
+
+	SET resultado = 'S';
+	DECLARE entradaRespTodo1Header REFERENCE TO InputRoot.XMLNSC.SCT.ESB.ns48:esbXML.Header.responseData.status.statusCode;
+	--Se guarda el mensaje original
+	CREATE LASTCHILD OF entorno.Variables.OriginalP DOMAIN('XMLNSC') PARSE(ASBITSTREAM(InputRoot.XMLNSC));
+
+	IF (entradaRespTodo1Header = COD_ESTADO_EXITOSO) THEN
+
+		SET entorno.Variables.CDRESPTA = entorno.Variables.EXITO;
+		SET entorno.Variables.FLAGRESPTA = FLAG_RESPUESTA_E;
+		-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+		
+		PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+
+		CALL mapeoExito (InputRoot, OutputRoot, entorno);
+
+	ELSE
+		SET resultado = 'F';
+		CALL TODO1MapException( InputRoot , OutputRoot, entorno, codigoEscenario );
+	END IF;
+
+END;
+	
+
+
+/*
+* Procedimiento "privado", que cumple los requerimientos del documento TODO1 Consumer Adapter en
+* el que se indica:
+*
+* "Habiendo detectado que ocurrio una excepcion (expresada como SystemException,
+* BusinessException o ProviderException de la Capa de Integracion) se efectÃºa la
+* generacion del estatus de respuesta de error para el canal. Esta tarea se detalla en la siguiente seccion del documento.
+*
+* 2.mapExceptionForChannel: Se tiene ya listo el mensaje de respuesta hacia TODO1 en formato TCFX.
+* DATO IMPORTANTE: Quien invoque a este procedimiento debe agregarle un body al OutputRoot posteriormente
+* ya que no arma el mensaje final.
+*/
+CREATE PROCEDURE TODO1MapException(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE,IN CodigoEscenario INTEGER)
+BEGIN
+
+	DECLARE entradaRespTodo1Header REFERENCE TO InputRoot.XMLNSC.SCT.ESB.ns48:esbXML.Header.responseData.status.statusCode;
+	DECLARE codRespProveedor REFERENCE TO InputRoot.XMLNSC.SCT.ESB.ns48:esbXML.Header.responseData.status.systemException.faultcode;
+	--Analizamos caso entradaRespTodo1Header es SystemException
+	IF entradaRespTodo1Header = COD_ESTADO_EXCEPCION_SISTEMA THEN
+
+		CALL setearEnvironment(entorno, COD_SIST_PROVEEDOR_SERVICIO, codRespProveedor, FLAG_RESPUESTA_F);
+		-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+		PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+		--Averiguo si el sp se ejecuto con exito
+		IF (entorno.Variables.FLAG = 'Y') THEN
+			--mapeo para llamada al sp anterior en forma exitosa
+			CALL mapeoExcepcionPorSistemaSubrutinaExitosa (InputRoot, OutputRoot, entorno);
+		ELSE
+			--mapeo para llamada al sp anterior no exitosa:
+			CALL mapeoExcepcionSubrutinaNoExitosa(InputRoot, OutputRoot, entorno);
+
+		END IF;
+		--Inicio BusinessException o ProviderException
+	ELSEIF entradaRespTodo1Header = COD_ESTADO_EXCEP_NEGOCIO OR entradaRespTodo1Header = COD_ESTADO_EXCEPCION_PROVEEDOR THEN
+		--Si codigo de escenario es 1 entonces corresponde a una estructura de Canal Exception
+		IF CodigoEscenario = 1 THEN
+			CALL mapeoExcepcionEscenario1 (InputRoot, OutputRoot);
+			-- INICIO ESCENARIO 2
+		ELSE
+			DECLARE excepcionGenerica REFERENCE TO InputRoot.XMLNSC.SCT.ESB.ns48:esbXML.Body.*.genericException;
+
+			CALL setearEnvironment2(entorno, excepcionGenerica.code, FLAG_RESPUESTA_F);
+			-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+			PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+			--inicio procedimiento de mapeo de errores luego de la llamada a la subrutina
+			--Averiguo si el sp se ejecuto con exito
+			IF (entorno.Variables.FLAG = 'Y') THEN
+
+				CALL mapeoEscenario2SubrutinaExitosa (OutputRoot,entorno,excepcionGenerica.description);
+
+			ELSE
+				CALL mapeoExcepcionSubrutinaNoExitosa(InputRoot, OutputRoot, entorno);
+
+			END IF;
+			--Fin procedimiento de mapeo de errores luego de la llamada a la subrutina
+		END IF;
+		-- FIN ESCENARIO 2
+	END IF;
+	--Fin BusinessException o ProviderException
+END;	
+
+
+CREATE PROCEDURE setearEnvironment (IN entorno REFERENCE, IN CDSPS CHARACTER,IN CDRESPTA CHARACTER,IN FLAGRESPTA CHARACTER)
+BEGIN
+	SET entorno.Variables.CDSPS = CDSPS;
+	SET entorno.Variables.CDRESPTA = CDRESPTA;
+	SET entorno.Variables.FLAGRESPTA = FLAGRESPTA;
+
+END;
+
+CREATE PROCEDURE setearEnvironment2 (IN entorno REFERENCE,IN CDRESPTA CHARACTER,IN FLAGRESPTA CHARACTER)
+BEGIN
+
+	SET entorno.Variables.CDRESPTA = CDRESPTA;
+	SET entorno.Variables.FLAGRESPTA = FLAGRESPTA;
+
+END;
+
+CREATE FUNCTION FinacleErrorHomologate(IN InputRoot REFERENCE, IN OutputRoot REFERENCE, IN entorno REFERENCE, IN exception_ns REFERENCE, IN baseOperatoinName CHARACTER) RETURNS BOOLEAN
+BEGIN
+	-- Referencias utilizadas en FINACLE Error Translation
+	DECLARE Error BOOLEAN;
+	DECLARE entradaRespFinacleHeader REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Header;
+	DECLARE entradaBodyResponseHeader REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body.ns1944:FIXML.*:Header.*:ResponseHeader.*:HostTransaction.*:Status;
+	-- Integration Layer Error
+	IF UPPER(entradaRespFinacleHeader.responseData.status.statusCode) = 'SYSTEMEXCEPTION' THEN
+		SET OutputRoot = InputRoot;
+		SET Error = TRUE;
+		RETURN Error;		
+		-- No Error
+	ELSEIF UPPER(entradaRespFinacleHeader.responseData.status.statusCode) = 'SUCCESS' AND UPPER(entradaBodyResponseHeader) = 'SUCCESS' THEN
+		SET Error = FALSE;
+		RETURN Error;
+		-- Finacle Error
+	ELSEIF UPPER(entradaRespFinacleHeader.responseData.status.statusCode) = 'SUCCESS' AND UPPER(entradaBodyResponseHeader) <> 'SUCCESS' THEN
+		-- Constantes utilizadas en FINACLE Error Translation
+		DECLARE TAG_FISYSTEM_EXCEPCION CONSTANT CHARACTER 'FISystemException';
+		DECLARE TAG_FIBUSINESS_EXCEPCION CONSTANT CHARACTER 'FIBusinessException';
+		DECLARE COD_SIST_PROVEEDOR_SERV_FINACLE CONSTANT CHARACTER 'FIN001';
+		DECLARE FLAG_RESPUESTA_C CONSTANT CHARACTER 'C'; -- requiring  as response only the canonical code
+		-- Variables utilizadas en FINACLE Error Translation
+		DECLARE finacleErrorCode CHARACTER;
+		DECLARE finacleErrorDesc CHARACTER;
+		DECLARE finacleErrorType CHARACTER;
+		-- Creacion de referencias.
+		DECLARE entradaRespFinacleBody REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body;
+		DECLARE excepcion REFERENCE TO InputRoot.XMLNSC.ns:esbXML.Body.ns1944:FIXML.*:Body.*:Error;
+		
+		SET finacleErrorCode = excepcion.*.*:ErrorDetail.*:ErrorCode;
+		SET finacleErrorDesc = excepcion.*.*:ErrorDetail.*:ErrorDesc;
+		-- Compruebo si es una excepcion de sistema o de negocio
+		DECLARE exceptionName CHARACTER;
+		SET exceptionName = FIELDNAME(excepcion.[1]);
+		IF exceptionName = TAG_FISYSTEM_EXCEPCION THEN
+			SET finacleErrorType = 'ProviderException';
+		ELSEIF exceptionName = TAG_FIBUSINESS_EXCEPCION THEN
+			SET finacleErrorType = 'BusinessException';
+		END IF;
+
+		CALL setearEnvironment (entorno, COD_SIST_PROVEEDOR_SERV_FINACLE, finacleErrorCode, FLAG_RESPUESTA_C);
+		-- Llamada al store procedure INT_SP_CONV_RESPTA_SERVICIOS
+		PROPAGATE TO TERMINAL 'out4' DELETE NONE;
+		-- Creacion de la estructura y refencia de salida HEADER
+		SET OutputRoot.XMLNSC.ns:esbXML.Header = InputRoot.XMLNSC.*:esbXML.Header;
+		DECLARE salidaRespHeader REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Header;
+
+		DECLARE exceptionElementName CHARACTER;
+		SET exceptionElementName = baseOperatoinName || finacleErrorType;
+		CREATE FIELD OutputRoot.XMLNSC.ns:esbXML.Body;
+		DECLARE ref REFERENCE TO OutputRoot.XMLNSC.ns:esbXML.Body;
+		CREATE FIRSTCHILD OF ref AS ref NAMESPACE exception_ns NAME exceptionElementName;
+		
+		SET ref.genericException.code = entorno.Variables.CDCANONICO;
+		SET ref.genericException.description = finacleErrorDesc;
+		
+		SET salidaRespHeader.responseData.status.statusCode = finacleErrorType;
+		
+		SET Error = TRUE;
+		RETURN Error;
+	END IF;
+END;

@@ -1,0 +1,165 @@
+
+/*
+*
+* File name: WSChannelAdapterOut.esql
+*
+* Purpose: Convert an ESBxml-il request into a SOAP/HTTP.
+*
+* Authors: Oscar Bustos, Juan Figueredo
+* Date: March 142010
+* Version: 2.0
+*
+* @copyright IBM Colombia Ltd. 2010. All rights reserved.
+*
+*/
+
+BROKER SCHEMA core.integrationcontrollers.wschanneladapterTLS
+
+DECLARE BE_FAULTCODE CONSTANT CHARACTER 'Server.BusinessException';
+
+CREATE COMPUTE MODULE WSChannelAdapterOut_WSChannelAdapterOut
+	/*
+	* Este modulo permite convertir el llamado ESBxml-il/MQ a un mensaje de tipo SOAP/HTTP
+	*
+	* En caso de que el mensaje de entrada sea de exito, envuelve la respuesta en SOAP
+	* En caso de que el mensaje de entrada sea de error o no sea estandar, lo envia por la salida failure
+	* En caso de que el mensaje de entrada sea de tipo BusinessException o ProviderException los encapsula en
+	* un mensaje SOAP Fault
+	*/
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE esbXML REFERENCE TO InputRoot.XMLNSC.il:esbXML;
+		
+		--Genera el encabezado soap
+		CALL GenerateSoapHeader();
+		
+		--Actualizar los objetos con la respuesa del servicio especifico
+		DECLARE refEnvVarMsgRs REFERENCE TO Environment.Variables.PutMsgQ;
+		DECLARE refMsgRsHeader REFERENCE TO refEnvVarMsgRs.XMLNSC.il:esbXML.Header;
+		DECLARE refMsgRsBody REFERENCE TO refEnvVarMsgRs.XMLNSC.il:esbXML.Body;
+
+		--Dependiendo del codigo se genera una salida soap o un fallo soap
+		CASE refMsgRsHeader.responseData.status.statusCode
+		WHEN 'ProviderException' THEN
+			DECLARE refBodyException REFERENCE TO refMsgRsBody.*:providerException.genericException;
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Header =OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header;
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultcode = refBodyException.code;
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultstring = refBodyException.description;
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.detail = refMsgRsBody;
+			SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 500;
+		WHEN 'BusinessException' THEN
+			DECLARE refBodyException REFERENCE TO refMsgRsBody.[1].genericException;
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Header = OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header;								
+			CREATE LASTCHILD OF OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault NAME 'faultcode' VALUE BE_FAULTCODE;
+			CREATE LASTCHILD OF OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault NAME 'faultstring' VALUE refBodyException.description;			
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.detail = refMsgRsBody;
+			SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 500;
+		WHEN 'Success' THEN
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Header = OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header;
+			SET OutputRoot.XMLNSC.ns:Envelope.ns:Body   = refMsgRsBody;
+		WHEN 'SystemException' THEN
+			SET OutputRoot = InputRoot;
+			
+			--Se agregan lineas de código para obtener respuesta tipo SOAP Fault SystemException
+
+			PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;			
+		ELSE
+			SET OutputRoot = InputRoot;
+			SET OutputRoot.XMLNSC.il:esbXML.Header.responseData.status.statusCode = 'SystemException';
+			SET OutputRoot.XMLNSC.il:esbXML.Header.responseData.status.systemException.faultcode ='Server.ESB.InternalServerResponseError';
+			PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;
+		END CASE;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE GenerateSoapHeader() BEGIN
+		
+		-- 20131115 Ajuste por incidente BCSWF0010XXXX. Siempre debe responder Encoding = UTF-8, debido a que el 
+		-- encoding de los mensajes del cosumidor del WSCA, debe ser utf-8.
+		SET OutputRoot.Properties.CodedCharSetId = 1208;	
+		CREATE FIRSTCHILD OF OutputRoot.XMLNSC TYPE XMLNSC.XmlDeclaration;
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Version = '1.0';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Encoding = 'UTF-8';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)StandAlone = 'yes';		
+		
+		DECLARE esbXML REFERENCE TO InputRoot.XMLNSC.il:esbXML;
+		DECLARE esbXMLHeader REFERENCE TO esbXML.Header;
+		
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		SET OutputLocalEnvironment.Destination.SOAP.Reply.ReplyIdentifier = CAST(esbXML.Header.routingStack.route.ReplyTo.correlationId AS BLOB);
+
+		CREATE FIELD OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header.mf:responseHeader;
+		DECLARE SOAPref REFERENCE TO OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header.mf:responseHeader;
+		--Transforma el encabezado soap en encabezado esbXml-il
+		SET SOAPref.systemId =esbXML.Header.systemId;
+		SET SOAPref.messageId =esbXML.Header.messageId;
+		SET SOAPref.timestamp=esbXML.Header.interactionData.timestamp;
+		CALL RemoveMessageContext(esbXMLHeader,SECURITYCONSUMER,TRUE);
+		SET SOAPref.messageContext = esbXML.Header.messageContext;
+		
+		--Actualizar los objetos con la respuesa del servicio especifico
+		DECLARE refEnvVarMsgRs REFERENCE TO Environment.Variables.PutMsgQ;
+		DECLARE refMsgRsHeader REFERENCE TO refEnvVarMsgRs.XMLNSC.il:esbXML.Header;
+		
+		SET SOAPref.responseStatus.statusCode = refMsgRsHeader.responseData.status.statusCode;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE WSChannelAdapterOut_SOAPFault
+	/*
+	* Este modulo permite encapsular un fallo en un SOAP fault
+	*/
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		--Genera el encabezado soap
+		CALL GenerateSoapHeader();
+		
+		--Actualizar los objetos con la respuesa del servicio especifico
+		DECLARE refEnvVarMsgRs REFERENCE TO Environment.Variables.PutMsgQ;
+		DECLARE refMsgRsHeader REFERENCE TO refEnvVarMsgRs.XMLNSC.il:esbXML.Header;
+		DECLARE refMsgRsBody REFERENCE TO refEnvVarMsgRs.XMLNSC.il:esbXML.Body;
+		
+		DECLARE inExeption REFERENCE TO refMsgRsHeader.responseData.status.systemException;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Header = OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultcode = inExeption.faultcode;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultstring = inExeption.faultstring;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultactor = inExeption.faultactor;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.detail.*:systemException.genericException.code = inExeption.faultcode;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.detail.*:systemException.genericException.description = inExeption.detail;
+		
+		RETURN TRUE;
+	END;
+		
+	CREATE PROCEDURE GenerateSoapHeader() BEGIN
+				
+		-- 20131115 Ajuste por incidente BCSWF0010XXXX. Siempre debe responder Encoding = UTF-8, debido a que el 
+		-- encoding de los mensajes del cosumidor del WSCA, debe ser utf-8.
+		SET OutputRoot.Properties.CodedCharSetId = 1208;	
+		CREATE FIRSTCHILD OF OutputRoot.XMLNSC TYPE XMLNSC.XmlDeclaration;
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Version = '1.0';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Encoding = 'UTF-8';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)StandAlone = 'yes';
+		
+		DECLARE esbXML REFERENCE TO InputRoot.XMLNSC.il:esbXML;
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		SET OutputLocalEnvironment.Destination.SOAP.Reply.ReplyIdentifier = CAST(esbXML.Header.routingStack.route.ReplyTo.correlationId AS BLOB);
+
+		CREATE FIELD OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header.mf:responseHeader;
+		DECLARE SOAPref REFERENCE TO OutputLocalEnvironment.SOAP.Envelope.ns:Envelope.ns:Header.mf:responseHeader;
+		--Transforma el encabezado soap en encabezado esbXml-il
+		SET SOAPref.systemId =esbXML.Header.systemId;
+		SET SOAPref.messageId =esbXML.Header.messageId;
+		SET SOAPref.timestamp=esbXML.Header.interactionData.timestamp;
+		SET SOAPref.messageContext =esbXML.Header.messageContext;
+		
+		--Actualizar los objetos con la respuesa del servicio especifico
+		DECLARE refEnvVarMsgRs REFERENCE TO Environment.Variables.PutMsgQ;
+		DECLARE refMsgRsHeader REFERENCE TO refEnvVarMsgRs.XMLNSC.il:esbXML.Header;
+		
+		SET SOAPref.responseStatus.statusCode = refMsgRsHeader.responseData.status.statusCode;
+	END;
+END MODULE;

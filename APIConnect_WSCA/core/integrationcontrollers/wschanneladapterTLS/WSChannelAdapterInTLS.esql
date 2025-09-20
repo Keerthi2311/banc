@@ -1,0 +1,250 @@
+/*
+*
+* File name: WSChannelAdapterIn.esql
+*
+* Purpose: Convert a SOAP/HTTP request into an ESBxml-il.
+*
+* Authors: Oscar Bustos, Juan Figueredo
+* Date: March 14 2010
+* Version: 2.0
+*
+* @copyright IBM Colombia Ltd. 2010. All rights reserved.
+*
+*/
+
+BROKER SCHEMA core.integrationcontrollers.wschanneladapterTLS
+PATH core.common.util;
+
+--UDP: Prefijo para clasificaciones de Consumidor
+DECLARE CN_PREFIX EXTERNAL CHARACTER 'http://grupobancolombia.com/clas/AplicacionesActuales#';
+--Namespace de los mensajes de capa de integracion ESB tipo IL
+DECLARE il NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+--Namespace de Mensaje de tipo SOI
+DECLARE mf NAMESPACE 'http://grupobancolombia.com/ents/SOI/MessageFormat/V2.1';
+--Namespace de Mensaje de tipo SOAP
+DECLARE ns NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/';
+
+
+CREATE COMPUTE MODULE WSChannelAdapterIn_WSChannelAdapterIn
+	/*
+	* Este modulo permite convertir el llamado SOAP/HTTP a un mensaje de tipo ESBxml-il/MQ
+	*/
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN 
+		CALL CreateHeaders();
+		DECLARE SOAPref REFERENCE TO InputLocalEnvironment.SOAP.Envelope.SOAP.Header.mf:requestHeader;
+
+		IF LASTMOVE(SOAPref) THEN
+			
+			CALL ValidateConsumerIdentity(SOAPref.systemId);
+			CALL SOI2IL(SOAPref);
+			CALL ApplyClassification(SOAPref.systemId);
+			
+		ELSE
+			CALL ThrowSystemException(REQUEST,DEFAULT_EXCEPTION_CATALOG, '1100',
+					COMMAND,INVALID_HEADER_ERROR, Environment, OutputExceptionList); 
+		END IF;
+		
+		RETURN TRUE;
+	END;
+	
+	
+	CREATE PROCEDURE CreateHeaders() BEGIN
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.MQMD.Format = MQFMT_STRING;
+	END;	
+	
+	CREATE PROCEDURE ValidateConsumerIdentity(IN inputSystemID CHAR) BEGIN
+		
+		--Si VALIDATE_IDENTITY es false, no se hace validacion de identidad
+		IF VALIDATE_IDENTITY THEN
+			DECLARE certRef REFERENCE TO InputLocalEnvironment.SOAP.Input.TransportSecurity.ClientAuth.Certificate;
+			DECLARE subject, issuer, serial, validityDate, csKey, csValue CHARACTER;
+			
+			SET subject = certRef.Subject;
+			SET issuer = certRef.Issuer;
+			SET serial = certRef.Serial;
+			
+			-- se lanza una excepcion si no se encuentra informacion de indentidad en el request
+			IF NOT LASTMOVE(certRef) OR subject = '' OR  issuer = '' OR serial = '' THEN
+				CALL ThrowSystemException(REQUEST,DEFAULT_EXCEPTION_CATALOG, '1200',
+					COMMAND,IDENTITY_INFORMATION_ERROR, Environment, OutputExceptionList); 
+			END IF;
+			-- si se debe forzar que los certificados sean firmados por un certificador especifico
+			--por seguridad las CA permitidos se almacenan en base64 na propiedad
+			-- El ALLOWED_ISSUERS, se maneja como a una lista de certificados almacenados en Base 64
+			-- la variable FORCE_ISSUER, se encuntra en false , ya que en el momento no se necesita validar los certificados por un ente certificador.
+			--- Si la variable FORCE_ISSUER estubiera en true, se deberia de contar con una lista de certificados firmados por entes certifciadores.
+			
+			IF FORCE_ISSUER THEN
+				DECLARE issuerBase64 CHARACTER BASE64ENCODE(issuer);
+				IF NOT CONTAINS(ALLOWED_ISSUERS, issuerBase64) THEN
+					CALL ThrowSystemException(REQUEST,DEFAULT_EXCEPTION_CATALOG, '1200',
+					COMMAND,CERTIFICATE_ISSUER_ERROR, Environment, OutputExceptionList);
+				END IF;
+			END IF;
+			
+			SET csKey = 'Subject' || hashValue(subject) || 'Issuer' || hashValue(issuer) || 'Serial' || hashValue(serial);
+			SET csValue = getValue(USERDEFINED, DEFAULTPOLICIES, IDENTITY_SERVICE, csKey);
+		    --SET csValue = getValue('UserDefined/'||IDENTITY_SERVICE, csKey);
+			
+			-- se valida la informacion del certificado, si no se encuentra en el servicio configurable se lanza una excepcion
+			
+			IF csValue IS NULL OR LENGTH(csValue) = 0 THEN
+				CALL ThrowSystemException(REQUEST,DEFAULT_EXCEPTION_CATALOG, '1200',
+					COMMAND,CERTIFICATE_ERROR_MESSAGE, Environment, OutputExceptionList); 
+			END IF;
+			
+			-- si el systemid no es el que esta configurado, retorna una excepcion.
+			-- el systemid validacion es opcional
+			IF csValue <> APICONNECT_IDENTIFIER THEN
+				CALL ThrowSystemException(REQUEST,DEFAULT_EXCEPTION_CATALOG, '1100',
+					COMMAND,CERTIFICATE_ERROR_MESSAGE, Environment, OutputExceptionList); 
+			END IF;
+		END IF;
+	END;
+	
+	CREATE PROCEDURE SOI2IL(IN refSOAP REFERENCE) BEGIN
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+		CREATE FIELD OutputRoot.XMLNSC.il:esbXML.Header;
+		DECLARE refHeader REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		DECLARE cursorIL REFERENCE TO refHeader;
+		
+		DECLARE cursorSOAP REFERENCE TO refSOAP;
+		MOVE cursorSOAP FIRSTCHILD NAME 'requestHeader';
+		DECLARE systemId CHARACTER FIELDVALUE(cursorSOAP.systemId);
+		SET cursorIL.systemId = systemId;
+		SET cursorIL.messageId = FIELDVALUE(cursorSOAP.messageId);
+		
+		CREATE LASTCHILD OF cursorIL AS cursorIL TYPE Name NAME 'interactionData';
+		SET cursorIL.senderSystemId = systemId;
+		SET cursorIL.timestamp = CURRENT_TIMESTAMP;
+		
+		CREATE LASTCHILD OF refHeader AS cursorIL TYPE Name NAME 'requestData';
+		CREATE LASTCHILD OF cursorIL TYPE Name NAME 'userId';
+		SET cursorIL.userId.userName = FIELDVALUE(cursorSOAP.userId.userName);
+		-- userToken is defined as "anyType", so just pass it:
+		SET cursorIL.userId.userToken = cursorSOAP.userId.userToken;
+		
+		CREATE LASTCHILD OF cursorIL TYPE Name NAME 'destination';
+		SET cursorIL.destination.name = FIELDVALUE(cursorSOAP.destination.name);
+		SET cursorIL.destination.namespace =
+			FIELDVALUE(cursorSOAP.destination.namespace);
+		SET cursorIL.destination.operation =
+			FIELDVALUE(cursorSOAP.destination.operation);
+		
+		CREATE LASTCHILD OF cursorIL TYPE Name NAME 'classifications';
+		
+		MOVE cursorSOAP LASTCHILD NAME 'classifications';
+		IF LASTMOVE(cursorSOAP) THEN
+			FOR cls AS cursorSOAP.classification[] DO
+				SET cursorIL.classifications.classification[<] = FIELDVALUE(cls);
+			END FOR;
+		END IF;
+		
+		CREATE LASTCHILD OF refHeader AS cursorIL TYPE Name NAME 'routingStack';
+		CREATE FIELD cursorIL.route.ReplyTo AS cursorIL;
+		SET cursorIL.address = il;
+		SET cursorIL.correlationId = InputLocalEnvironment.Destination.SOAP.Reply.ReplyIdentifier;
+		
+		-- Check if the message context is present
+        MOVE cursorSOAP TO cursorSOAP.*:messageContext;
+        IF LASTMOVE(cursorSOAP) THEN
+              CREATE LASTCHILD OF refHeader AS cursorIL TYPE Name NAME 'messageContext';
+              
+              FOR p AS cursorSOAP.*:property[] DO
+                    CREATE LASTCHILD OF cursorIL NAME 'property';
+                    SET cursorIL.property[<].key = FIELDVALUE(p.*:key);
+                    SET cursorIL.property[<].value = FIELDVALUE(p.*:value);
+              END FOR;
+        END IF;
+		
+		CREATE LASTCHILD OF OutputRoot.XMLNSC.il:esbXML AS cursorIL FROM InputRoot.XMLNSC;
+		SET cursorIL NAME = 'Body';
+		
+		--calcula el hash del id de seguridad del componente
+		DECLARE hashValue CHARACTER hashValue(SECURITY_ID);
+		
+		DECLARE refHeaderOut REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		CALL core.common.util.esbXML.il.AddMessageContextProperty(refHeaderOut, SECURITYCONSUMER, hashValue);
+		
+	END;
+
+	CREATE PROCEDURE ApplyClassification(IN systemId CHARACTER) BEGIN
+		DECLARE class REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header.requestData.classifications;
+		DECLARE index INTEGER CARDINALITY(class.classification[]);
+		SET index = index + 1;
+		DECLARE id CHARACTER;
+		
+		SET id = systemId;
+
+		IF id IS NOT NULL AND LENGTH(id) > 0 THEN
+			SET class.classification[index] = CN_PREFIX || id;
+		ELSE
+			CALL ThrowSystemException(REQUEST,DEFAULT_EXCEPTION_CATALOG, '1200',
+				COMMAND,MAPID_ERROR, Environment, OutputExceptionList); 
+		END IF;
+	END;
+
+END MODULE;
+
+CREATE COMPUTE MODULE WSChannelAdapterIn_SOAPFault
+	/*
+	* Este modulo permite encapsular un fallo en un SOAP fault
+	*/
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE inExeption REFERENCE TO InputRoot.XMLNSC.il:esbXML.Header.responseData.status.systemException;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Header = OutputLocalEnvironment.SOAP.Envelope.SOAP.Header;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultcode = inExeption.faultcode;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultstring = inExeption.faultstring;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.faultactor = inExeption.faultactor;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.detail.*:systemException.genericException.code = inExeption.faultcode;
+		SET OutputRoot.XMLNSC.ns:Envelope.ns:Body.ns:Fault.detail.*:systemException.genericException.description = inExeption.detail;
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE WSChannelAdapterIn_Server_ESB_InfrastructureError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CreateErrorMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CreateErrorMessage() BEGIN
+		DECLARE incur REFERENCE TO InputRoot.XMLNSC;
+		DECLARE env REFERENCE TO Environment;
+		IF env.Variables.OriginMsg IS null THEN
+			CALL SendOriginMsgToEnv(incur, env);
+		END IF;
+
+		CREATE FIELD OutputRoot.XMLNSC.il:esbXML.Header TYPE Name;
+		DECLARE header REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		DECLARE SOAPref REFERENCE TO InputLocalEnvironment.SOAP.Envelope.SOAP.Header.mf:requestHeader;
+		IF LASTMOVE(SOAPref) THEN
+			--Se recuperan los datos
+			SET header.systemId = SOAPref.systemId;
+			SET header.messageId = SOAPref.messageId;
+			SET header.interactionData.receiverSystemId = SOAPref.systemId;
+			SET header.interactionData.timestamp = CURRENT_TIMESTAMP;
+			SET header.requestData.userId = SOAPref.userId;
+			SET header.requestData.destination = SOAPref.destination;
+			SET header.messageContext = SOAPref.messageContext;
+		END IF;
+		CALL setFault(header, 'Server.ESB.InfrastructureError', 'Error browsing configuration queue.');
+	END;
+END MODULE;

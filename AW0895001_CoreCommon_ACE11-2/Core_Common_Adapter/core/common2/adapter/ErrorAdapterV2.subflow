@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmJavaCompute.msgnode="ComIbmJavaCompute.msgnode" xmlns:ComIbmPassthru.msgnode="ComIbmPassthru.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:mbmonitor="http://www.ibm.com/wbi/2008/eflow_mbmonitor" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common2/adapter/ErrorAdapterV2.subflow" nsPrefix="core_common2_adapter_ErrorAdapterV2.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CATALOG_POLICY_NAME" name="UDP_CATALOG_POLICY_NAME" lowerBound="1" defaultValueLiteral="UDCS_ERRORADAPTERV2_EQUIVALENCES">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_INTERACTION_TYPE" name="UDP_INTERACTION_TYPE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_OPERATION_TYPE" name="UDP_OPERATION_TYPE" defaultValueLiteral="COMMAND">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_RETHROW_FAILURE" name="UDP_RETHROW_FAILURE" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CATALOG_POLICY_TTYPE" name="UDP_CATALOG_POLICY_TTYPE" lowerBound="1" defaultValueLiteral="UserDefined">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CATALOG_POLICY_PROJECT" name="UDP_CATALOG_POLICY_PROJECT">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Level" name="Level" lowerBound="1" defaultValueLiteral="ERROR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventType" name="EventType" defaultValueLiteral="REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventDescription" name="EventDescription">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Platform" name="Platform" lowerBound="1" defaultValueLiteral="ACE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EnvironmentTrx" name="EnvironmentTrx" lowerBound="1" defaultValueLiteral="Local">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ExecutionEnvironment" name="ExecutionEnvironment" defaultValueLiteral="OCP">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ServiceVersion" name="ServiceVersion" defaultValueLiteral="1.0">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BodyTrace" name="BodyTrace" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="ErrorAdapterV2" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Adapter/icons/full/obj16/ErrorAdapterV2.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Adapter/icons/full/obj30/ErrorAdapterV2.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmJavaCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="255,138" javaClass="core.common.adapter2.ErrorAdapter2_evalRules">
+        <translation xmi:type="utility:ConstantString" string="evalRules"/>
+        <longDescription xmi:type="utility:ConstantString" string="Usar servicio configurable de Mapeo Númerico"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Catch" location="62,37">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Catch" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output1" location="538,138">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="163,137" computeExpression="esql://routine/core.common2.adapter#ErrorAdapter2_SetFault.Main" computeMode="destination">
+        <translation xmi:type="utility:ConstantString" string="SetFault"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Failure" location="60,137">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Failure" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="349,138" computeExpression="esql://routine/core.common2.adapter#ErrorAdapterV2_PrepareError.Main">
+        <translation xmi:type="utility:ConstantString" string="PrepareError"/>
+      </nodes>
+      <nodes xmi:type="ComIbmPassthru.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="537,233">
+        <translation xmi:type="utility:ConstantString" string="Error_Info"/>
+        <nsMappingTable nsPrefix="il" namespace="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+        <nsMappingTable nsPrefix="eai" namespace="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+        <nsMappingTable nsPrefix="tns" namespace="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+        <monitorEvents eventSourceDescription="In terminal" eventSourceName="Error_Info.terminal.in" eventIdentity="Error_Info.InTerminal">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent" eventUOW="independent">
+            <applicationData dataLocation="$Environment/monitoringEvent" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="il" nsURI="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+              <nsPrefixMap prefix="eai" nsURI="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+              <nsPrefixMap prefix="tns" nsURI="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+            </applicationData>
+            <applicationData dataLocation="$Environment/Variables/ExceptionEvent/exceptionId" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="il" nsURI="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+              <nsPrefixMap prefix="eai" nsURI="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+              <nsPrefixMap prefix="tns" nsURI="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+            </applicationData>
+            <applicationData dataLocation="$Environment/Variables/ExceptionEvent/internalFaultcode" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="il" nsURI="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+              <nsPrefixMap prefix="eai" nsURI="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+              <nsPrefixMap prefix="tns" nsURI="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+            </applicationData>
+            <applicationData dataLocation="$Environment/Variables/ExceptionEvent/severity" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="il" nsURI="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+              <nsPrefixMap prefix="eai" nsURI="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+              <nsPrefixMap prefix="tns" nsURI="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+            </applicationData>
+            <applicationData dataLocation="$Environment/Variables/ExceptionMessage/XMLNSC/il:esbXML/Header" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="il" nsURI="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+              <nsPrefixMap prefix="eai" nsURI="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+              <nsPrefixMap prefix="tns" nsURI="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+            </applicationData>
+            <applicationData dataLocation="$Environment/Variables/ExceptionEvent/exceptionList" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="il" nsURI="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+              <nsPrefixMap prefix="eai" nsURI="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+              <nsPrefixMap prefix="tns" nsURI="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+            </applicationData>
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator/>
+            <bitStreamData encoding="base64Binary" bitstreamContent="body"/>
+            <eventName literal="Error_Info.InTerminal"/>
+            <eventFilter dataLocation="true()" isXPath="true">
+              <nsPrefixMap prefix="il" nsURI="http://grupobancolombia.com/intf/IL/esbXML/V3.0"/>
+              <nsPrefixMap prefix="eai" nsURI="http://grupobancolombia.com/intf/EAI/esbXML/V1.0"/>
+              <nsPrefixMap prefix="tns" nsURI="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1"/>
+            </eventFilter>
+          </eventXMLDoc>
+        </monitorEvents>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="InTerminal.Failure" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Catch" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="OutTerminal.Output1" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_CATALOG_POLICY_NAME">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CATALOG_POLICY_NAME" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_INTERACTION_TYPE">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_INTERACTION_TYPE" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_OPERATION_TYPE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_OPERATION_TYPE" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_RETHROW_FAILURE">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_RETHROW_FAILURE" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_CATALOG_POLICY_TTYPE">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CATALOG_POLICY_TTYPE" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_CATALOG_POLICY_PROJECT">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CATALOG_POLICY_PROJECT" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                  <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.Level">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.Level" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                    <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EventType">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.EventType" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                      <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EventDescription">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.EventDescription" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                        <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.Platform">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.Platform" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                          <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EnvironmentTrx">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.EnvironmentTrx" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                            <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ExecutionEnvironment">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.ExecutionEnvironment" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                              <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ServiceVersion">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.ServiceVersion" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                                <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.BodyTrace">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.BodyTrace" bundleName="core/common2/adapter/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

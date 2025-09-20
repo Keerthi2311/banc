@@ -1,0 +1,78 @@
+BROKER SCHEMA core.common.peq.json
+
+CREATE FILTER MODULE PeqJsonHttp_IsCached
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		RETURN CAST(Environment.PEQ.cache.exists AS BOOLEAN);
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PeqJsonHttp_PEQ_RS
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refJsonData REFERENCE TO InputRoot.JSON.Data;
+		IF EXISTS(refJsonData.errors[]) THEN
+			THROW USER EXCEPTION MESSAGE CAST(refJsonData.errors[1].code AS INTEGER) VALUES (refJsonData.errors[1].detail, 'Error homologación PEQ - ' || ProcessType);
+			RETURN FALSE;
+		END IF;
+
+		DECLARE refResultParam REFERENCE TO refJsonData.data.RespuestaEquivalencesAdapter.resultadosParametrizacion.Item;
+		
+		WHILE LASTMOVE(refResultParam) DO
+			DECLARE refCriterio REFERENCE TO refResultParam.criterioParametrizacion;
+			DECLARE refvalParm REFERENCE TO refResultParam.valorParametrizado;
+			CALL PeqPutCache(Environment, refCriterio.tipologia, refCriterio.valorOrigen, refvalParm.valorDestino, refvalParm.descripcionDatoDestino);
+			
+			MOVE refResultParam NEXTSIBLING;
+		END WHILE;
+		
+		-- Devolver el mensaje original de entrada al subflujo
+		DECLARE refEnvCachePeq REFERENCE TO Environment.PEQ.cache;
+		CALL CopyCompleteMessage(refEnvCachePeq.inputOrig, OutputRoot);
+		SET OutputLocalEnvironment = refEnvCachePeq.localEnvironmentOrig;
+
+		DELETE FIELD Environment.handler;
+		DELETE FIELD Environment.PEQ.localEnvironmentOrig;
+		DELETE FIELD Environment.PEQ.inputOrig;
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PeqJsonHttp_Error
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refInHTTPHeader REFERENCE TO InputRoot.HTTPResponseHeader;
+		DECLARE httpStatusCode INTEGER CAST(refInHTTPHeader."X-Original-HTTP-Status-Code" AS INTEGER);
+
+		DECLARE outError ROW;
+		DECLARE dataStrcuture CHAR CAST(InputRoot.BLOB.BLOB AS CHAR CCSID InputRoot.Properties.CodedCharSetId Encoding InputRoot.Properties.Encoding);
+		
+		--Identificar que la estructura de datos entrante sea valida para buscar la informacion especifica JSON.
+		IF NOT (core.common.util.ContainsCharacters(dataStrcuture, '{}') AND CONTAINS(dataStrcuture, 'status') AND CONTAINS(dataStrcuture, 'errors')) THEN
+			THROW USER EXCEPTION MESSAGE 500 VALUES ('PEQ HTTP Error: La estructura de la respuesta tiene una forma diferente a las aceptadas', CAST(InputRoot.BLOB.BLOB AS CHARACTER));
+		END IF;
+
+		CREATE LASTCHILD OF outError DOMAIN('JSON') PARSE(InputRoot.BLOB.BLOB);
+		
+		SET OutputRoot.Properties = Environment.PEQ.cache.inputOrig.Properties;
+		SET OutputRoot.HTTPResponseHeader = Environment.HttpHeaderRs;
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN('JSON');
+
+		DECLARE refOutJson REFERENCE TO OutputRoot.JSON;
+		SET refOutJson.Data = outError.JSON.Data; 
+		SET refOutJson.Data.status = CAST(refOutJson.Data.status AS INTEGER);
+		SET refOutJson.Data.meta = Environment.HttpMeta;
+		
+		CREATE FIELD refOutJson.Data.errors IDENTITY(JSON.Array)errors;
+		CREATE LASTCHILD OF refOutJson.Data.errors NAME 'Item';
+	    DECLARE RefJsonErrorsItem REFERENCE TO refOutJson.Data.errors.Item[<];
+	
+		SET RefJsonErrorsItem.code = CAST(httpStatusCode AS CHARACTER);
+		SET RefJsonErrorsItem.detail= 'PEQ Invoke Error';				
+
+		SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = httpStatusCode;
+		RETURN TRUE;
+	END;
+END MODULE;

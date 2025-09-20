@@ -1,0 +1,131 @@
+/**********************************************************************
+* COPYRIGHT. IBM 2012. ALL RIGHTS RESERVED. NO PART OF THIS SOURCE    *
+* CODE MAY BE REPRODUCED, STORED IN A RETRIEVAL SYSTEM, OR TRANSMITTED*
+* IN ANY FORM BY ANY MEANS, ELECTRONIC, MECHANICAL, PHOTO, COPYING,   *
+* RECORDING OR OTHERWISE, WITHOUT THE PRIOR WRITTEN PERMISSION OF	  *
+* IBM 																  *
+**********************************************************************/
+/**
+*
+* File Name: PushReplyToQ.esql
+*
+* Purpose: Sublujo utilitario para recuperar los datos de invocacion MQ
+*
+* Authors: Oscar Bustos, Juan Figueredo
+* Date: 04 de Mayo de 2012
+* Version: 3.0
+*
+* @copyright IBM Colombia 2011. All rights reserved.
+*
+*/
+
+BROKER SCHEMA core.common.util
+--UDP: Indica si se debe generar excepcion en caso de ausencia de MQMD.ReplyToQ
+--DECLARE RTQ_REQUIRED EXTERNAL BOOLEAN FALSE;
+--DECLARE USE_CORRELID EXTERNAL BOOLEAN FALSE;
+
+/*******************************************************************************
+* Nodo Name:         DoPush					                                   *
+* Module Name:       PushReplyToQ_DoPush	  								   *
+* Description:       Genera un mensaje de error en el caso de que la bandera   *
+*					 RTQ_REQUIRED sea true y el campo MQMD.ReplyToQ no esté    *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+
+CREATE COMPUTE MODULE PushReplyToQ_DoPush
+/*******************************************************************************
+* Function Name: Main                             							   *
+* Input Parameters:	None                          							   *
+* Output Parameters: Boolean Return               							   *
+* Description: Punto principal de entrada del Módulo						   *
+*    																		   *
+* Version Date		  Author	  				Description  				   *	
+* ======= =========== ========================= ============================== *
+* 1.00     			  04-May-2012 Oscar Bustos	Versión inicial  			   *
+*******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyAndPush();
+		IF RTQ_REQUIRED AND IsRTQMissing(InputRoot.MQMD.ReplyToQ) THEN
+			CALL ResponseResourceNotAvailable();
+			RETURN FALSE;
+		END IF;
+		RETURN TRUE;
+	END;
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia los encabezados del mensaje en el mensaje de salida 	   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	
+/*******************************************************************************
+* Procedure Name: CopyAndPush		 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description:Se copia todo el mensaje, asi evalua la asignacion de la cola	   *
+* 			  de respuesta o replicacion					   			       *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyAndPush() BEGIN
+		-- aaltamir. Se debe copiar todo el mensaje, se hace la adecuaciÃ³n
+		-- SET OutputRoot.XMLNSC.il:esbXML = InputRoot.XMLNSC.il:esbXML;
+		SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+		DECLARE header REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+
+		IF LASTMOVE(header) THEN
+			DECLARE queue CHARACTER InputRoot.MQMD.ReplyToQ;
+			DECLARE queueMgr CHARACTER InputRoot.MQMD.ReplyToQMgr;
+			IF USE_CORRELID THEN
+				DECLARE correlId BLOB InputRoot.MQMD.CorrelId;
+				IF correlId IS NULL OR correlId = MQCI_NONE THEN
+					SET correlId = InputRoot.MQMD.MsgId;
+				END IF;
+				CALL PushRTQWithCorrel(header, queue, queueMgr, correlId);
+			ELSE
+				CALL PushRTQ(header, queue, queueMgr);
+			END IF;
+		END IF;
+	END;
+	
+/*******************************************************************************
+* Procedure Name: ResponseResourceNotAvailable		 						   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description:Se genera mensaje de excepcion si no esta la cola MQ disponible  *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE ResponseResourceNotAvailable() BEGIN
+		DECLARE incur REFERENCE TO InputRoot.XMLNSC;
+		DECLARE env REFERENCE TO Environment;
+		IF env.Variables.OriginMsg IS NULL THEN
+			CALL SendOriginMsgToEnv(incur, env);
+		END IF;
+
+		DECLARE header REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		CALL setFault(header, 'Server.ESB.ResponseResourceNotAvailable', 
+					  'Reply Endpoint Missing: MQMD.ReplyToQ is NULL or Empty');
+		PROPAGATE TO TERMINAL 'out1';
+	END;
+END MODULE;

@@ -1,0 +1,76 @@
+BROKER SCHEMA core.integrationcontrollers.wschanneladapterTLS
+
+--Variable que confiugra el tiempo de timeout
+DECLARE UDP_TIMEOUT_MILLIS EXTERNAL INTEGER 0;
+/*******************************************************************************
+* Node Name: PrepareGet														   *
+* Module Name: SincRequestProxy_PrepareGet									   *
+* Description: Nodo que recupera el CorrelationId generado por el MQOutput 	   *
+* en el environment y lo pone en el MQMD									   *
+* 																			   *
+* Version 	Date 		Author 				        Description 			   *
+* ========	=========== =========================   ========================== *
+* 1.00     	28-Dic-2022 Juan Esteban Piedrahita    	Versión inicial wsca 	   *
+*******************************************************************************/
+
+CREATE COMPUTE MODULE WSChannelAdapterInTLS_PrepareGet
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+			CALL PrepareGet();
+		RETURN TRUE;
+	END;
+	
+/*******************************************************************************
+* Function Name: PrepareGet                         						   *
+* Input Parameters:	None                          							   *
+* Output Parameters: None              										   *
+* Description: Procedimiento PrepareGet que ajusta los parametros MQMD para    *
+*			   realizar el request sincrono. Entre ellos se configuran el      *
+*			   tiempo de Timeout y el identificador de correlacion.			   *
+*    																		   *
+* Version Date		  Author	  				Description  				   *	
+* ======= =========== ========================= =============================  *
+*  1.00   28-Dic-2022 Juan Esteban Piedrahita    	Versión inicial wsca 	   *
+*******************************************************************************/
+	CREATE PROCEDURE PrepareGet() BEGIN
+		DECLARE incur REFERENCE TO InputRoot.XMLNSC;
+		DECLARE env REFERENCE TO Environment;
+		IF env.Variables.OriginMsg IS null THEN
+			CALL SendOriginMsgToEnv(incur, env);
+		END IF;
+
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		SET OutputLocalEnvironment.MQ.GET.MQGMO.WaitInterval = UDP_TIMEOUT_MILLIS;
+		SET OutputLocalEnvironment.MQ.GET.MQGMO.Options = BITOR(MQGMO_WAIT, 
+			MQGMO_COMPLETE_MSG, MQMO_MATCH_CORREL_ID);
+
+		SET OutputRoot = InputRoot;
+
+		SET Environment.Variables.OriginMsg.MQMD = InputRoot.MQMD;
+		SET Environment.Variables.OriginMsg.Properties = InputRoot.Properties;
+		
+		SET OutputRoot.MQMD.CorrelId = InputLocalEnvironment.WrittenDestination.MQ.DestinationData.msgId;
+	END;
+	
+/******************************************************************************
+* Procedure Name: SendOriginMsgToEnv		                 				  *
+* Input Parameters:	CHARACTER inx - mensaje actual	 						  *
+*					CHARACTER env - Environment							 	  *
+* Output Parameters:None													  *
+* Returns: None																  *
+* Description:Envia el mensaje actual ubicado en inx (inx -> InputRoot.XMLNSC)*
+*			  a la ubicacion env.Variables.OriginMsg (env -> Environment)	  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    28-Dic-2022 Juan Esteban Piedrahita    Versión inicial wsca      *
+******************************************************************************/
+CREATE PROCEDURE SendOriginMsgToEnv(IN inx REFERENCE, IN env REFERENCE)
+BEGIN
+	DELETE FIELD env.Variables.OriginMsg;
+	CREATE FIELD env.Variables.OriginMsg TYPE Name;
+	CREATE FIRSTCHILD OF env.Variables.OriginMsg DOMAIN('XMLNSC') PARSE (
+	ASBITSTREAM(inx));
+END;
+	
+END MODULE;

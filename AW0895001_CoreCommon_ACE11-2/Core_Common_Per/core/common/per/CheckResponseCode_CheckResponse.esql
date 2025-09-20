@@ -1,0 +1,86 @@
+BROKER SCHEMA core.common.per
+
+DECLARE il                        NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+DECLARE per 					  NAMESPACE 'http://grupobancolombia.com/intf/componente/tecnico/Homologacion/ParametrizadorRespuesta/V1.0';
+DECLARE SUCCESS_STATUS            CONSTANT CHARACTER 'Success';
+DECLARE EXCEPTION_ID			  CONSTANT CHARACTER '2303';
+DECLARE EXCEPTION_DETAIL		  CONSTANT CHARACTER 'No se pudo encontrar el valor a homologar en el PER.';
+DECLARE UDP_PATH_TO_RESPONSE_CODE EXTERNAL CHARACTER '';
+DECLARE UDP_CODIGO_IDIOMA         EXTERNAL CHARACTER '';
+DECLARE UDP_CODIGO_PROVEEDOR      EXTERNAL CHARACTER '';
+DECLARE UDP_ESTADO_RESPUESTA      EXTERNAL CHARACTER '';
+DECLARE UDP_OPERATION_TYPE		  EXTERNAL CHARACTER '';
+
+DECLARE INTERACTION_TYPE CONSTANT CHARACTER 'RESPONSE';
+DECLARE EXCEPTION_CATALOG CONSTANT CHARACTER 'ILSEv2';
+DECLARE EXCEPTION_DESCRIPTION CONSTANT CHARACTER 'No se ha podido encontrar el codigo a homologar';
+
+
+CREATE COMPUTE MODULE CheckResponseCode_CheckResponse
+CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		
+		DECLARE refHeadIn REFERENCE TO InputRoot.XMLNSC.il:esbXML.Header;
+		DECLARE refBodyIn REFERENCE TO InputRoot.XMLNSC.il:esbXML.Body;
+		
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+		
+		IF refHeadIn.responseData.status.statusCode = SUCCESS_STATUS THEN
+			-- This is a successful response, just propagate it
+			SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+			RETURN TRUE;
+		ELSE
+			-- Copy message header:
+			CREATE FIELD OutputRoot.XMLNSC.il:esbXML.Header FROM refHeadIn;
+			-- Create the output Body:
+			CREATE FIELD OutputRoot.XMLNSC.il:esbXML.Body;
+			
+			-- Create references
+			DECLARE refHeadOut REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+			DECLARE refBodyOut REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Body;
+			DECLARE cursor REFERENCE TO refBodyIn;
+			
+			-- Store the original request in the environment for later use...
+			CALL core.common.util.SendOriginMsgToEnv(InputRoot.XMLNSC, Environment);
+			
+			-- Navigate the message to the element specified by UDP_PATH_TO_RESPONSE_CODE
+			DECLARE nodes ROW;
+			
+			CALL tokenizar(UDP_PATH_TO_RESPONSE_CODE, '/', nodes);
+			DECLARE node REFERENCE TO nodes.val[1];
+			XP: WHILE LASTMOVE(node) DO
+				DECLARE elementName CHARACTER FIELDVALUE(node);
+				MOVE cursor FIRSTCHILD NAMESPACE * NAME elementName;
+				IF NOT LASTMOVE(cursor) THEN
+					LEAVE XP;
+				END IF;
+				MOVE node NEXTSIBLING REPEAT NAME;
+			END WHILE;
+			
+			DECLARE responseCode CHARACTER COALESCE(FIELDVALUE(cursor), '');
+			
+			IF LENGTH(responseCode) < 1 THEN
+				CALL ThrowSystemException(INTERACTION_TYPE, EXCEPTION_CATALOG,
+					EXCEPTION_ID, UDP_OPERATION_TYPE, EXCEPTION_DESCRIPTION, Environment, InputExceptionList);
+			END IF;
+			
+			-- Finally propagate the request to the PER
+			CALL CreatePERRequest(refBodyOut, UDP_CODIGO_IDIOMA,
+				UDP_CODIGO_PROVEEDOR, responseCode, UDP_ESTADO_RESPUESTA);
+			PROPAGATE TO TERMINAL 'out1';
+		END IF;
+	   
+	   RETURN FALSE;
+	END;
+	
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+END MODULE;

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" 
+xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" 
+xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common/util/PushReplyToQ.subflow" 
+nsPrefix="core_common_util_PushReplyToQ.subflow">
+<eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+<eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+<eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.RTQ_REQUIRED" name="RTQ_REQUIRED" lowerBound="1" >
+  <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+</eStructuralFeatures>
+<eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.USE_CORRELID" name="USE_CORRELID" lowerBound="1" >
+  <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+</eStructuralFeatures>
+<translation xmi:type="utility:TranslatableString" key="PushReplyToQ" bundleName="core/common/util/PushReplyToQ" pluginId="flowAPIgenerated"/>
+<colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/flowAPIgenerated/icons/full/obj16/PushReplyToQ.gif"/>
+<colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/flowAPIgenerated/icons/full/obj30/PushReplyToQ.gif"/>
+<composition>
+<nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="100,144">
+<translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/util/PushReplyToQ" pluginId="flowAPIgenerated"/>
+</nodes>
+<nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="253,144" computeExpression="esql://routine/core.common.util#PushReplyToQ_DoPush.Main">
+<translation xmi:type="utility:ConstantString" string="DoPush"/>
+</nodes>
+<nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="445,145">
+<translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/util/PushReplyToQ" pluginId="flowAPIgenerated"/>
+</nodes>
+<nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output1" location="441,294">
+<translation xmi:type="utility:TranslatableString" key="OutTerminal.WrappedError" bundleName="core/common/util/PushReplyToQ" pluginId="flowAPIgenerated"/>
+</nodes>
+<connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+<connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+<connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="OutTerminal.Output1" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+</composition>
+<propertyOrganizer>
+<propertyDescriptor groupName="Group.Options" configurable="true" userDefined="true" describedAttribute="Property.RTQ_REQUIRED">
+<propertyName xmi:type="utility:TranslatableString" key="Property.RTQ_REQUIRED" bundleName="core/common/util/PushReplyToQ" pluginId="flowAPIgenerated"/>
+<propertyDescriptor groupName="Group.Options" configurable="true" userDefined="true" describedAttribute="Property.USE_CORRELID">
+<propertyName xmi:type="utility:TranslatableString" key="Property.USE_CORRELID" bundleName="core/common/util/PushReplyToQ" pluginId="flowAPIgenerated"/>
+</propertyDescriptor>
+</propertyDescriptor>
+</propertyOrganizer>
+<stickyBoard/>
+</eClassifiers>
+</ecore:EPackage>

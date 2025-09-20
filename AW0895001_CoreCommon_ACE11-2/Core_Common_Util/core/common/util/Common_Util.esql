@@ -1,0 +1,592 @@
+BROKER SCHEMA core.common.util
+DECLARE peq NAMESPACE 'http://grupobancolombia.com/intf/componente/tecnico/homologacion/RecuperarParametrizacionEquivalencias/V2.0';
+DECLARE per NAMESPACE 'http://grupobancolombia.com/intf/componente/tecnico/Homologacion/ParametrizadorRespuesta/V1.0';
+DECLARE UDP_TIMEOUT_MILLIS EXTERNAL INTEGER 0;
+DECLARE UDP_MSGID_TO_CORRELID EXTERNAL BOOLEAN FALSE;
+DECLARE POP_WITH_CORREL EXTERNAL BOOLEAN FALSE;
+DECLARE INF_ERROR_G CONSTANT CHARACTER 'Error de infraestructura en el llamado al GetMessageMementoQ.';
+DECLARE UDP_CORREL_FROM_ROUTING_STACK EXTERNAL BOOLEAN FALSE;
+DECLARE RTQ_REQUIRED EXTERNAL BOOLEAN FALSE;
+DECLARE USE_CORRELID EXTERNAL BOOLEAN FALSE;
+DECLARE nsIL NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+DECLARE INF_ERROR CONSTANT CHARACTER 
+				'Error de infraestructura en el llamado al PutMessageMementoQ.';
+DECLARE UDP_TIMEOUT_S EXTERNAL INTEGER 1;
+DECLARE UDP_TIMEOUT_QUEUE EXTERNAL CHARACTER '';
+
+DECLARE il            NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+DECLARE OPTYPE        CONSTANT CHARACTER 'COMMAND';
+DECLARE CODE2500      CONSTANT CHARACTER '2500';
+DECLARE EXCEPT_CATALG CONSTANT CHARACTER 'ILSEv2';
+DECLARE ref 		  CONSTANT CHARACTER 'InputExceptionList';	
+---******
+DECLARE eai NAMESPACE 'http://grupobancolombia.com/intf/EAI/esbXML/V1.0';
+----*****
+DECLARE DEFAULT_MSGID CONSTANT CHARACTER 'NONE';
+DECLARE INDEX_BASE CONSTANT INTEGER 3;
+DECLARE MQ_URI_PREFIX CONSTANT CHARACTER 'wmq:/msg/queue/';
+DECLARE MQ_DELIMITER  CONSTANT CHARACTER '@';
+DECLARE MQIRIPREFIX   CONSTANT INTEGER 16;
+DECLARE SYS_EX 		  CONSTANT CHARACTER 'SystemException';
+
+DECLARE UDP_PROVIDER_SYSTEMID 	EXTERNAL CHARACTER '';
+
+DECLARE SUCCESS_STATUS 			CONSTANT CHARACTER 'Success';
+DECLARE INTTYPE_REQUEST 		CONSTANT CHARACTER 'REQUEST';
+DECLARE INTTYPE_RESPONSE 		CONSTANT CHARACTER 'RESPONSE';
+DECLARE INTTYPE_ONEWAY 		    CONSTANT CHARACTER 'ONEWAY';
+
+DECLARE SE_STATUS 			    CONSTANT CHARACTER 'SystemException';
+DECLARE FAULT_500				CONSTANT CHARACTER '500';
+DECLARE FAULT_400				CONSTANT CHARACTER '400';
+DECLARE FAULTCD_400				CONSTANT CHARACTER 'Client.BadRequest';
+DECLARE FAULTCD_500				CONSTANT CHARACTER 'Server.InternalServerError';
+DECLARE FAULTSTR_400            CONSTANT CHARACTER '400 Client.BadRequest';
+DECLARE FAULTSTR_500            CONSTANT CHARACTER '500 Server.InternalServerError';
+DECLARE FAULT_SEPARATOR         CONSTANT CHARACTER '/';
+
+CREATE FUNCTION BuildMQURI (IN queue CHARACTER, IN queueMgr CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE q CHARACTER TRIM(queue);
+	DECLARE qm CHARACTER TRIM(queueMgr);
+	RETURN MQ_URI_PREFIX || q || MQ_DELIMITER || qm;
+END;
+
+CREATE PROCEDURE ParseMQURI (IN mqURI CHARACTER, OUT queue CHARACTER, OUT queueMgr CHARACTER)
+BEGIN
+	DECLARE atIndex INTEGER;
+	DECLARe uri CHARACTER TRIM(mqURI);
+	SET atIndex = POSITION('@' IN uri FROM MQIRIPREFIX);
+	SET queue = SUBSTRING(uri FROM MQIRIPREFIX FOR atIndex - MQIRIPREFIX);
+	SET queueMgr = SUBSTRING(uri FROM atIndex+1);
+END;
+
+CREATE PROCEDURE SendOriginMsgToEnv(IN inx REFERENCE, IN env REFERENCE)
+BEGIN
+	DELETE FIELD env.Variables.OriginMsg;
+	CREATE FIELD env.Variables.OriginMsg TYPE Name;
+	CREATE FIRSTCHILD OF env.Variables.OriginMsg DOMAIN('XMLNSC') PARSE (
+	ASBITSTREAM(inx));
+END;
+
+CREATE PROCEDURE PushRTQ (IN header REFERENCE, IN queue CHARACTER, IN queueMgr CHARACTER)
+BEGIN
+	DECLARE uri CHARACTER;
+	IF queue IS NOT null THEN
+		SET uri = BuildMQURI(queue,queueMgr);
+		IF header.routingStack IS null THEN
+			CREATE FIELD header.routingStack TYPE Name;
+		END IF;
+		DECLARE cursor REFERENCE TO header.routingStack;
+		CREATE LASTCHILD OF cursor AS cursor TYPE Name NAME 'route';
+		SET cursor.ReplyTo.address = uri;
+	END IF;
+END;
+
+
+CREATE PROCEDURE PopRTQ (IN header REFERENCE, OUT queue CHARACTER, OUT queueMgr CHARACTER)
+BEGIN
+	DECLARE cursor REFERENCE TO header.routingStack;
+	IF LASTMOVE(cursor) THEN
+		DECLARE uri CHARACTER cursor.route[<].ReplyTo.address;
+		IF uri IS NOT null THEN
+			DELETE FIELD cursor.route[<];
+			CALL ParseMQURI(uri,queue,queueMgr);
+		END IF;
+	END IF;
+END;
+
+
+CREATE PROCEDURE setFault (IN header REFERENCE, IN faultcode CHARACTER, IN description CHARACTER)
+BEGIN
+	IF header.responseData IS NULL THEN
+		DECLARE prev REFERENCE TO header.requestData;
+		IF LASTMOVE(prev) THEN
+			CREATE NEXTSIBLING OF prev TYPE Name NAME 'responseData';
+		ELSE
+			CREATE FIELD header.responseData;
+		END IF;
+	END IF;
+	DECLARE cursor REFERENCE TO header.responseData;
+	IF NOT EXISTS(cursor.providerData[]) THEN
+		CREATE FIELD cursor.providerData TYPE Name;
+	END IF;
+	SET cursor.status.statusCode = SYS_EX;
+	SET cursor.status.systemException.faultcode = faultcode;
+	SET cursor.status.systemException.detail = description;
+END;
+
+
+CREATE FUNCTION IsRTQMissing(IN rtq CHARACTER) RETURNS BOOLEAN
+BEGIN
+	DECLARE isEmpty BOOLEAN (LENGTH(TRIM(rtq)) < 1);
+	RETURN isEmpty;
+END;
+
+
+CREATE PROCEDURE PushRTQWithCorrel(IN header REFERENCE, IN queue CHARACTER,
+								   IN queueMgr CHARACTER, IN correlId BLOB)
+BEGIN
+	CALL PushRTQ(header,queue,queueMgr);
+	DECLARE cursor REFERENCE TO header.routingStack.route[<].ReplyTo;
+	SET cursor.correlationId = CAST(correlId AS BLOB);
+END;
+
+CREATE PROCEDURE PopRTQWithCorrel (IN header REFERENCE, OUT queue CHARACTER, 
+								   OUT queueMgr CHARACTER, OUT correlId BLOB)
+BEGIN
+	DECLARE cursor REFERENCE TO header.routingStack;
+	IF LASTMOVE(cursor) THEN
+		DECLARE uri CHARACTER cursor.route[<].ReplyTo.address;
+		DECLARE cid REFERENCE TO cursor.route[<].ReplyTo.correlationId;
+		IF LASTMOVE(cid) THEN
+			SET correlId = CAST(cid AS BLOB);
+		ELSE
+			SET correlId = MQCI_NONE;
+		END IF;
+		IF uri IS NOT null THEN
+			DELETE FIELD cursor.route[<];
+			CALL ParseMQURI(uri,queue,queueMgr);
+		END IF;
+	END IF;	
+END;
+
+CREATE PROCEDURE ThrowSystemException (IN InteractionType CHARACTER, 
+	IN ExceptionCatalog CHARACTER, IN ExceptionId CHARACTER, 
+		IN OperationType CHARACTER, IN ExceptionDetail CHARACTER, 
+		IN Environment REFERENCE, IN ExceptionList REFERENCE)
+BEGIN
+		CREATE FIELD Environment.Variables.ErrorAdapterV2 TYPE Name;
+		
+		DECLARE errorAdapterV2 REFERENCE TO
+		        Environment.Variables.ErrorAdapterV2;
+				 		
+	    SET errorAdapterV2.exceptionCatalog = ExceptionCatalog;
+	    SET errorAdapterV2.exceptionId = ExceptionId;
+	    SET errorAdapterV2.interactionType = InteractionType;
+	    SET errorAdapterV2.operationType = OperationType;
+	    SET errorAdapterV2.exceptionDetail = ExceptionDetail;
+	    SET errorAdapterV2.exceptionList = ExceptionList;
+	    
+	    THROW EXCEPTION;
+END;
+
+
+CREATE PROCEDURE SetExternalDestination (IN ilHeader REFERENCE, 
+	IN urn CHARACTER)
+BEGIN
+	DECLARE cursor REFERENCE TO ilHeader.interactionData.timestamp;
+	MOVE cursor NEXTSIBLING NAME 'externalDestination';
+	IF NOT LASTMOVE(cursor) THEN
+		CREATE NEXTSIBLING OF cursor TYPE NameValue NAME 'externalDestination';
+		MOVE cursor NEXTSIBLING NAME 'externalDestination';
+	END IF;
+	SET cursor = urn;
+END;
+
+
+CREATE PROCEDURE ExpirySetUp(IN outMQMD REFERENCE, IN timeout INTEGER, IN timeoutQueue CHARACTER) BEGIN
+	IF timeout > 0
+		THEN
+		 --CREATE LASTCHILD OF outMQMD DOMAIN 'MQMD' NAME 'MQMD';
+		 SET outMQMD.Expiry = timeout * 10;
+		 SET outMQMD.Report = MQRO_EXPIRATION_WITH_FULL_DATA;		 
+		 SET outMQMD.ReplyToQ = timeoutQueue;
+	END IF;
+END;
+
+
+CREATE PROCEDURE SendToEnv(IN inx REFERENCE, IN env REFERENCE)BEGIN
+
+	DECLARE refFieldNm CHARACTER FIELDNAME(inx);
+	CREATE LASTCHILD OF env.Variables DOMAIN 'XMLNSC' NAME refFieldNm;
+	SET env.Variables.{refFieldNm} = inx;
+END;
+
+CREATE PROCEDURE SetCDATAField (IN parent REFERENCE, IN name CHARACTER,
+				IN value CHARACTER)
+BEGIN
+	CREATE LASTCHILD OF parent TYPE XMLNSC.CDataField NAME name VALUE value;
+END;
+
+
+CREATE COMPUTE MODULE SMR_MessageRouter
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot = InputRoot;
+		
+		DECLARE refHeadOut REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		
+		-- System exceptions are propagated unodified:
+		IF refHeadOut.responseData.status.statusCode = 'SystemException' THEN
+			PROPAGATE TO LABEL 'SystemException';
+		ELSE
+			PROPAGATE TO LABEL refHeadOut.requestData.destination.operation;
+		END IF;
+		
+		RETURN FALSE;
+	END;
+END MODULE;
+
+
+CREATE PROCEDURE AddToDestinationList(IN localEnv   REFERENCE, IN destino CHARACTER,
+  										IN transporte CHARACTER) BEGIN
+	IF transporte = 'MQ' THEN
+	DECLARE I INTEGER CARDINALITY(localEnv.Destination.MQ.DestinationData[]);
+		IF I = 0 THEN			
+			SET localEnv.Destination.MQ.DestinationData[1].queueName = destino;
+		ELSE
+			SET localEnv.Destination.MQ.DestinationData[I+1].queueName = destino;
+		END IF;
+	ELSEIF transporte = 'HTTP' THEN
+		SET localEnv.Destination.HTTP.RequestURL = destino;
+	ELSEIF transporte = 'SOAP' THEN
+		SET localEnv.Destination.SOAP.Request.Transport.HTTP.WebServiceURL = destino;
+	ELSEIF transporte = 'LABEL' THEN
+		IF localEnv.Destination.RouterList.DestinationData is null THEN
+     		SET localEnv.Destination.RouterList.DestinationData."label" = destino;
+  		ELSE
+     		CREATE LASTCHILD OF localEnv.Destination.RouterList.DestinationData
+     		NAME 'label' VALUE destino; 
+  		END IF;
+	ELSEIF transporte = 'JMS' THEN
+		DECLARE I INTEGER CARDINALITY(localEnv.Destination.JMSDestinationList.DestinationData[]);
+		IF I = 0 THEN			
+			SET localEnv.Destination.JMSDestinationList.DestinationData[1]  = destino;
+		ELSE
+			SET localEnv.Destination.JMSDestinationList.DestinationData[I+1] = destino;
+		END IF;		 		
+	END IF;	
+END;
+  										
+  										
+CREATE PROCEDURE ChangeTimeStamp(IN timestampParent REFERENCE)
+BEGIN
+	IF NOT EXISTS(timestampParent.timestamp[]) THEN
+		IF EXISTS(timestampParent.receiverSystemId[]) THEN
+			CREATE NEXTSIBLING OF timestampParent.receiverSystemId 
+				NAME 'timestamp';
+		ELSEIF  EXISTS(timestampParent.senderSystemId[]) THEN
+			CREATE NEXTSIBLING OF timestampParent.senderSystemId
+				NAME 'timestamp';
+		END IF;
+	END IF;
+	--BCSWF00082184 Se cambia para que se registre siempre la fecha de sistema
+	-- y no se respete la fecha que viene en el mensaje request original
+	SET timestampParent.timestamp = CURRENT_TIMESTAMP;		
+END;
+
+CREATE FUNCTION ExtractMsgId(IN msgIdIn CHARACTER)
+RETURNS CHARACTER
+BEGIN
+	DECLARE atIndex INTEGER;
+	DECLARE msgId CHARACTER TRIM(msgIdIn);
+	DECLARE msgIdOut CHARACTER DEFAULT_MSGID;
+	
+	-- Calcula la la posición del último caracter '
+	SET atIndex = LENGTH(msgId) - INDEX_BASE;
+	
+	-- Extrae la subcadena y devuelve como resultado el msgId limpio
+	SET msgIdOut = SUBSTRING(msgId FROM INDEX_BASE FOR atIndex);
+	
+	RETURN msgIdOut;
+END;
+
+CREATE PROCEDURE CreatePEQRequest(INOUT cursor 		  REFERENCE, IN originApp 	  CHARACTER,
+								  IN    targetApp 	  CHARACTER, IN originSociety CHARACTER,
+								  IN    targetSociety CHARACTER) BEGIN
+	--
+	CREATE FIELD cursor.peq:recuperarParametrizacionEquivalencias.
+				 requerimientoParametrizacion.encabezadoHomologacion AS cursor;
+	
+	SET cursor.aplicacionOrigen  = originApp;
+	SET cursor.aplicacionDestino = targetApp;
+	SET cursor.sociedadOrigen    = originSociety;
+	SET cursor.sociedadDestino   = targetSociety;
+	MOVE cursor PARENT;
+								  END;
+								  
+	CREATE PROCEDURE AttachPEQParameter(INOUT cursor      REFERENCE, IN tipologia CHARACTER,
+		IN    campoOrigen REFERENCE) BEGIN
+		SET campoOrigen.tipologia = tipologia;
+		
+		DECLARE param REFERENCE TO cursor;
+		CREATE LASTCHILD OF cursor AS param TYPE Name NAME 'criterioParametrizacion';
+		SET param.tipologia   = tipologia;
+		SET param.valorOrigen = campoOrigen.valorOrigen; 
+	END;
+	
+	CREATE PROCEDURE GetPEQResult(IN parametrizacion REFERENCE, 
+		IN campoOrigen     REFERENCE) RETURNS CHARACTER BEGIN
+	--
+	DECLARE    valorDestino CHARACTER THE(SELECT ITEM res.valorParametrizado.valorDestino
+	FROM   parametrizacion.resultadosParametrizacion[] AS res
+	WHERE  res.criterioParametrizacion.tipologia 				 =  campoOrigen.tipologia
+	AND    res.criterioParametrizacion.valorOrigen 				 =  campoOrigen.valorOrigen
+	AND    res.valorParametrizado.datosRespuesta.codigoRespuesta =  '00');
+	RETURN valorDestino;
+		END;
+		
+CREATE PROCEDURE CreateBusinessExceptionResponse(IN inputHeader REFERENCE, IN outputXML REFERENCE,
+ 												  IN beName      CHARACTER, IN code      CHARACTER,
+ 												  IN description CHARACTER) BEGIN
+ 												  	
+    DECLARE namespace NAMESPACE FIELDVALUE(inputHeader.requestData.destination.namespace);
+ 	DECLARE refOperation           REFERENCE TO inputHeader.requestData.destination.operation;
+ 	   
+    DECLARE refHeadOut, refBodyOut REFERENCE TO outputXML; 	
+    CREATE FIELD outputXML.Header  AS refHeadOut;
+    CREATE FIELD outputXML.Body    AS refBodyOut;
+ 	CREATE FIELD refBodyOut.{namespace}:{beName}.genericException AS outputXML;
+ 	
+ 	CALL SetResponseData(refHeadOut);	 	 	 	
+	
+ 	SET refHeadOut.requestData.destination.operation         = refOperation || 'Response';
+	SET refHeadOut.responseData.status.statusCode            = 'BusinessException';
+	SET refHeadOut.responseData.status.businessExceptionName = beName;
+ 	SET outputXML.code                                       = code;
+    SET outputXML.description                                = description;  											  	
+END; 	
+
+
+CREATE PROCEDURE UpdateInteractionData(IN outputHeader REFERENCE, IN providerSystemId CHARACTER,
+ 										 IN interaction  CHARACTER) BEGIN
+	
+	DECLARE refSenderSystemId   REFERENCE TO outputHeader.interactionData.senderSystemId; 
+	DECLARE refReceiverSystemId REFERENCE TO outputHeader.interactionData.receiverSystemId ;
+	DECLARE refTimeStamp 	    REFERENCE TO outputHeader.interactionData.timestamp; 
+
+	IF interaction = INTTYPE_REQUEST OR interaction = INTTYPE_ONEWAY THEN 
+		IF LASTMOVE(refSenderSystemId) THEN
+			DELETE FIELD refSenderSystemId;  					
+		END IF;
+		IF LASTMOVE(refReceiverSystemId) THEN
+		   SET refReceiverSystemId = providerSystemId;
+		ELSE
+			CREATE FIRSTCHILD OF outputHeader.interactionData NAME 'receiverSystemId' VALUE providerSystemId;  	
+		END IF;				
+	END IF;
+	
+ 	IF interaction = INTTYPE_RESPONSE THEN
+		IF LASTMOVE(refReceiverSystemId) THEN						 
+			DELETE FIELD refReceiverSystemId;
+		END IF;
+		IF LASTMOVE(refSenderSystemId) THEN
+			SET refSenderSystemId = providerSystemId;
+		ELSE
+			CREATE FIRSTCHILD OF outputHeader.interactionData NAME 'senderSystemId' VALUE providerSystemId;  	
+		END IF;				
+ 	END IF;	
+	SET refTimeStamp       = CURRENT_TIMESTAMP;
+END;	
+
+CREATE PROCEDURE SetResponseData(IN outputHeader REFERENCE) BEGIN
+	
+	CREATE NEXTSIBLING OF outputHeader.requestData NAME 'responseData';
+	DECLARE               refRespdata              REFERENCE TO outputHeader.responseData;
+	CREATE FIRSTCHILD OF  refRespdata              NAME 'providerData';
+	
+	SET outputHeader.responseData.status.statusCode = SUCCESS_STATUS;
+  	
+END;
+
+CREATE PROCEDURE GetExternalDestination(IN inputHeader REFERENCE) RETURNS CHARACTER 
+  BEGIN
+  	RETURN FIELDVALUE(inputHeader.interactionData.externalDestination);  						    		  	  							    		  	  							    		 
+END;
+ 
+CREATE PROCEDURE AddMessageContextProperty(IN outputHeader REFERENCE, 
+										   IN key          CHARACTER, 
+										   IN value        CHARACTER)
+BEGIN
+	DECLARE refMC, refProp REFERENCE TO outputHeader.messageContext;
+	IF NOT LASTMOVE(refMC) THEN
+		CREATE LASTCHILD OF outputHeader AS refMC TYPE Name NAME 'messageContext';
+	END IF;
+	
+	CREATE LASTCHILD OF refMC AS refProp TYPE Name NAME 'property';
+	SET refProp.key   = key;
+	SET refProp.value = value;
+END;
+
+CREATE PROCEDURE GetMessageContextProperty (IN inputHeader REFERENCE, 
+											IN key         CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE refMC REFERENCE TO inputHeader.messageContext;
+	DECLARE value CHARACTER THE(SELECT ITEM FIELDVALUE(p.value) FROM refMC.property[] AS p 
+		WHERE p.key = key);
+	RETURN value;
+END;
+
+CREATE PROCEDURE ModifyMessageContextProperty (IN inputHeader REFERENCE, IN key CHARACTER, IN value CHARACTER)
+BEGIN
+	DECLARE refMC, cursor REFERENCE TO inputHeader.messageContext;
+	
+	MOVE cursor FIRSTCHILD TYPE Name NAME 'property';
+	MCP: WHILE LASTMOVE(cursor) DO
+		IF cursor.key = key THEN
+			SET cursor.value = value;
+			LEAVE MCP;
+		END IF;
+		MOVE cursor NEXTSIBLING REPEAT NAME;
+	END WHILE MCP;
+END;
+
+CREATE PROCEDURE DeleteMessageContextProperty (IN inputHeader REFERENCE, IN key CHARACTER)
+BEGIN
+	DECLARE refMCIn REFERENCE TO inputHeader.messageContext;
+    DECLARE refMC REFERENCE TO refMCIn;
+    MOVE refMC FIRSTCHILD;
+    
+    WHILE LASTMOVE(refMC) DO
+    	
+		IF  CONTAINS(refMC.key, key) THEN			
+        	DElETE FIELD refMC;        	
+        	--se mueve nuevamente al primer hijo para no perder la referencia eliminada
+	    	MOVE refMC TO refMCIn;
+			MOVE refMC FIRSTCHILD;
+			
+		ELSE			
+			MOVE refMC NEXTSIBLING;
+			
+      	END IF;
+
+	END WHILE;
+	
+	--verifica si no tiene mas hijos, si no existe eliminar el contenedor messageContext
+	MOVE refMCIn FIRSTCHILD;		
+	IF LASTMOVE(refMCIn) IS FALSE THEN
+		DELETE FIELD inputHeader.messageContext;
+	END IF;
+END;
+							
+CREATE PROCEDURE CreateSystemExceptionResponse(IN header REFERENCE, IN fault  CHARACTER,
+								  				 IN detail CHARACTER) BEGIN
+	DECLARE refHeadRespData REFERENCE TO header.responseData;
+	IF NOT LASTMOVE(refHeadRespData) THEN		
+		CREATE NEXTSIBLING OF header.requestData AS refHeadRespData NAME 'responseData';
+	END IF;
+	
+	DECLARE refHeadProviderData REFERENCE TO refHeadRespData.providerData;
+	IF NOT LASTMOVE(refHeadProviderData) THEN
+		CREATE FIRSTCHILD OF refHeadRespData AS refHeadProviderData NAME 'providerData';
+	END IF;
+	
+	DECLARE refHeaderStatus REFERENCE TO refHeadRespData.status;	
+	IF NOT LASTMOVE(refHeaderStatus) THEN		
+		CREATE LASTCHILD OF refHeadRespData AS refHeaderStatus NAME 'status';	
+	END IF;	
+	
+	DECLARE refHeaderStatCd REFERENCE TO refHeaderStatus.statusCode;
+	IF NOT LASTMOVE(refHeaderStatCd) THEN
+		CREATE FIRSTCHILD  OF refHeaderStatus AS refHeaderStatCd NAME 'statusCode' VALUE SE_STATUS;
+		CREATE NEXTSIBLING OF refHeaderStatCd NAME 'systemException';
+	END IF;
+	
+	DECLARE refHeaderSE     REFERENCE TO refHeaderStatus.systemException;
+    DECLARE refDestination  REFERENCE TO header.requestData.destination;
+
+    DECLARE refName,
+    		refNamespace,
+    		refOperation,
+    		refFaultActor   CHARACTER ''; 
+
+    SET refName                 = refDestination.name;
+    SET refNamespace            = refDestination.namespace;
+    SET refOperation            = refDestination.operation;
+    SET refHeaderStatCd         = SE_STATUS;
+    SET refFaultActor           = refNamespace || FAULT_SEPARATOR || refName || FAULT_SEPARATOR || refOperation;
+	
+	IF fault = FAULT_400 THEN
+		SET refHeaderSE.faultcode   = FAULTCD_400;
+		SET refHeaderSE.faultstring = FAULTSTR_400;
+	ELSEIF fault = FAULT_500 THEN
+		SET refHeaderSE.faultcode   = FAULTCD_500;
+		SET refHeaderSE.faultstring = FAULTSTR_500;
+	END IF;										  				 								  				 
+	SET refHeaderSE.faultactor  = refFaultActor;			
+	SET refHeaderSE.detail      = detail;
+
+END;
+								  				 
+CREATE PROCEDURE CreateEncabezadoHomologacion(IN ref REFERENCE, IN appOrigen CHARACTER, IN appDestino CHARACTER, IN socOrigen CHARACTER, IN socDestino CHARACTER)
+BEGIN
+	--
+	CREATE FIELD ref.encabezadoHomologacion AS ref;
+	
+	SET ref.aplicacionOrigen = appOrigen;
+	SET ref.aplicacionDestino = appDestino;
+	SET ref.sociedadOrigen = socOrigen;
+	SET ref.sociedadDestino = socDestino;
+END;
+
+
+ 
+CREATE PROCEDURE tokenizar (IN texto CHARACTER, IN separador CHARACTER, IN valores REFERENCE)
+BEGIN
+	DECLARE p1 INTEGER POSITION(separador IN texto);
+	IF p1 > 0 THEN
+		X: LOOP
+			CREATE LASTCHILD OF valores TYPE NameValue
+				NAME 'val' VALUE SUBSTRING(texto FROM 1 FOR p1 - 1); --last child so that the next element will append on last row.
+			SET texto = SUBSTRING(texto FROM p1 + 1);
+			SET p1 = POSITION(separador IN texto);
+			IF p1 = 0 THEN
+				LEAVE X;
+			END IF;
+		END LOOP X;
+	END IF;
+	CREATE LASTCHILD OF valores TYPE NameValue NAME 'val' VALUE texto;
+END;
+
+
+CREATE PROCEDURE url2urn(IN url CHARACTER) RETURNS CHARACTER BEGIN
+	RETURN 'urn:' || REPLACE(SUBSTRING(url AFTER '//'), '/', ':');
+END;
+
+CREATE FUNCTION ContainsCharacters(IN texto CHARACTER, IN caracteres CHARACTER) RETURNS BOOLEAN
+BEGIN
+	RETURN LENGTH(TRANSLATE(texto, caracteres, '')) < LENGTH(texto);
+END;
+
+CREATE PROCEDURE RPAD(IN value CHARACTER, IN paddingChar CHARACTER, IN totalLength INTEGER)
+RETURNS CHARACTER
+BEGIN
+	IF value = NULL THEN
+		RETURN '';
+	END IF;
+		
+    DECLARE result CHARACTER;
+    DECLARE paddingLength INTEGER totalLength - LENGTH(value);
+
+    -- Verificar si es necesario aplicar el relleno
+    IF paddingLength > 0 AND LENGTH(paddingChar) > 0 THEN
+        SET result = value || REPLICATE(paddingChar, paddingLength);
+    ELSE
+        SET result = value;
+    END IF;
+
+	
+	RETURN result;
+END;
+
+CREATE PROCEDURE LPAD(IN value CHARACTER, IN paddingChar CHARACTER, IN totalLength INTEGER)
+RETURNS CHARACTER
+BEGIN
+	IF COALESCE(value, '') = '' THEN
+		RETURN '';
+	END IF;
+		
+    DECLARE result CHARACTER;
+    DECLARE paddingLength INTEGER totalLength - LENGTH(value);
+
+    -- Verificar si es necesario aplicar el relleno
+    IF paddingLength > 0 AND LENGTH(paddingChar) > 0 THEN
+        SET result = REPLICATE(paddingChar, paddingLength) || value;
+    ELSE
+        SET result = value;
+    END IF;
+
+	
+	RETURN result;
+END;

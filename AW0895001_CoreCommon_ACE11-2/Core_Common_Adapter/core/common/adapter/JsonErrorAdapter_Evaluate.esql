@@ -1,0 +1,304 @@
+BROKER SCHEMA core.common.adapter
+
+	DECLARE Level EXTERNAL CHARACTER '';
+	DECLARE EventType EXTERNAL CHARACTER '';
+	DECLARE EventDescription EXTERNAL CHARACTER '';
+	DECLARE Platform EXTERNAL CHARACTER '';
+	DECLARE EnvironmentTrx EXTERNAL CHARACTER '';
+	DECLARE ExecutionEnvironment EXTERNAL CHARACTER '';
+	DECLARE ServiceVersion EXTERNAL CHARACTER '';
+	DECLARE BodyTrace EXTERNAL BOOLEAN TRUE;
+	DECLARE OperationName EXTERNAL CHARACTER '';
+	DECLARE ServiceName EXTERNAL CHARACTER '';
+
+	DECLARE GeneralErrorPrefix EXTERNAL CHARACTER 'SI'; /* SI - Indica un error de sistema generado por la plataforma de integracion */
+	DECLARE SpecificErrorPrefix EXTERNAL CHARACTER 'SM'; /* SM - Indica un error de sistema propio de la API implementada en los componentes */
+	DECLARE ProviderErrorPrefix EXTERNAL CHARACTER 'SP'; /* SP - Indica un error de sistema en el proveedor de la API */
+	
+	DECLARE JSON_CONTENT_TYPE CONSTANT CHARACTER 'application/json;charset=UTF-8';
+	
+CREATE COMPUTE MODULE JsonErrorAdapter_Evaluate
+	CREATE FUNCTION Main() returns boolean
+	BEGIN
+		CALL GenerateError();
+		CALL BuildEnv(Environment, OutputRoot);
+		DELETE FIELD OutputRoot.HTTPInputHeader;
+		
+		PROPAGATE TO TERMINAL 'out1' DELETE NONE; -- primero el evento
+		PROPAGATE TO TERMINAL 'out'; -- salida normal
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J do
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE GenerateError() BEGIN
+		CALL core.common.util.json.SaveHttpHeaderMeta(Environment, InputProperties, InputRoot.HTTPInputHeader);
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.Properties.ContentType = JSON_CONTENT_TYPE;
+		SET OutputRoot.HTTPResponseHeader = Environment.HttpHeaderRs;
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;
+				
+		DECLARE refOutJsonData REFERENCE TO OutputRoot.JSON.Data;
+		CREATE FIELD refOutJsonData.meta;
+		SET refOutJsonData.meta = Environment.HttpMeta;
+		
+		DECLARE T INTEGER 0;
+		DECLARE cont, val INTEGER 1;
+
+		if EXISTS(InputExceptionList.ParserException[]) THEN
+			SET refOutJsonData.status = 400;
+			SET refOutJsonData.title = 'Bad Request';
+		ELSE
+			SET refOutJsonData.status = 500;
+			SET refOutJsonData.title = 'SystemException';
+		END IF;
+		
+		CALL getLastExceptionDetail(InputExceptionList, refOutJsonData);
+		SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = refOutJsonData.status;
+	END;
+	
+	CREATE PROCEDURE getLastExceptionDetail(IN InputTree REFERENCE, INOUT RefJsonData REFERENCE)	
+    /****************************************************************************
+	 * A procedure that will get the details of the last exception from a message
+	 * IN InputTree:  The incoming exception list
+	 * IN messageNumber:  The last message numberr.
+	 * IN messageText: The last message text.
+	 *****************************************************************************/
+	BEGIN
+        CREATE FIELD RefJsonData.errors IDENTITY(JSON.Array)errors;
+		-- messageNumber:  The last message number. messageText: The last message text.
+		DECLARE messageNumber, messageText CHAR;
+   	    -- Create a reference to the first child of the exception list
+   	    DECLARE ptrException REFERENCE TO InputTree.*[1];
+   	    -- keep looping while the moves to the child of exception list work 
+		X: WHILE lastmove(ptrException) DO
+			-- store the current values for the error number and text
+			IF ptrException.Number IS NOT NULL THEN
+        		SET messageNumber = ptrException.Number;
+        		SET messageText = ptrException.Text;
+
+				DECLARE errorCodePrefix CHARACTER GeneralErrorPrefix;
+				
+				-- Se identifica si es una excepcion generada por usuario por medio de 
+				-- codigo THROW USER EXCEPTION o por medio del nodo Throw 
+				-- Se vuelve a crear el elemento errors para que solo tome las excepciones UserException 
+        		IF FIELDNAME(ptrException) = 'UserException' THEN
+        			DELETE FIELD RefJsonData.errors;
+        			CREATE FIELD RefJsonData.errors IDENTITY(JSON.Array)errors;
+        			
+        			-- Si hay una deficion del elemento catalogo con SPXXX, este correspondera al prefijo y al hhtpcode
+        			IF LENGTH(ptrException.Catalog) = 5 AND (SUBSTRING(ptrException.Catalog FROM 1 FOR 2) IN (ProviderErrorPrefix,SpecificErrorPrefix,GeneralErrorPrefix)) THEN
+        				SET errorCodePrefix = SUBSTRING(ptrException.Catalog FROM 1 FOR 2);
+        				SET RefJsonData.status = CAST(SUBSTRING(ptrException.Catalog FROM 3 FOR 5) AS INTEGER);
+        			ELSEIF LENGTH(messageNumber) = 3  THEN
+		    			-- Si es una excepcion generada por el desarrollador (usuario) y si tiene 3 digitos,
+		    			-- se identificaria como un valor HTTP-CODE para setearlo en la cabecera de respuesta
+						SET RefJsonData.status = CAST(messageNumber AS INTEGER);
+        			END IF;
+        		END IF;
+				
+				IF RefJsonData.status = '400' THEN /* Bad Request */
+					SET errorCodePrefix = SpecificErrorPrefix;
+				END IF;
+        		
+				DECLARE ptrInsertException REFERENCE TO ptrException.Insert;
+				DECLARE idx INTEGER 1;
+
+        		WHILE lastmove(ptrInsertException) DO
+        			IF ptrInsertException.Text IS NOT NULL THEN
+	        			CREATE LASTCHILD OF RefJsonData.errors NAME 'Item';
+	        			DECLARE RefJsonErrorsItem REFERENCE TO RefJsonData.errors.Item[<];
+
+						SET RefJsonErrorsItem.code = errorCodePrefix || messageNumber;
+						SET RefJsonErrorsItem.detail = ptrInsertException.Text;
+						
+						SET Environment.Exception.errors[idx].code = errorCodePrefix || messageNumber;
+						SET Environment.Exception.errors[idx].detail = RefJsonErrorsItem.detail;
+						SET idx = idx + 1;
+        			END IF;
+        			MOVE ptrInsertException NEXTSIBLING;
+        		END WHILE;
+
+				-- Con la variable de entorno "Environment.handler.object" se identifica el objeto el cual puede presentar error como complemento del mensaje de error.
+				-- Si no se define la variable de entorno solo se muestra la excepcion.
+				IF COALESCE(Environment.handler.object, '') <> '' THEN
+        			CREATE LASTCHILD OF RefJsonData.errors NAME 'Item';
+        			DECLARE RefJsonErrorsItem REFERENCE TO RefJsonData.errors.Item[<];
+					SET RefJsonErrorsItem.code = errorCodePrefix || messageNumber;
+					SET RefJsonErrorsItem.detail = 'Object Error: ' || Environment.handler.object || '. ' || messageText;
+				END IF; 
+
+  			END IF;
+  			
+    		IF FIELDNAME(ptrException) = 'UserException' THEN
+    			LEAVE X;
+    		END IF;        			
+  			
+  			-- now move to the last child which should be the next exceptionlist
+			move ptrException lastchild;
+		END WHILE X;
+	END;	
+
+END MODULE;
+
+CREATE COMPUTE MODULE JsonErrorAdapter_Passthrough_Event	
+	CREATE FUNCTION Main() returns boolean
+	BEGIN
+		SET OutputRoot = InputRoot;
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+
+		CALL BuildEnv(Environment, OutputRoot);
+		DELETE FIELD OutputRoot.HTTPInputHeader;
+		
+		PROPAGATE TO TERMINAL 'out1' DELETE NONE; -- primero el evento
+		PROPAGATE TO TERMINAL 'out'; -- salida normal
+		RETURN FALSE;
+	END;
+	
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J do
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;	
+END MODULE;
+
+CREATE COMPUTE MODULE JsonErrorAdapter_Timeout_Handler
+	CREATE FUNCTION Main() returns boolean
+	BEGIN
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+
+		CALL GenerateTimeoutError();
+		CALL BuildEnv(Environment, OutputRoot);
+		DELETE FIELD OutputRoot.HTTPInputHeader;
+		
+		PROPAGATE TO TERMINAL 'out1' DELETE NONE; -- primero el evento
+		PROPAGATE TO TERMINAL 'out'; -- salida normal
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE GenerateTimeoutError() 
+	BEGIN
+		DECLARE detail CHARACTER '';
+		--Identificar que la estructura de datos entrante sea valida para buscar la informacion especifica JSON.
+		IF EXISTS(InputRoot.JSON[]) THEN
+			DECLARE refFault REFERENCE TO InputRoot.JSON.Data.fault;
+			SET detail = COALESCE(refFault.reason, '') || COALESCE(refFault.detail,'');
+		ELSEIF EXISTS(InputRoot.XMLNSC[]) THEN
+			DECLARE refFault REFERENCE TO InputRoot.XMLNSC.*:Envelope.*:Body.*:Fault;
+			SET detail = COALESCE(refFault.*:Reason.*:Text, '') || COALESCE(refFault.*:Detail.*:text,'');
+		ELSEIF EXISTS(InputRoot.BLOB[]) THEN
+			SET detail = CAST(InputRoot.BLOB.BLOB AS CHARACTER);
+		END IF;
+
+		CALL core.common.util.json.SaveHttpHeaderMeta(Environment, InputProperties, InputRoot.HTTPInputHeader);
+		SET OutputRoot.Properties = InputProperties;
+		SET OutputRoot.Properties.ContentType = JSON_CONTENT_TYPE;
+		SET OutputRoot.HTTPResponseHeader = Environment.HttpHeaderRs;
+				
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;		
+
+		DECLARE refOutJsonData REFERENCE TO OutputRoot.JSON.Data;
+		CREATE FIELD refOutJsonData.meta;
+
+		SET refOutJsonData.meta = Environment.HttpMeta;
+		SET refOutJsonData.status = 500;
+		SET refOutJsonData.title = 'SystemException';
+
+		CREATE FIELD refOutJsonData.errors IDENTITY(JSON.Array)errors;
+
+		CREATE LASTCHILD OF refOutJsonData.errors NAME 'Item';
+		DECLARE refJsonErrors REFERENCE TO refOutJsonData.errors;
+		SET refJsonErrors.Item[1].code = GeneralErrorPrefix || '500';
+		SET refJsonErrors.Item[1].detail= 'Se produjo un tiempo de espera durante el proceso';				
+		
+		IF detail <> '' THEN
+			SET refJsonErrors.Item[2].code = GeneralErrorPrefix || '500';
+			SET refJsonErrors.Item[2].detail= detail;				
+		END IF;
+		
+		SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 500;
+	END;
+END MODULE;
+
+CREATE PROCEDURE BuildEnv(IN env REFERENCE, IN input REFERENCE) BEGIN
+	IF NOT EXISTS(env.monitoringEvent[]) THEN
+		CREATE FIELD env.monitoringEvent;
+	END IF;
+
+	DECLARE MonitoringEvent 	REFERENCE TO env.monitoringEvent;
+
+	IF NOT EXISTS(MonitoringEvent.runtime[]) THEN
+		CREATE FIELD MonitoringEvent.runtime;
+	END IF;
+
+	IF NOT EXISTS(MonitoringEvent.serviceInfo[]) THEN
+		CREATE FIELD MonitoringEvent.serviceInfo;
+	END IF;
+
+	IF NOT EXISTS(MonitoringEvent.genericInfo[]) THEN
+		CREATE FIELD MonitoringEvent.genericInfo;
+	END IF;
+
+	IF NOT EXISTS(MonitoringEvent.additionalInfo[]) THEN
+		CREATE FIELD MonitoringEvent.additionalInfo;
+	END IF;
+	
+	CREATE FIELD MonitoringEvent.errors;
+		
+	DECLARE refMonEventRuntime 	REFERENCE TO MonitoringEvent.runtime;
+	DECLARE refMonEventSvcInfo 	REFERENCE TO MonitoringEvent.serviceInfo;
+	DECLARE refMonEventGenInfo 	REFERENCE TO MonitoringEvent.genericInfo;
+	DECLARE refMonEventInfo 	REFERENCE TO MonitoringEvent.additionalInfo;
+	DECLARE refMonEventErrors 	REFERENCE TO MonitoringEvent.errors;
+	
+	-- MonitoringEvent.runtime
+	SET refMonEventRuntime.integrationPlatform                = Platform;
+	SET refMonEventRuntime.environment                        = EnvironmentTrx;
+	SET refMonEventRuntime.technicalInfo.executionEnvironment = ExecutionEnvironment;
+	SET refMonEventRuntime.host                               = GetIP();
+
+	-- MonitoringEvent.serviceInfo
+	SET refMonEventSvcInfo.version       = ServiceVersion;
+	SET refMonEventSvcInfo.messageId 	 = COALESCE(input.HTTPInputHeader."Message-Id", env.HttpHeader.messageId);
+	SET refMonEventSvcInfo.consumerId 	 = COALESCE(input.HTTPInputHeader."Consumer-Id", env.HttpHeader.consumerId);
+	SET refMonEventSvcInfo.systemId      = COALESCE(input.HTTPInputHeader."Application-Id", env.HttpHeader.applicationId);
+	SET refMonEventSvcInfo.operation 	 = OperationName;
+	SET refMonEventSvcInfo.name 		 = ServiceName;
+	
+	-- MonitoringEvent.genericInfo
+	SET refMonEventGenInfo.level            = Level;
+	SET refMonEventGenInfo.eventType        = EventType;
+	SET refMonEventGenInfo.eventDescription = EventDescription;
+	SET refMonEventGenInfo.bodyTrace 	    = BodyTrace;
+	SET refMonEventGenInfo.jsonStandar 	    = true;
+	SET refMonEventGenInfo.timestamp 	    = CURRENT_TIMESTAMP;
+	SET refMonEventGenInfo.uuid             = COALESCE(NULLIF(refMonEventGenInfo.uuid, ''), UUIDASCHAR);
+
+	-- MonitoringEvent.additionalInfo
+	DELETE FIELD refMonEventInfo.headers;
+	CREATE FIELD refMonEventInfo.headers;
+	IF EXISTS(input.MQMD[]) THEN
+		SET refMonEventInfo.headers.Data = input.MQMD;
+	ELSEIF EXISTS(input.HTTPResponseHeader[]) THEN
+		SET refMonEventInfo.headers.Data = input.HTTPResponseHeader;
+	END IF;
+
+	-- MonitoringEvent.errors
+	SET refMonEventErrors.code = CAST(input.JSON.Data.status AS CHARACTER);
+	SET refMonEventErrors.detail = input.JSON.Data.title;
+END;

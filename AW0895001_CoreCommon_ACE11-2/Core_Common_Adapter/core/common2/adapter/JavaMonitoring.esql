@@ -1,0 +1,7 @@
+BROKER SCHEMA core.common2.adapter
+
+
+CREATE FUNCTION GetIP()
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "core.common.adapter2.AdappterMonitoring.ReturnMyIP";

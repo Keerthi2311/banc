@@ -1,0 +1,13 @@
+*.keep
+.metadata
+*.class
+*.bar
+*.jar
+.recommenders
+.settings
+**/importFiles
+**/logs
+*.xsdzip
+**/BARFiles
+bin/
+target/

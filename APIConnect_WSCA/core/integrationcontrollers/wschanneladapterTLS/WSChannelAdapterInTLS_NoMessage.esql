@@ -1,0 +1,31 @@
+BROKER SCHEMA core.integrationcontrollers.wschanneladapterTLS
+
+/*******************************************************************************
+* Node Name: NoMessage														   *
+* Module Name: WSChannelAdapterInTLS_NoMessage								   *
+* Description: Nodo que restablece el mensaje original para recuperar datos    *
+* para la traza de eventos   					                               *
+* 																			   *
+* Version 	Date 		Author 				        Description 			   *
+* ========	=========== =========================   ========================== *
+* 1.00     	15-Oct-2024 Mauricio Murcia Roa    	    Evaluación de datos traza  *
+*******************************************************************************/
+
+CREATE COMPUTE MODULE WSChannelAdapterInTLS_NoMessage
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refVarOriginMsg REFERENCE TO Environment.Variables.OriginMsg;
+		SET OutputRoot.Properties = refVarOriginMsg.Properties;
+		SET OutputRoot.MQMD = refVarOriginMsg.MQMD;
+		SET OutputRoot.XMLNSC = refVarOriginMsg.XMLNSC;
+		
+		CALL printLnConsole(
+		PROVIDER_TIMEOUT || '.' || 
+		' MessageId:' || COALESCE(InputRoot.XMLNSC.*:esbXML.Header.messageId,'null') ||
+		' SystemId:' || COALESCE(InputRoot.XMLNSC.*:esbXML.Header.systemId,'null') ||
+		' Name:' || COALESCE(InputRoot.XMLNSC.*:esbXML.Header.requestData.destination.name,'null') ||
+		' Operation:' || COALESCE(InputRoot.XMLNSC.*:esbXML.Header.requestData.destination.operation,'null') ||
+		' Namespace:' || COALESCE(InputRoot.XMLNSC.*:esbXML.Header.requestData.destination.namespace,'null'));
+		RETURN TRUE;
+	END;
+END MODULE;

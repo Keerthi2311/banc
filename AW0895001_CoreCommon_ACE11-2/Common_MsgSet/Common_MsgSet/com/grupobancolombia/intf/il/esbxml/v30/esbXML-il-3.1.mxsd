@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+		The esbXML-il document is used for generating/validating messages to
+		be used inside the boundaries of the Integration Layer
+	-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:Q1="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1" xmlns:tns="http://grupobancolombia.com/intf/IL/esbXML/V3.0" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://grupobancolombia.com/intf/IL/esbXML/V3.0">
+    <xs:import namespace="http://grupobancolombia.com/ents/IL/MessageFormat/V4.1" schemaLocation="../../../../ents/il/messageformat/v41/MessageFormat-4.1.mxsd"/>
+    <xs:element name="esbXML" type="tns:esbXML">
+    <xs:annotation>
+      <xs:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/esbXML;XSDElementDeclaration$MRObject"/>
+      </xs:appinfo>
+    </xs:annotation>
+  </xs:element>
+	<xs:complexType name="esbXML">
+		<xs:sequence>
+			<xs:element name="Header" type="Q1:Header"/>
+			<xs:element name="Body" type="tns:Body"/>
+			<xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="Body">
+		<xs:sequence>
+			<xs:any maxOccurs="1" minOccurs="0" namespace="##any" processContents="lax"/>
+		</xs:sequence>
+	</xs:complexType>
+    <xs:element name="Body" type="tns:Body">
+  </xs:element>
+</xs:schema>

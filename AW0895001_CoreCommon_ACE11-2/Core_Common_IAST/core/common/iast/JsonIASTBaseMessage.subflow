@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmFilter.msgnode="ComIbmFilter.msgnode" xmlns:ComIbmFlowOrder.msgnode="ComIbmFlowOrder.msgnode" xmlns:ComIbmMSLMapping.msgnode="ComIbmMSLMapping.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common/iast/JsonIASTBaseMessage.subflow" nsPrefix="core_common_iast_JsonIASTBaseMessage.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true" nodeLayoutStyle="RECTANGLE">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_UDCS_CMSTI_CATALOG" name="UDP_UDCS_CMSTI_CATALOG" lowerBound="1" defaultValueLiteral="UDCS_CMSTI_CATALOG">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_POLICY_TYPE" name="UDP_POLICY_TYPE" lowerBound="1" defaultValueLiteral="UserDefined">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_POLICY_PROJECT" name="UDP_POLICY_PROJECT" lowerBound="1" defaultValueLiteral="DefaultPolicies">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_TEMPORIZADOR" name="UDP_TEMPORIZADOR" lowerBound="1" defaultValueLiteral="{ID_SERVIDOR}{COD_TRANSACCION}TEMP">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_RESPONSE_REQUIRED" name="UDP_RESPONSE_REQUIRED" lowerBound="1" defaultValueLiteral="S">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_ID_SERVIDOR" name="UDP_ID_SERVIDOR" lowerBound="1" defaultValueLiteral="##ID_SERVIDOR##">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_COD_TRANSACCION" name="UDP_COD_TRANSACCION" lowerBound="1" defaultValueLiteral="##COD_TRANSACCION##">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_REQUIERE_RESPUESTA" name="UDP_REQUIERE_RESPUESTA" lowerBound="1" defaultValueLiteral="S">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_ORIENTACION" name="UDP_ORIENTACION" lowerBound="1" defaultValueLiteral="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_TIPO_MENSAJE" name="UDP_TIPO_MENSAJE" lowerBound="1" defaultValueLiteral="TS">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_POSSEGMENT" name="UDP_POSSEGMENT" lowerBound="1" defaultValueLiteral="00001">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_NUM_SEGMENT" name="UDP_NUM_SEGMENT" lowerBound="1" defaultValueLiteral="01">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CODIGO_RESP" name="UDP_CODIGO_RESP" lowerBound="1" defaultValueLiteral="0000">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_LONGITUD_CARGA" name="UDP_LONGITUD_CARGA" lowerBound="1" defaultValueLiteral="0">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="JsonIASTBaseMessage" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_IAST/icons/full/obj16/JsonIASTBaseMessage.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_IAST/icons/full/obj30/JsonIASTBaseMessage.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="31,104">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="971,117">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="746,117" computeExpression="esql://routine/core.common.iast#JsonIASTBaseMessage_UpdateCache.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="Update Cache Base Message"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="502,37">
+        <translation xmi:type="utility:ConstantString" string="Flow Order"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="268,105" filterExpression="esql://routine/core.common.iast#JsonIASTBaseMessage_IsCached.Main">
+        <translation xmi:type="utility:ConstantString" string="IsCached"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMSLMapping.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="747,37" mappingExpression="msl://{core.common.iast}#IAST">
+        <translation xmi:type="utility:ConstantString" string="Mapping IAST Base Message"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="973,41" computeExpression="esql://routine/core.common.iast#JsonIASTBaseMessage_Cached.Main">
+        <translation xmi:type="utility:ConstantString" string="Cached"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_3" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.ConfigurableService" configurable="true" userDefined="true" describedAttribute="Property.UDP_UDCS_CMSTI_CATALOG">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_UDCS_CMSTI_CATALOG" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+        <propertyDescriptor groupName="Group.Policy" configurable="true" userDefined="true" describedAttribute="Property.UDP_POLICY_TYPE">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_POLICY_TYPE" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+          <propertyDescriptor groupName="Group.Policy" configurable="true" userDefined="true" describedAttribute="Property.UDP_POLICY_PROJECT">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_POLICY_PROJECT" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+            <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_TEMPORIZADOR">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_TEMPORIZADOR" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+              <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_RESPONSE_REQUIRED">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_RESPONSE_REQUIRED" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_ID_SERVIDOR">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_ID_SERVIDOR" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                  <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_COD_TRANSACCION">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_COD_TRANSACCION" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                    <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_REQUIERE_RESPUESTA">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_REQUIERE_RESPUESTA" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                      <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_ORIENTACION">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_ORIENTACION" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                        <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_TIPO_MENSAJE">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_TIPO_MENSAJE" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                          <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_POSSEGMENT">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_POSSEGMENT" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                            <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_NUM_SEGMENT">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_NUM_SEGMENT" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                              <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_LONGITUD_CARGA">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_LONGITUD_CARGA" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                                <propertyDescriptor groupName="Group.DefaultIastHeaderData" configurable="true" userDefined="true" describedAttribute="Property.UDP_CODIGO_RESP">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CODIGO_RESP" bundleName="core/common/iast/JsonIASTBaseMessage" pluginId="Core_Common_IAST"/>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard>
+      <stickyNote location="27,198">
+        <body xmi:type="utility:ConstantString" string="* User Defined Properties&#xA;== DefaultIastHeaderData&#xA;&#xA;UDP_TEMPORIZADOR&#xA;  - Uso disponible de comodines:&#xA;         {ID_SERVIDOR} --> Hace referencia a UDP_ID_SERVIDOR&#xA;         {COD_TRANSACCION} --> Hacer referencia UDP_COD_TRANSACCION valor fijo o resultante del uso de comodines.&#xA;UDP_COD_TRANSACCION&#xA;  - Uso disponible de comodines:&#xA;         {ConfigurableService}:UDCS_XXX&#xA;         {JsonData}:data.element1&#xA;&#xA;Si se utiliza el comodin {ConfigurableService}: debe seguir el nombre del servicio configurable, adicional debe seguir la propiedad &#xA;a buscar en el servicio configurable separado por '|', esta puede ser por intermedio de {JsonData}: el cual obtiene el valor del elemento referenciado.&#xA;Ejemplos de uso:&#xA;--> {ConfigurableService}:UDCS_XXX|{JsonData}:data.element&#xA;--> {ConfigurableService}:UDCS_XXX|TEXTO&#xA;--> {JsonData}:data.test"/>
+      </stickyNote>
+    </stickyBoard>
+  </eClassifiers>
+</ecore:EPackage>

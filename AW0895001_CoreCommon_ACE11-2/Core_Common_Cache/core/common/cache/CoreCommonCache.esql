@@ -1,0 +1,83 @@
+BROKER SCHEMA core.common.cache
+
+
+/*******************************************************************************
+* Procedure Name: put														   *
+* Input Parameters: cache, Key and Value							           *
+* Output Parameters: None 													   *
+* Description: Ingresa los valores value de entrada en la memoria cache 	   *
+*  				con la llave Key                                         	   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		07/03/2018	Heran Rengifo		Versión inicial 				   *
+*******************************************************************************/
+CREATE PROCEDURE put (IN Cache CHARACTER, IN Key CHARACTER, IN Value CHARACTER)
+	LANGUAGE JAVA 
+	EXTERNAL NAME 
+			"com.bancolombia.integracion.cache.ESQLCacheWrapper.put";
+			
+/*******************************************************************************
+* Procedure Name: remove													   *
+* Input Parameters: cache, 	key						                           *
+* Output Parameters: true si la eliminacion fue exitosa 					   *
+* Description: Elimina los valores de la cache	 	                           *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		07/03/2018	Heran Rengifo		Versión inicial 				   *
+*******************************************************************************/
+CREATE FUNCTION remove (IN Cache CHARACTER, IN Key CHARACTER)
+	RETURNS BOOLEAN
+	LANGUAGE JAVA 
+	EXTERNAL NAME 
+			"com.bancolombia.integracion.cache.ESQLCacheWrapper.remove";
+			
+/*******************************************************************************
+* Procedure Name: get														   *
+* Input Parameters: cache, 	key						                           *
+* Output Parameters: String o nulo                              			   *
+* Description: retorna los valores almacenados en la cache                     *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		07/03/2018	Heran Rengifo		Versión inicial 				   *
+*******************************************************************************/
+CREATE FUNCTION get (IN Cache CHARACTER, IN Key CHARACTER)
+	RETURNS CHARACTER
+	LANGUAGE JAVA 
+	EXTERNAL NAME 
+			"com.bancolombia.integracion.cache.ESQLCacheWrapper.get";
+			
+/*******************************************************************************
+* Procedure Name: clear														   *
+* Input Parameters: cache						                               *
+* Output Parameters:                              			                   *  
+* Description: elimina todos los elementos de una cache especifica             *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		07/03/2018	Heran Rengifo		Versión inicial 				   *
+*******************************************************************************/
+CREATE PROCEDURE clear (IN Cache CHARACTER)
+	LANGUAGE JAVA 
+	EXTERNAL NAME 
+			"com.bancolombia.integracion.cache.ESQLCacheWrapper.clear";
+			
+/*******************************************************************************
+* Procedure Name: initCache													   *
+* Input Parameters: properties, cache						                   *
+* Output Parameters: True si se crea la cache, false si no lo hace             *  
+* Description: crea una nueva cache en memoria, con el nombre indicado y las   *
+*	variables de inicializacion entregadas en properties          			   *
+*	las propiedades se entregan en el formato llave=valor|llave2=valor		   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		07/03/2018	Heran Rengifo		Versión inicial 				   *
+*******************************************************************************/
+CREATE FUNCTION init (IN properties CHARACTER, IN Cache CHARACTER)
+	RETURNS BOOLEAN
+	LANGUAGE JAVA 
+	EXTERNAL NAME 
+			"com.bancolombia.integracion.cache.ESQLCacheWrapper.init";

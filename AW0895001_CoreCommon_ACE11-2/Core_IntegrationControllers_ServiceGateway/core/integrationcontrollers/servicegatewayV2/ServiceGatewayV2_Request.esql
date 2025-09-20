@@ -1,0 +1,82 @@
+BROKER SCHEMA core.integrationcontrollers.servicegatewayV2
+
+/*******************************************************************************
+* Nodo Name:         PreRegistryQuery	                                       *
+* Module Name:       ServiceGateway_PreRegistryQuery		                   *
+* Description:       Prepara el registro de evento de INFO en el 			   *
+*					 ESBTracingManager a través del subflujo LoggingAdapter    *
+*					(inmerso en el compendio CoreCommonsV2) y prepara el lookup*
+*					 a realizar en registro de Servicios (WSRR) que se llevará *
+*					 a cabo en el nodo RegistryLookup.						   *
+*******************************************************************************/
+CREATE COMPUTE MODULE ServiceGatewayV2_Request_Log_PreRegsitryQuery
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- Preparar evento de monitoreo
+		SET OutputRoot = InputRoot;
+		DECLARE interactionData REFERENCE TO
+			OutputRoot.XMLNSC.il:esbXML.Header.interactionData;
+		CALL ChangeTimeStamp(interactionData);
+		
+		--guardar en Enviroment el mensaje original
+		CREATE FIELD Environment.RequestOrigin;
+		SET Environment.RequestOrigin = OutputRoot;
+		
+		PROPAGATE TO TERMINAL 'out1';
+		
+		-- Hacer el mapeo
+		CALL PrepareRequest();
+		RETURN TRUE;
+	END;
+	
+	CREATE PROCEDURE PrepareRequest() BEGIN
+		-- Copiar las propiedades de entrada...
+		SET OutputRoot.Properties = InputRoot.Properties;
+		
+		--Referencias iniciales
+		DECLARE refHeadIn  	REFERENCE TO InputRoot.XMLNSC.il:esbXML.Header;
+		
+		CALL setWebServiceEndpoint(UDP_REGISTRY_URL_V2);
+		
+		--crea el mensaje de request
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC';
+		DECLARE cursor REFERENCE TO OutputRoot.XMLNSC;		
+		
+		--crea los envolventes SOAP
+		CREATE LASTCHILD OF cursor AS cursor TYPE Name NAMESPACE soapns NAME 'Envelope';
+		
+		--crea los envolventes Header y Body
+		CREATE FIRSTCHILD OF cursor TYPE Name NAMESPACE soapns NAME 'Header';
+		CREATE LASTCHILD OF cursor AS cursor TYPE Name NAMESPACE soapns NAME 'Body';
+		
+		CREATE FIRSTCHILD OF cursor AS cursor TYPE Name NAMESPACE sdo NAME 'executeNamedQueryWithParameters';
+		
+		SET cursor.query = UDP_BANCOLOMBIA_WSRRLOOKUP;
+		
+		DECLARE nameSpace CHARACTER refHeadIn.requestData.destination.namespace;
+		
+		DECLARE AT_INDEX INTEGER POSITION('/' IN nameSpace REPEAT -1);
+		
+		CREATE LASTCHILD OF cursor TYPE Name NAME 'parameters' VALUE refHeadIn.systemId;
+		
+		CREATE LASTCHILD OF cursor TYPE Name NAME 'parameters' VALUE LEFT(nameSpace, AT_INDEX)
+            || 'Enlace' || SUBSTRING(nameSpace FROM AT_INDEX); 
+		
+	END;	
+	
+	/********************************************************************************
+	* Module setWebServiceEndpoint													*	
+	* Purpose: Establecer extremo de servicio para acceder a proveedores de 		*
+	*		   servicios Web														*
+	********************************************************************************/	
+	CREATE PROCEDURE setWebServiceEndpoint(IN wsAddress CHARACTER) BEGIN
+		SET OutputRoot.Properties.IdentityMappedType = 'usernameAndPassword';
+		
+		SET OutputLocalEnvironment.Destination.SOAP.Request.Transport.HTTP.WebServiceURL = wsAddress;
+		--crea el tac HTTPRequestHeader
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'HTTPRequestHeader';
+		
+		SET OutputRoot.HTTPRequestHeader.SOAPAction = UDP_SOAP_ACTION;
+	END;
+
+END MODULE;

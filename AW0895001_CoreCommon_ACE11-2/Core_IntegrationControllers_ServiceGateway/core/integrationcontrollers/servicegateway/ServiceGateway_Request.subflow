@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:SRRetrieveEntity.msgnode="SRRetrieveEntity.msgnode" xmlns:core_common2_adapter_LoggingAdapter.subflow="core/common2/adapter/LoggingAdapter.subflow" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility"
+    nsURI="core/integrationcontrollers/servicegateway/ServiceGateway_Request.subflow" nsPrefix="core_integrationcontrollers_servicegateway_ServiceGateway_Request.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.COMPAT_MODE" name="COMPAT_MODE" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SOURCE_MQ_RTQ" name="SOURCE_MQ_RTQ" defaultValueLiteral="INT_MQCA_SINCRO_INT.QL.CBK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SOURCE_SG_RTQ" name="SOURCE_SG_RTQ" defaultValueLiteral="INT_SG_INT.QL.CBK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WSRR_REQQ" name="WSRR_REQQ" defaultValueLiteral="sm63_requestQName">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WSRR_REQQM" name="WSRR_REQQM" defaultValueLiteral="sm63_requestQMgr">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WSRR_RESQ" name="WSRR_RESQ" defaultValueLiteral="sm63_responseQName">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WSRR_RESQM" name="WSRR_RESQM" defaultValueLiteral="sm63_responseQMgr">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REQUESTQNAME_INDEX" name="REQUESTQNAME_INDEX" lowerBound="1" defaultValueLiteral="4">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REQUESTQMNAME_INDEX" name="REQUESTQMNAME_INDEX" lowerBound="1" defaultValueLiteral="5">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.QM_CLUSTER" name="QM_CLUSTER" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CN_PREFIX" name="CN_PREFIX" defaultValueLiteral="http://grupobancolombia.com/clas/AplicacionesActuales#">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CN_SC_PREFIX" name="CN_SC_PREFIX" defaultValueLiteral="http://grupobancolombia.com/clas/AplicacionesSeguras#">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CN_HIDDEN" name="CN_HIDDEN" defaultValueLiteral="http://grupobancolombia.com/clas/AplicacionesActuales;http://grupobancolombia.com/clas/AplicacionesSeguras">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.name" name="name" defaultValueLiteral="None">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.namespace" name="namespace">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.serviceVersion" name="serviceVersion">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="ServiceGateway_Request" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_IntegrationControllers_ServiceGateway/icons/full/obj16/ServiceGateway_Request.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_IntegrationControllers_ServiceGateway/icons/full/obj30/ServiceGateway_Request.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="20,20">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="659,20">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="115,21" computeExpression="esql://routine/core.integrationcontrollers.servicegateway#ServiceGateway_PreRegistryQuery.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="Log_PreRegistryQuery"/>
+      </nodes>
+      <nodes xmi:type="SRRetrieveEntity.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="310,22" name="None" depthPolicy="MatchOnly">
+        <translation xmi:type="utility:ConstantString" string="Registry Lookup"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="485,21" computeExpression="esql://routine/core.integrationcontrollers.servicegateway#ServiceGateway_PostRegistryQuery.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="PostRegistryQuery"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_LoggingAdapter.subflow:FCMComposite_1" xmi:id="FCMComposite_1_4" location="254,158" EventDescription="ServiceGateway_Request.Log_PreRegistryQuery">
+        <translation xmi:type="utility:ConstantString" string="LoggingAdapter"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_5" location="454,156" UDP_INTERACTION_TYPE="REQUEST" UDP_EXCEPTION_ID="1201" UDP_OPERATION_TYPE="COMMAND" UDP_EXCEPTION_DETAIL="The values sent in the request do not match the values of the WSRR Registry - OCP">
+        <translation xmi:type="utility:ConstantString" string="ResourceNotFound"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_6" location="426,-47" UDP_INTERACTION_TYPE="REQUEST" UDP_EXCEPTION_ID="1201" UDP_OPERATION_TYPE="COMMAND" UDP_EXCEPTION_DETAIL="The Lookup in the Service Registry has failed. - OCP">
+        <translation xmi:type="utility:ConstantString" string="ConnectionFailure"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_7" location="252,-48" UDP_INTERACTION_TYPE="REQUEST" UDP_EXCEPTION_ID="1201" UDP_OPERATION_TYPE="COMMAND" UDP_EXCEPTION_DETAIL="The Pre_Registry query has failed. - OCP">
+        <translation xmi:type="utility:ConstantString" string="PreRegistryFailure"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.noMatch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.COMPAT_MODE">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.COMPAT_MODE" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SOURCE_MQ_RTQ">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.SOURCE_MQ_RTQ" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SOURCE_SG_RTQ">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.SOURCE_SG_RTQ" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WSRR_REQQ">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.WSRR_REQQ" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WSRR_REQQM">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.WSRR_REQQM" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WSRR_RESQ">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.WSRR_RESQ" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WSRR_RESQM">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.WSRR_RESQM" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REQUESTQNAME_INDEX">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.REQUESTQNAME_INDEX" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REQUESTQMNAME_INDEX">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.REQUESTQMNAME_INDEX" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.QM_CLUSTER">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.QM_CLUSTER" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                          <propertyDescriptor groupName="Group.Pep" configurable="true" userDefined="true" describedAttribute="Property.CN_PREFIX">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.CN_PREFIX" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                            <propertyDescriptor groupName="Group.Pep" configurable="true" userDefined="true" describedAttribute="Property.CN_SC_PREFIX">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.CN_SC_PREFIX" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                              <propertyDescriptor groupName="Group.GenericClass" configurable="true" userDefined="true" describedAttribute="Property.CN_HIDDEN">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.CN_HIDDEN" bundleName="core/integrationcontrollers/servicegateway/ServiceGateway_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                                <propertyDescriptor groupName="Group.RegistryLookUp" propertyEditor="com.ibm.etools.mft.flow.properties.StringPropertyEditor" configurable="true" describedAttribute="Property.name">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.name" bundleName="SRRetrieveEntity" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                                  <propertyDescriptor groupName="Group.RegistryLookUp" propertyEditor="com.ibm.etools.mft.flow.properties.StringPropertyEditor" configurable="true" describedAttribute="Property.namespace">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.namespace" bundleName="SRRetrieveEntity" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                                    <propertyDescriptor groupName="Group.RegistryLookUp" propertyEditor="com.ibm.etools.mft.flow.properties.StringPropertyEditor" configurable="true" describedAttribute="Property.serviceVersion">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.serviceVersion" bundleName="SRRetrieveEntity" pluginId="com.ibm.etools.mft.ibmnodes.definitions"/>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.name" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="SRRetrieveEntity.msgnode#Property.name"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.namespace" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="SRRetrieveEntity.msgnode#Property.namespace"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.serviceVersion" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="SRRetrieveEntity.msgnode#Property.serviceVersion"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

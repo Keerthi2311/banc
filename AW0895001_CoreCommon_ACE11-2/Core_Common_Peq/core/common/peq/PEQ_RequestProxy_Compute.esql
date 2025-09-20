@@ -1,0 +1,19 @@
+BROKER SCHEMA core.common.peq
+
+
+CREATE COMPUTE MODULE PEQ_RequestProxy_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+         SET OutputRoot.Properties = InputRoot.Properties;
+         SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+         SET Environment.msgInMQMD = InputRoot.MQMD;
+         
+         DECLARE env REFERENCE TO Environment.Variables.OriginMsg;
+         
+         IF NOT LASTMOVE(env) THEN
+            CALL SendOriginMsgToEnv(InputRoot.XMLNSC, Environment);
+         END IF;
+         
+		RETURN TRUE;
+	END;
+END MODULE;

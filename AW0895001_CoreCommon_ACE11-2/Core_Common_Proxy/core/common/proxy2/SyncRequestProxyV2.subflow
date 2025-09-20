@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQGet.msgnode="ComIbmMQGet.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common/proxy2/SyncRequestProxyV2.subflow" nsPrefix="core_common_proxy2_SyncRequestProxyV2.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MQOutput_QMgrName" name="MQOutput_QMgrName" defaultValueLiteral="&lt;REQUEST QMGR NAME>">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MQOutput_QName" name="MQOutput_QName" defaultValueLiteral="&lt;REQUEST QUEUE NAME>">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Callback_QName" name="Callback_QName" lowerBound="1" defaultValueLiteral="&lt;CALLBACK QUEUE NAME>">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MQGet_Validate" name="MQGet_Validate" lowerBound="1" eType="//%" defaultValueLiteral="none"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MQGet_MessageSet" name="MQGet_MessageSet">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MQGet_MessageType" name="MQGet_MessageType">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MQGet_MessageFormat" name="MQGet_MessageFormat">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MQGet_ParseTiming" name="MQGet_ParseTiming" lowerBound="1" eType="//%.1" defaultValueLiteral="deferred"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_EXCEPTION_DETAIL_PUT" name="UDP_EXCEPTION_DETAIL_PUT" defaultValueLiteral="Error al poner un mensaje de la cola de request del sistema proveedor usando el SincRequestProxy">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_EXCEPTION_DETAIL_GET" name="UDP_EXCEPTION_DETAIL_GET" defaultValueLiteral="Error al leer un mensaje de la cola de response del sistema proveedor usando el SincRequestProxy">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_EXCEPTION_DETAIL_TIMEOUT" name="UDP_EXCEPTION_DETAIL_TIMEOUT" defaultValueLiteral="Tiempo Agotado para la lectura del mensaje de la cola de response del sistema proveedor usando el SincRequestProxy">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_INTERACTION_TYPE" name="UDP_INTERACTION_TYPE" defaultValueLiteral="REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_OPERATION_TYPE" name="UDP_OPERATION_TYPE" defaultValueLiteral="COMMAND">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_TIMEOUT_MILLIS" name="UDP_TIMEOUT_MILLIS" lowerBound="1" defaultValueLiteral="1000">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_MSGID_TO_CORRELID" name="UDP_MSGID_TO_CORRELID" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="SyncRequestProxyV2" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Proxy/icons/full/obj16/SyncRequestProxyV2.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Proxy/icons/full/obj30/SyncRequestProxyV2.gif"/>
+    <composition>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_8" location="474,31" UDP_EXCEPTION_ID="2300">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input1" location="22,96">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQGet.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_9" location="434,102" messageDomainProperty="XMLNSC" transactionMode="no" getWithCorrelID="true">
+        <translation xmi:type="utility:ConstantString" string="PROXY.GET"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_10" location="220,33" UDP_EXCEPTION_ID="2300">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException1"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_11" location="113,97" transactionMode="no" newCorrelId="true" request="true" validateMaster="none">
+        <translation xmi:type="utility:ConstantString" string="PROXY.PUT"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_12" location="522,165" UDP_EXCEPTION_ID="3200">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException2"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="611,98">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_13" location="246,101" computeExpression="esql://routine/core.common.proxy2#SyncRequestProxy_V2_PrepareGET.Main">
+        <translation xmi:type="utility:ConstantString" string="PrepareGET"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_11" sourceNode="InTerminal.Input1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_13" sourceNode="FCMComposite_1_11" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_13" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_11" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_12" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.noMessage" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.warning" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.HostnamePropertyEditor" configurable="true" describedAttribute="Property.MQOutput_QMgrName">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.MQOutput_QMgrName" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+        <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.MQOutput_QName">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.MQOutput_QName" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+          <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.Callback_QName">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.Callback_QName" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+            <propertyDescriptor groupName="Group.MQGet" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.ValidateMasterForOpaqueParsingAndBuildTreePropertyEditor" configurable="true" describedAttribute="Property.MQGet_Validate">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.MQGet_Validate" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+              <propertyDescriptor groupName="Group.MQGet" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.MRMessageSetNamePropertyEditorV8" describedAttribute="Property.MQGet_MessageSet">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.MQGet_MessageSet" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                <propertyDescriptor groupName="Group.MQGet" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQMessageTypeEditor" describedAttribute="Property.MQGet_MessageType">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.MQGet_MessageType" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                  <propertyDescriptor groupName="Group.MQGet" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.MRMessageFormatPropertyEditor" describedAttribute="Property.MQGet_MessageFormat">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.MQGet_MessageFormat" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                    <propertyDescriptor groupName="Group.MQGet" describedAttribute="Property.MQGet_ParseTiming">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.MQGet_ParseTiming" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                      <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_EXCEPTION_DETAIL_PUT">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_EXCEPTION_DETAIL_PUT" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                        <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_EXCEPTION_DETAIL_GET">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_EXCEPTION_DETAIL_GET" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                          <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_EXCEPTION_DETAIL_TIMEOUT">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_EXCEPTION_DETAIL_TIMEOUT" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                            <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_INTERACTION_TYPE">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_INTERACTION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+                              <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_OPERATION_TYPE">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_OPERATION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_TIMEOUT_MILLIS">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_TIMEOUT_MILLIS" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_MSGID_TO_CORRELID">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_MSGID_TO_CORRELID" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.MQOutput_QMgrName" overriddenNodes="FCMComposite_1_11">
+      <overriddenAttribute href="ComIbmMQOutput.msgnode#Property.queueManagerHostname"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.MQOutput_QName" overriddenNodes="FCMComposite_1_11">
+      <overriddenAttribute href="ComIbmMQOutput.msgnode#Property.queueName"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.Callback_QName" overriddenNodes="FCMComposite_1_11">
+      <overriddenAttribute href="ComIbmMQOutput.msgnode#Property.replyToQ"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.Callback_QName" overriddenNodes="FCMComposite_1_9">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.queueName"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.MQGet_Validate" overriddenNodes="FCMComposite_1_9">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.validateMaster"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.MQGet_MessageSet" overriddenNodes="FCMComposite_1_9">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.messageSetProperty"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.MQGet_MessageType" overriddenNodes="FCMComposite_1_9">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.messageTypeProperty"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.MQGet_MessageFormat" overriddenNodes="FCMComposite_1_9">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.messageFormatProperty"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.MQGet_ParseTiming" overriddenNodes="FCMComposite_1_9">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.validateTiming"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_EXCEPTION_DETAIL_PUT" overriddenNodes="FCMComposite_1_10">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_EXCEPTION_DETAIL"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_EXCEPTION_DETAIL_GET" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_EXCEPTION_DETAIL"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_EXCEPTION_DETAIL_TIMEOUT" overriddenNodes="FCMComposite_1_12">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_EXCEPTION_DETAIL"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_INTERACTION_TYPE" overriddenNodes="FCMComposite_1_8 FCMComposite_1_10 FCMComposite_1_12">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_INTERACTION_TYPE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_OPERATION_TYPE" overriddenNodes="FCMComposite_1_12 FCMComposite_1_10 FCMComposite_1_8">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_OPERATION_TYPE"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+  <eClassifiers xmi:type="ecore:EEnum">
+    <eLiterals xmi:id="MQGet_Validate.none" name="none"/>
+    <eLiterals xmi:id="MQGet_Validate.contentAndValue" name="contentAndValue" value="1"/>
+    <eLiterals xmi:id="MQGet_Validate.content" name="content" value="2"/>
+    <eLiterals xmi:id="MQGet_Validate.inherit" name="inherit" value="3"/>
+  </eClassifiers>
+  <eClassifiers xmi:type="ecore:EEnum">
+    <eLiterals xmi:id="MQGet_ParseTiming.deferred" name="deferred"/>
+    <eLiterals xmi:id="MQGet_ParseTiming.immediate" name="immediate" value="1"/>
+    <eLiterals xmi:id="MQGet_ParseTiming.complete" name="complete" value="2"/>
+  </eClassifiers>
+</ecore:EPackage>

@@ -1,0 +1,63 @@
+BROKER SCHEMA core.common.util.json
+
+DECLARE FORMAT_ISO8601 CONSTANT CHARACTER 'yyyy-MM-dd''T''HH:mm:ss.SSS-05:00'; 
+DECLARE CONTENT_TYPE CONSTANT CHARACTER 'application/json;charset=UTF-8';
+
+-- HEADERS RESPONSE DEFAULT
+DECLARE UDP_RATE_LIMIT EXTERNAL CHARACTER '0';
+DECLARE UDP_STRICT_TRANSPORT_SECURITY EXTERNAL CHARACTER 'max-age=31536000; includeSubDomains';
+DECLARE UDP_FRAME_ANCESTORS EXTERNAL CHARACTER 'none';
+DECLARE UDP_DEFAULT_SRC EXTERNAL CHARACTER 'self'' *.bancolombia.com';
+DECLARE UDP_X_CONTENT_TYPE_OPTIONS EXTERNAL CHARACTER 'nosniff';
+DECLARE UDP_CACHE_CONTROL EXTERNAL CHARACTER 'no-store';
+
+CREATE PROCEDURE SaveHttpHeaderMeta(IN envVar REFERENCE, IN prop REFERENCE, IN htppHeader REFERENCE) 
+BEGIN
+	CREATE FIELD envVar.HttpHeader;
+	DECLARE refVarHeader REFERENCE TO envVar.HttpHeader;
+
+	-- Datos de entrada cabeceras
+	SET refVarHeader.messageId			= htppHeader."Message-Id";
+	SET refVarHeader.requestDateTime 	= CAST(prop.CreationTime AS CHARACTER FORMAT FORMAT_ISO8601); 
+	SET refVarHeader.consumerId 		= htppHeader."Consumer-Id";
+	SET refVarHeader.applicationId 		= htppHeader."Application-Id"; -- OJO validar para eliminar es el mismo Cliend-Id
+	SET refVarHeader.clientId 			= htppHeader."Client-Id";
+	SET refVarHeader.clientSecret		= htppHeader."Client-Secret";
+	SET refVarHeader.apiVersion 		= htppHeader."Api-Version";
+	SET refVarHeader.accept 			= htppHeader."Accept";
+	SET refVarHeader.authorization 		= htppHeader."Authorization";
+	SET refVarHeader.jsonWebToken 		= htppHeader."Json-Web-Token";
+	SET refVarHeader.xClientCertificate = htppHeader."X-Client-Certificate";
+
+	-- Definición de datos de salida por defecto cabeceras
+	SET refVarHeader.contentType 				= CONTENT_TYPE; 
+	SET refVarHeader.ratelimitLimit 			= UDP_RATE_LIMIT;
+	SET refVarHeader.strictTransportSecurity  	= UDP_STRICT_TRANSPORT_SECURITY;
+	SET refVarHeader.frameAncestors 			= UDP_FRAME_ANCESTORS;
+	SET refVarHeader.defaultSrc  				= UDP_DEFAULT_SRC;
+	SET refVarHeader.xContentTypeOptions 		= UDP_X_CONTENT_TYPE_OPTIONS;
+	SET refVarHeader.cacheControl 				= UDP_CACHE_CONTROL;
+
+	-- Asignar datos de salida objeto Meta
+	CREATE FIELD envVar.HttpMeta;
+	DECLARE refVarMeta REFERENCE TO envVar.HttpMeta;
+
+	SET refVarMeta._messageId		= refVarHeader.messageId;
+	SET refVarMeta._requestDateTime = refVarHeader.requestDateTime; 
+	SET refVarMeta._consumerId 		= refVarHeader.consumerId;
+	SET refVarMeta._applicationId 	= refVarHeader.applicationId;
+	
+	-- Asignar datos de salida respuesta Header
+	CREATE FIELD envVar.HttpHeaderRs;
+	DECLARE refVarHeaderRs REFERENCE TO envVar.HttpHeaderRs;
+
+	SET refVarHeaderRs."content-type"				= refVarHeader.contentType;
+	SET refVarHeaderRs."api-version"				= refVarHeader.apiVersion;
+	SET refVarHeaderRs."message-id" 				= refVarHeader.messageId;
+	SET refVarHeaderRs."rate-limit" 				= refVarHeader.ratelimitLimit;
+	SET refVarHeaderRs."strict-transport-security" 	= refVarHeader.strictTransportSecurity;
+	SET refVarHeaderRs."frame-ancestors" 			= refVarHeader.frameAncestors;
+	SET refVarHeaderRs."default-src" 				= refVarHeader.defaultSrc;
+	SET refVarHeaderRs."x-content-type-options" 	= refVarHeader.xContentTypeOptions;
+	SET refVarHeaderRs."cache-control" 				= refVarHeader.cacheControl;
+END;

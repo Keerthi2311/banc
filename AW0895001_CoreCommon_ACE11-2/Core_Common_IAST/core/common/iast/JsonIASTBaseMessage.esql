@@ -1,0 +1,84 @@
+BROKER SCHEMA core.common.iast
+CREATE COMPUTE MODULE JsonIASTBaseMessage_Cached
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN ATOMIC /* Si hay más de un hilo en ejecución con ATOMIC se garantiza que se resuelva una sola vez*/
+		IF NOT EXISTS(CACHE_IAST.{InputRoot.HTTPInputHeader."Consumer-Id"}.DFDL[]) THEN
+			CREATE FIRSTCHILD OF CACHE_IAST.{InputRoot.HTTPInputHeader."Consumer-Id"};
+			DECLARE refCacheIast REFERENCE TO CACHE_IAST.{InputRoot.HTTPInputHeader."Consumer-Id"};
+			SET refCacheIast.DFDL = InputRoot.DFDL;
+			SET refCacheIast.DFDL_MessageType   = InputRoot.Properties.MessageType;
+			SET refCacheIast.DFDL_MessageFormat = InputRoot.Properties.MessageFormat;
+		END IF;
+		
+		RETURN FALSE;
+	END;
+END MODULE;
+
+CREATE FILTER MODULE JsonIASTBaseMessage_IsCached
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF NOT EXISTS(Root.HTTPInputHeader."Consumer-Id"[]) THEN
+			THROW USER EXCEPTION MESSAGE 500 VALUES('El elemento Consumer-Id hace falta', 'Error: JSonIASTBaseMessage');
+		END IF;
+		
+		IF NOT EXISTS(Root.HTTPInputHeader."Message-Id"[]) THEN
+			THROW USER EXCEPTION MESSAGE 500 VALUES('El elemento Message-Id hace falta', 'Error: JSonIASTBaseMessage');
+		END IF;
+			
+		RETURN EXISTS(CACHE_IAST.{Root.HTTPInputHeader."Consumer-Id"}.DFDL[]);
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE JsonIASTBaseMessage_UpdateCache
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot = InputRoot;
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+
+		DECLARE refHTTPInput REFERENCE TO InputRoot.HTTPInputHeader;
+		CALL PutIASTCacheDFDLField(refHTTPInput."Consumer-Id",'MENSAJE',refHTTPInput."Message-Id");
+				
+		DECLARE hora, secTransaccion, codTransaccion, idServidor, temporizador CHARACTER '';
+		SET hora = GetCurrentTimeFormatHHMMSSMS();
+		CALL PutIASTCacheDFDLField(refHTTPInput."Consumer-Id",'HORACLIREQ',hora);
+		
+		DECLARE messageId CHARACTER SUBSTRING(refHTTPInput."Message-Id" FROM 1 FOR 16); --OJO, si cambia la longitud del campo cabecera MENSAJE debe cambiar la longitud aquí (FOR 16).
+		
+		SET secTransaccion = messageId || SUBSTRING(hora FROM 3 FOR 4);
+		CALL PutIASTCacheDFDLField(refHTTPInput."Consumer-Id",'SEC_TRANSACCION',secTransaccion);
+		
+		/* GetDynamicValue --> Validar/obtener por medio de UDP_COD_TRANSACCION el valor fijo a asignar 
+		   o con base en comodines que referencian al llamdo del servicio configurable y/o data del mensaje de entrada
+		   Ejemplo: {ConfigurableService}:UDCS_TIPO_MOVIMIENTO|{JsonData}:data.test
+		*/
+		SET codTransaccion = GetDynamicValue(InputRoot, UDP_COD_TRANSACCION); 
+		CALL PutIASTCacheDFDLField(refHTTPInput."Consumer-Id",'COD_TRANSACCION',codTransaccion);
+		
+		-- UDP_TEMPORIZADOR --> Identificar para reemplazar comodines {ID_SERVIDOR}, {COD_TRANSACCION} 
+		SET temporizador = UDP_TEMPORIZADOR;
+
+		IF CONTAINS(UDP_TEMPORIZADOR,'{ID_SERVIDOR}') THEN
+			SET idServidor = GetIASTCacheDFDLField(refHTTPInput."Consumer-Id",'ID_SERVIDOR');
+			SET temporizador = REPLACE(temporizador, '{ID_SERVIDOR}', idServidor);
+		END IF;
+
+		IF CONTAINS(UDP_TEMPORIZADOR,'{COD_TRANSACCION}') THEN
+			SET temporizador = REPLACE(temporizador, '{COD_TRANSACCION}', codTransaccion);
+		END IF;
+		
+	    SET temporizador = ConfigurableServiceGetValue(UDP_POLICY_TYPE, UDP_POLICY_PROJECT, UDP_UDCS_CMSTI_CATALOG, temporizador);
+		CALL PutIASTCacheDFDLField(refHTTPInput."Consumer-Id",'TEMPORIZADOR',temporizador);
+
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+END MODULE;

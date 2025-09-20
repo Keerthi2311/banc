@@ -1,0 +1,25 @@
+BROKER SCHEMA core.common.util2
+
+
+
+CREATE COMPUTE MODULE SMR_MessageRouter_SMR
+CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot = InputRoot;
+		
+		DECLARE refHeadOut REFERENCE TO OutputRoot.XMLNSC.nsIL:esbXML.Header;
+		
+		IF refHeadOut.responseData.status.statusCode = 'SystemException' THEN
+			PROPAGATE TO LABEL 'SystemException';
+		ELSE
+			PROPAGATE TO LABEL refHeadOut.requestData.destination.operation;
+		END IF;
+		
+		RETURN FALSE;
+	END;
+END MODULE;
+
+								
+
+
+

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmFilter.msgnode="ComIbmFilter.msgnode" xmlns:ComIbmWSReply.msgnode="ComIbmWSReply.msgnode" xmlns:ComIbmWSRequest.msgnode="ComIbmWSRequest.msgnode" xmlns:core_common_adapter_JsonErrorAdapter.subflow="core/common/adapter/JsonErrorAdapter.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility"
+    nsURI="core/common/per/json/PerJsonHttp.subflow" nsPrefix="core_common_per_json_PerJsonHttp.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true" nodeLayoutStyle="RECTANGLE">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.URL" name="URL" lowerBound="1" defaultValueLiteral="http://localhost:7800/equivalences/spr">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Timeout" name="Timeout" lowerBound="1" defaultValueLiteral="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Level" name="Level" lowerBound="1" defaultValueLiteral="ERROR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventType" name="EventType" lowerBound="1" defaultValueLiteral="REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventDescription" name="EventDescription">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Platform" name="Platform" lowerBound="1" defaultValueLiteral="ACE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EnvironmentTrx" name="EnvironmentTrx" lowerBound="1" defaultValueLiteral="Desarrollo">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ExecutionEnvironment" name="ExecutionEnvironment" lowerBound="1" defaultValueLiteral="Local">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ServiceVersion" name="ServiceVersion" lowerBound="1" defaultValueLiteral="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BodyTrace" name="BodyTrace" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.OperationName" name="OperationName" lowerBound="1" defaultValueLiteral="Ope11">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ServiceName" name="ServiceName" lowerBound="1" defaultValueLiteral="Serv11">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_POLICY_TYPE" name="UDP_POLICY_TYPE" lowerBound="1" defaultValueLiteral="UserDefined">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_POLICY_PROJECT" name="UDP_POLICY_PROJECT" lowerBound="1" defaultValueLiteral="DefaultPolicies">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ConfigurableServiceCatalog" name="ConfigurableServiceCatalog" defaultValueLiteral="UDCS_HTTPCODE_CATALOG">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DefaultHttpCodeCatalog" name="DefaultHttpCodeCatalog" defaultValueLiteral="502">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DefaultDetailDescriptionCatalog" name="DefaultDetailDescriptionCatalog" defaultValueLiteral="MENSAJE INESPERADO RECIBIDO DEL SERVIDOR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DefaultHttpCodeSuccessResponse" name="DefaultHttpCodeSuccessResponse" lowerBound="1" defaultValueLiteral="500">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DefaultCharExceptionCodeCatalog" name="DefaultCharExceptionCodeCatalog" defaultValueLiteral="BP">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UseHttpCodeCatalog" name="UseHttpCodeCatalog" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DefaultCharExceptionCode" name="DefaultCharExceptionCode">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="PerJsonHttp" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Per/icons/full/obj16/PerJsonHttp.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Per/icons/full/obj30/PerJsonHttp.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="17,138">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="1038,148">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFilter.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="197,137" filterExpression="esql://routine/core.common.per.json#PERJson_IsCached.Main">
+        <translation xmi:type="utility:ConstantString" string="IsCached"/>
+      </nodes>
+      <nodes xmi:type="ComIbmWSRequest.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="382,40" httpVersion="1.1" protocol="TLS" messageDomainProperty="JSON">
+        <translation xmi:type="utility:ConstantString" string="HTTP PER"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="713,39" computeExpression="esql://routine/core.common.per.json#PERJson_PER_RS.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="PER RS"/>
+      </nodes>
+      <nodes xmi:type="ComIbmWSReply.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="1038,92">
+        <translation xmi:type="utility:ConstantString" string="HTTP Reply"/>
+      </nodes>
+      <nodes xmi:type="core_common_adapter_JsonErrorAdapter.subflow:FCMComposite_1" xmi:id="FCMComposite_1_8" location="772,92">
+        <translation xmi:type="utility:ConstantString" string="JsonErrorAdapter"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="552,92" computeExpression="esql://routine/core.common.per.json#PERJson_Http_Error.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="PER Http Error"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in">
+        <bendPoints>204,0,-99,-111</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_2" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.false" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.true" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_22" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.error" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Error"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.WebService" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.URLPropertyEditor" configurable="true" describedAttribute="Property.URL">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.URL" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+        <propertyDescriptor groupName="Group.WebService" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.PositiveIntegerPropertyEditor" configurable="true" describedAttribute="Property.Timeout">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.Timeout" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+          <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.Level">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.Level" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+            <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EventType">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.EventType" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+              <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EventDescription">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.EventDescription" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.Platform">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.Platform" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                  <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EnvironmentTrx">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.EnvironmentTrx" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                    <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ExecutionEnvironment">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.ExecutionEnvironment" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                      <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ServiceVersion">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.ServiceVersion" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                        <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.BodyTrace">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.BodyTrace" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                          <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.OperationName">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.OperationName" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                            <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ServiceName">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.ServiceName" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                              <propertyDescriptor groupName="Group.Policy" configurable="true" userDefined="true" describedAttribute="Property.UDP_POLICY_TYPE">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_POLICY_TYPE" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                <propertyDescriptor groupName="Group.Policy" configurable="true" userDefined="true" describedAttribute="Property.UDP_POLICY_PROJECT">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_POLICY_PROJECT" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                  <propertyDescriptor groupName="Group.HttpCodeCatalog" configurable="true" userDefined="true" describedAttribute="Property.UseHttpCodeCatalog">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.UseHttpCodeCatalog" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                    <propertyDescriptor groupName="Group.HttpCodeCatalog" configurable="true" userDefined="true" describedAttribute="Property.ConfigurableServiceCatalog">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.ConfigurableServiceCatalog" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                      <propertyDescriptor groupName="Group.HttpCodeCatalog" configurable="true" userDefined="true" describedAttribute="Property.DefaultHttpCodeCatalog">
+                                        <propertyName xmi:type="utility:TranslatableString" key="Property.DefaultHttpCodeCatalog" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                        <propertyDescriptor groupName="Group.HttpCodeCatalog" configurable="true" userDefined="true" describedAttribute="Property.DefaultDetailDescriptionCatalog">
+                                          <propertyName xmi:type="utility:TranslatableString" key="Property.DefaultDetailDescriptionCatalog" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                          <propertyDescriptor groupName="Group.HttpCode" configurable="true" userDefined="true" describedAttribute="Property.DefaultHttpCodeSuccessResponse">
+                                            <propertyName xmi:type="utility:TranslatableString" key="Property.DefaultHttpCodeSuccessResponse" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                            <propertyDescriptor groupName="Group.HttpCodeCatalog" configurable="true" userDefined="true" describedAttribute="Property.DefaultCharExceptionCodeCatalog">
+                                              <propertyName xmi:type="utility:TranslatableString" key="Property.DefaultCharExceptionCodeCatalog" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                              <propertyDescriptor groupName="Group.HttpCode" configurable="true" userDefined="true" describedAttribute="Property.DefaultCharExceptionCode">
+                                                <propertyName xmi:type="utility:TranslatableString" key="Property.DefaultCharExceptionCode" bundleName="core/common/per/json/PerJsonHttp" pluginId="Core_Common_Per"/>
+                                              </propertyDescriptor>
+                                            </propertyDescriptor>
+                                          </propertyDescriptor>
+                                        </propertyDescriptor>
+                                      </propertyDescriptor>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.URL" overriddenNodes="FCMComposite_1_3">
+      <overriddenAttribute href="ComIbmWSRequest.msgnode#Property.URLSpecifier"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.Timeout" overriddenNodes="FCMComposite_1_3">
+      <overriddenAttribute href="ComIbmWSRequest.msgnode#Property.timeoutForServer"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.Level" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.Level"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.EventType" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.EventType"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.EventDescription" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.EventDescription"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.Platform" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.Platform"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.EnvironmentTrx" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.EnvironmentTrx"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ExecutionEnvironment" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.ExecutionEnvironment"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ServiceVersion" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.ServiceVersion"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.BodyTrace" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.BodyTrace"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.OperationName" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.OperationName"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.ServiceName" overriddenNodes="FCMComposite_1_8">
+      <overriddenAttribute href="core/common/adapter/JsonErrorAdapter.subflow#Property.ServiceName"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

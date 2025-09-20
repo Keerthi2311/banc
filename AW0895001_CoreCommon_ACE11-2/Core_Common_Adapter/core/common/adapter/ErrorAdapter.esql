@@ -1,0 +1,726 @@
+/**********************************************************************
+* COPYRIGHT. IBM 2012. ALL RIGHTS RESERVED. NO PART OF THIS SOURCE    *
+* CODE MAY BE REPRODUCED, STORED IN A RETRIEVAL SYSTEM, OR TRANSMITTED*
+* IN ANY FORM BY ANY MEANS, ELECTRONIC, MECHANICAL, PHOTO, COPYING,   *
+* RECORDING OR OTHERWISE, WITHOUT THE PRIOR WRITTEN PERMISSION OF	  *
+* IBM COLOMBIA														  *
+**********************************************************************/
+/**
+*
+* File Name: ErrorAdapter.esql
+*
+* Purpose: Sublujo utilitario para generar errores de tipo esbXML-il validos
+*
+* Authors: Oscar Bustos, Juan Figueredo, Giovanni Martinez
+* Date: 04 de Mayo de 2012
+* Version: 3.0
+*
+* @copyright IBM Colombia 2011. All rights reserved.
+*
+*/
+
+BROKER SCHEMA core.common.adapter
+PATH core.common.util;
+--Namespace de los mensajes de capa de integracion ESB
+DECLARE il NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+--Constantes de declaracion de los errores del catalogo
+DECLARE REQUEST_PARSER_EX CONSTANT CHARACTER 'Client.InvalidMessage';
+DECLARE RESPONSE_PARSER_EX CONSTANT CHARACTER 
+									'Server.ESB.InvalidProviderResponseMessage';
+DECLARE REQUEST_INT_EX CONSTANT CHARACTER 'Server.ESB.InternalServerError';
+DECLARE RESPONSE_INT_EX CONSTANT CHARACTER 'Server.ESB.InternalServerResponseError';
+DECLARE SYSTEM_EXCEPTION CONSTANT CHARACTER 'SystemException';
+--Constantes por defecto para cuando no hay informacion sobre los campos esbXML-il obligatorios
+DECLARE DEF_ID CONSTANT CHARACTER '';
+DECLARE DEF_USER CONSTANT CHARACTER 'UNAUTHENTICATED';
+DECLARE DEF_DEST_NAME CONSTANT CHARACTER 'UNDEFINED_NAME';
+DECLARE DEF_DEST_NS CONSTANT CHARACTER 'https:/bancolombia.com/undefined';
+DECLARE DEF_DEST_OP CONSTANT CHARACTER 'UNDEFINED_OPERATION';
+--Constantes por defecto para cuando no hay informacion sobre los campos esbXML-il obligatorios
+DECLARE LOOKUP_FAULTSTRING EXTERNAL BOOLEAN FALSE;
+/******************************************************************************
+* Function Name: ExtractException                 							  *
+* Input Parameters:	REFERENCE exList - Lista de Excepciones					  *
+*					REFERENCE env - Referencia al Environment				  *
+* Output Parameters: CHARACTER type - Tipo de excepcion						  *
+* Returns: tipo de excepcion encontrado										  *
+* Description: Recupera el ultimo elemento de la lista de excepciones		  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    04/05/2012  Oscar Bustos		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE FUNCTION ExtractException(IN exList REFERENCE, IN env REFERENCE, 
+										   OUT type CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE messageNumber INTEGER;
+	DECLARE type CHARACTER;
+	DECLARE ex ROW;
+	DECLARE ptrException REFERENCE TO exList.*[1];
+	-- Extract last exception
+	WHILE LASTMOVE(ptrException) DO
+		IF ptrException.Number IS NOT null THEN
+			-- SET messageNumber = ptrException.Number;
+			SET type = FIELDNAME(ptrException);
+			SET ex = ptrException;
+		END IF;
+		MOVE ptrException LASTCHILD;
+	END WHILE;
+	DELETE FIELD env.Variables.Exception;
+	CREATE FIELD env.Variables.Exception;
+	CREATE LASTCHILD OF env.Variables.Exception DOMAIN('XMLNSC');
+	CREATE LASTCHILD OF env.Variables.Exception.XMLNSC TYPE Name 
+												NAME COALESCE(type,'Exception');
+	SET env.Variables.Exception.XMLNSC.*[1] = ex;
+	RETURN type;
+END;
+/******************************************************************************
+* Function Name: IsParserException                 							  *
+* Input Parameters:	CHARACTER type - Tipo de excepcion						  *
+* Output Parameters: CHARACTER type - Tipo de excepcion						  *
+* Returns: BOOLEAN true si la excepcion se dio por problemas de parseo		  *
+* Description: Valida si la excepcion fue por problemas de parseo o no.		  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    04/05/2012  Oscar Bustos		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE FUNCTION IsParserException(IN type CHARACTER) RETURNS BOOLEAN
+BEGIN
+	DECLARE found BOOLEAN false;
+	-- Test for ParserException
+	IF type = 'ParserException' THEN
+		SET found = true;
+	END IF;
+	RETURN found;
+END;
+
+/******************************************************************************
+* Function Name: BuildStatus	                 							  *
+* Input Parameters:	REFERENCE exList - Lista de Excepciones					  *
+* 					BOOLEAN isResponse - Bandera que sirve para diferenciar	  *
+*							si el mensaje es de request o de response		  *
+* 					REFERENCE env - Referencia al Environment				  *
+* 					INTEGER ccsid - Identificacion de conjunto de caracteres  *
+* Output Parameters: CHARACTER type - Tipo de excepcion 					  *
+* Returns: CHARACTER Tipo de excepcion encontrado						  	  *
+* Description: Genera el tag StatusCode del encabezado esbXML-il y lo retorna *
+* 			   en el ambiente.												  *
+* Diferencia entre error de parseo o error interno.							  *
+* Diferencia entre error de request o de response.							  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    04/05/2012  Oscar Bustos		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE FUNCTION BuildStatus(IN exList REFERENCE, IN isResponse BOOLEAN, IN env
+								REFERENCE, IN ccsid INTEGER) RETURNS CHARACTER
+BEGIN
+	DECLARE status ROW;
+	DECLARE isParserEx BOOLEAN;
+	DECLARE type CHARACTER ExtractException(exList, env, type);
+	DECLARE detailEx CHARACTER;
+	DECLARE i INTEGER;
+	DECLARE j INTEGER;
+	DECLARE ex REFERENCE TO env.Variables.Exception.XMLNSC;
+	SET isParserEx = IsParserException(type);
+	-- Build status depending on request/response and parserError/otherError
+	SET status.statusCode = 'SystemException';
+	IF isParserEx = true THEN
+		IF isResponse = true THEN
+			SET status.systemException.faultcode = RESPONSE_PARSER_EX;
+		ELSE
+			SET status.systemException.faultcode = REQUEST_PARSER_EX;
+		END IF;
+		SET status.systemException.faultstring VALUE = NULL;
+		SET status.systemException.faultactor VALUE = NULL;
+		SET status.systemException.detail = CAST(ASBITSTREAM(ex) AS CHARACTER 
+																   CCSID ccsid);
+	ELSE
+		IF isResponse = true THEN
+			SET status.systemException.faultcode = RESPONSE_INT_EX;
+		ELSE
+			SET status.systemException.faultcode = REQUEST_INT_EX;
+		END IF;
+		SET status.systemException.faultstring VALUE = NULL;
+		SET status.systemException.faultactor VALUE = NULL;
+		
+		-- Obtener mas detalle del ExceptionList por medio de los Inserts
+		SET detailEx = '';
+		SET        i = 1;
+		SET 	   j = CARDINALITY(ex.*[1].Insert[]);
+		WHILE (i <= j) DO
+			
+			SET detailEx = detailEx || ' '||COALESCE(ex.*[1].Insert[i].Text,'')
+																		 || ':';
+			SET i = i + 1;
+		END WHILE;	
+		
+		SET status.systemException.detail = type || ': ['
+		|| COALESCE(ex.*[1].Catalog,'DEFAULT') || ':'
+		|| CAST(ex.*[1].Number AS CHARACTER) || '] '
+		|| ex.*[1].Text || ': ['|| detailEx || '] ';
+	END IF;
+	SET env.Variables.Status = status;
+	RETURN type;
+END;
+
+/*******************************************************************************
+* Nodo Name:         setISE					                                   *
+* Module Name:       ErrorAdapter_setISE							           *
+* Description:       Respalda al nodo compute setISE						   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+CREATE COMPUTE MODULE ErrorAdapter_setISE
+/******************************************************************************
+* Function Name: Main                             							  *
+* Input Parameters:	None                          							  *
+* Output Parameters: Boolean Return               							  *
+* Description: Punto principal de entrada del Módulo						  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    04-May-2012 Oscar Bustos	   			Versión inicial   			  *
+******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL ProcessExceptionList();
+		RETURN TRUE;
+	END;
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia los encabezados del mensaje en el mensaje de salida 	   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	
+/*******************************************************************************
+* Procedure Name: ProcessExceptionList 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description:Genera un error de tipo Client.InvalidMessage					   *
+* 			  o Server.ESB.InternalServerError dependiendo de la lista 		   *
+*			  de excepciones de entrada										   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE ProcessExceptionList() BEGIN
+		DECLARE exList REFERENCE TO InputExceptionList;
+		DECLARE env REFERENCE TO Environment;
+		DECLARE isResponse BOOLEAN false;
+		DECLARE outcur REFERENCE TO OutputRoot;
+		DECLARE ccsid INTEGER InputRoot.Properties.CodedCharSetId;
+		DECLARE type CHARACTER BuildStatus(exList, isResponse, env, ccsid);
+		DECLARE inx REFERENCE TO InputRoot.XMLNSC;
+
+		IF env.Variables.OriginMsg IS null AND IsParserException(type) = false THEN
+			CALL SendOriginMsgToEnv(inx, env);
+		END IF;
+
+		CREATE FIELD OutputRoot.XMLNSC.il:esbXML AS outcur TYPE Name;
+		CREATE FIRSTCHILD OF outcur AS outcur TYPE Name NAME 'Header';
+		IF EXISTS(InputRoot.XMLNSC.il:esbXML.Header[]) THEN
+			SET outcur = InputRoot.XMLNSC.il:esbXML.Header;
+		END IF;
+		SET outcur.responseData.status = env.Variables.Status;
+		CREATE NEXTSIBLING OF outcur TYPE Name NAME 'Body';
+	END;
+END MODULE;
+
+/*******************************************************************************
+* Nodo Name:         setISRE				                                   *
+* Module Name:       ErrorAdapter_setISRE							           *
+* Description:       Respalda al nodo compute setISRE						   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+CREATE COMPUTE MODULE ErrorAdapter_setISRE
+/******************************************************************************
+* Function Name: Main                             							  *
+* Input Parameters:	None                          							  *
+* Output Parameters: Boolean Return               							  *
+* Description: Punto principal de entrada del Módulo						  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    04-May-2012 Oscar Bustos	   			Versión inicial   			  *
+******************************************************************************/		
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL ProcessExceptionList();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+/*******************************************************************************
+* Procedure Name: ProcessExceptionList 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description:Genera un error de tipo Server.ESB.InvalidProviderResponseMessage*
+* 			  o Server.ESB.InternalServerResponseError dependiendo de la lista *
+*			  de excepciones de entrada										   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE ProcessExceptionList() BEGIN
+		DECLARE exList REFERENCE TO InputExceptionList;
+		DECLARE env REFERENCE TO Environment;
+		DECLARE isResponse BOOLEAN true;
+		DECLARE outcur REFERENCE TO OutputRoot;
+		DECLARE ccsid INTEGER InputRoot.Properties.CodedCharSetId;
+		DECLARE type CHARACTER BuildStatus(exList, isResponse, env, ccsid);
+		DECLARE inx REFERENCE TO InputRoot.XMLNSC;
+
+		IF env.Variables.OriginMsg IS null THEN
+			CALL SendOriginMsgToEnv(inx, env);
+		END IF;
+
+		CREATE FIELD OutputRoot.XMLNSC.il:esbXML AS outcur TYPE Name;
+		CREATE FIRSTCHILD OF outcur AS outcur TYPE Name NAME 'Header';
+		IF EXISTS(InputRoot.XMLNSC.il:esbXML.Header[]) THEN
+			SET outcur = InputRoot.XMLNSC.il:esbXML.Header;
+		END IF;
+		SET outcur.responseData.status = env.Variables.Status;
+		CREATE NEXTSIBLING OF outcur TYPE Name NAME 'Body';
+	END;
+END MODULE;
+
+/*******************************************************************************
+* Nodo Name:         RouteError				                                   *
+* Module Name:       ErrorAdapter_RouteError						           *
+* Description:       Respalda al nodo compute ErrorController				   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+CREATE COMPUTE MODULE ErrorAdapter_RouteError
+/*******************************************************************************
+* Procedure Name: Main                                                         *
+* Input Parameters: None                                                       *
+* Output Parameters: None                                                      *
+* Description: Punto principal de entrada del Módulo	                       *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL ProcessError();
+		RETURN FALSE;
+	END;
+
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia los encabezados del mensaje en el mensaje de salida 	   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+/*******************************************************************************
+* Procedure Name: ProcessError		                                           *
+* Input Parameters: None                                                       *
+* Output Parameters: None                                                      *
+* Description:Realiza transformaciones de mensajes de error para Consumidor y  *
+*  			  ErrorHandler, y decide en cada caso (segun codigo de error) si se*
+*			  debe propagar a cada uno de ellos.							   *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE ProcessError() BEGIN
+		DECLARE exList REFERENCE TO InputExceptionList;
+		DECLARE inesb REFERENCE TO InputRoot.XMLNSC.il:esbXML;
+		CREATE FIELD OutputRoot.XMLNSC.il:esbXML;
+		DECLARE outesb REFERENCE TO OutputRoot.XMLNSC.il:esbXML;
+		DECLARE env REFERENCE TO Environment;
+		DECLARE fc CHARACTER inesb.Header.responseData.status.systemException.faultcode;
+		DECLARE fs CHARACTER 'System Exception.';
+		CALL PropagateError(exList, inesb, outesb, env, fc, fs, InputRoot.MQMD.CodedCharSetId);
+	END;
+
+/*******************************************************************************
+* Procedure Name: PropagateError		                                       *
+* Input Parameters: REFERENCE exList - Lista de Excepciones					   *
+* 					REFERENCE inesb - Referencia al mensaje esbXML de entrada  *
+* 					REFERENCE outesb - Referencia al mensaje esbXML de salida  *
+* 					REFERENCE env - Referencia al Environment				   *
+* 					CHARACTER fc - Faultcode de entrada						   *
+* 					CHARACTER fs - FaultString de entrada					   *
+* 					INTEGER ccs - Identificacion de conjunto de caracteres	   *
+* Output Parameters: None                                                      *
+* Description: Decide si el mensaje de error debe ser propagado al consumidor  *
+*			   y/o al TracingManager										   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE PropagateError(IN exList REFERENCE, IN inesb REFERENCE, 
+									IN outesb REFERENCE, IN env REFERENCE, 
+									IN fc CHARACTER, IN fs CHARACTER, 
+									IN ccs INTEGER) BEGIN
+		DECLARE routingRules ROW;
+		DECLARE propToCaller BOOLEAN false;
+		DECLARE propToHandler BOOLEAN false;
+
+		IF fc IS NULL THEN
+			THROW USER EXCEPTION;
+		END IF;
+
+		SET routingRules.toCaller[] = LIST{
+		'Client.NotAuthorized',
+		'Client.ResourceNotFound',
+		'Client.InvalidMessage',
+		'Server.ESB.InfrastructureError',
+		'Server.ESB.DeadLetter',
+		'Server.ESB.InternalServerError',
+		'Server.ESB.ResourceNotAvailable',
+		'Server.Provider.Timeout',
+		'Server.ESB.NotAuthorized',
+		'Server.ESB.InvalidProviderResponseMessage',
+		'Server.ESB.InternalServerResponseError',
+		'Server.ESB.InvalidMessage'
+		};
+		SET propToCaller = EXISTS(SELECT T FROM routingRules.toCaller[] AS T WHERE T = fc);
+
+		SET routingRules.toHandler[] = LIST{
+		'Client.NotAuthorized',
+		'Client.ResourceNotFound',
+		'Server.ESB.InfrastructureError',
+		'Server.ESB.DeadLetter',
+		'Server.ESB.InternalServerError',
+		'Server.ESB.ResourceNotAvailable',
+		'Server.Provider.Timeout',
+		'Server.ESB.NotAuthorized',
+		'Server.ESB.InvalidProviderResponseMessage',
+		'Server.ESB.InternalServerResponseError',
+		'Server.ESB.ResponseResourceNotAvailable',
+		'Server.ESB.InvalidMessage'
+		};
+		SET propToHandler = EXISTS(SELECT T FROM routingRules.toHandler[] AS T WHERE T = fc);
+
+		CALL PrepareErrorForCaller(fc, fs, inesb, outesb);
+		IF propToCaller = true THEN
+			IF propToHandler = true THEN
+				PROPAGATE TO TERMINAL 'out2' FINALIZE NONE DELETE NONE;
+			ELSE
+				PROPAGATE TO TERMINAL 'out2';
+			END IF;
+		END IF;
+
+		IF propToHandler = true THEN
+			CALL PrepareErrorForHandler(exList, outesb, env, ccs);
+			PROPAGATE TO TERMINAL 'out1';
+		END IF;
+	END;
+
+/*******************************************************************************
+* Procedure Name: PrepareErrorForCaller                                        *
+* Input Parameters: CHARACTER fc - Faultcode de entrada						   *
+* 					CHARACTER fs - FaultString de entrada					   *
+*					REFERENCE inesb - Referencia al mensaje esbXML de entrada  *
+*					REFERENCE outesb - Referencia al mensaje esbXML de salida  *
+* Output Parameters: None                                                      *
+* Description:Completa el mensaje en el caso de que no vengan				   *
+*			  campos obligatorios.											   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE PrepareErrorForCaller(IN fc CHARACTER, IN fs CHARACTER, 
+								  IN inesb REFERENCE, IN outesb REFERENCE) BEGIN
+		DECLARE outcur REFERENCE TO outesb;
+		DECLARE incur REFERENCE TO inesb.Header;
+		DECLARE ts TIMESTAMP CURRENT_TIMESTAMP;
+
+		CREATE FIRSTCHILD OF outesb AS outcur TYPE Name NAME 'Header';
+		CREATE NEXTSIBLING OF outcur TYPE Name NAME 'Body';
+		SET outcur.systemId = COALESCE(incur.systemId,DEF_ID);
+		SET outcur.messageId = COALESCE(incur.messageId,CAST(ts AS CHARACTER));
+		IF EXISTS(incur.interactionData[]) THEN
+			SET outcur.interactionData = incur.interactionData;
+		ELSE
+			SET outcur.interactionData.timestamp = ts;
+		END IF;
+		IF EXISTS(incur.requestData[]) THEN
+			SET outcur.requestData = incur.requestData;
+		ELSE
+			SET outcur.requestData.userId.userName = DEF_USER;
+			SET outcur.requestData.destination.name = DEF_DEST_NAME;
+			SET outcur.requestData.destination.namespace = DEF_DEST_NS;
+			SET outcur.requestData.destination.operation = DEF_DEST_OP;
+		END IF;
+		IF EXISTS(incur.responseData.providerData[]) THEN
+			SET outcur.responseData.providerData = incur.responseData.providerData;
+		ELSE
+			SET outcur.responseData.providerData.systemId = DEF_ID;
+		END IF;
+		CREATE FIELD outcur.responseData.status TYPE Name;
+		SET outcur.routingStack = incur.routingStack;
+		SET outcur.messageContext = incur.messageContext;
+		MOVE outcur TO outcur.responseData.status;
+		CREATE FIRSTCHILD OF outcur TYPE NameValue NAME 'statusCode' VALUE SYSTEM_EXCEPTION;
+		CREATE NEXTSIBLING OF outcur.statusCode AS outcur TYPE Name NAME 'systemException';
+		SET outcur.faultcode VALUE = fc;
+		SET outcur.faultstring VALUE = fs;
+		DECLARE indest REFERENCE TO incur.requestData.destination;
+		SET outcur.faultactor = COALESCE(indest.namespace, DEF_DEST_NS) || '/'
+		|| COALESCE(indest.name, DEF_DEST_NAME) || '/'
+		|| COALESCE(indest.operation, DEF_DEST_OP);
+		SET outcur.detail = incur.responseData.status.systemException.detail;
+	END;
+/*******************************************************************************
+* Procedure Name: PrepareErrorForHandler                                       *
+* Input Parameters: REFERENCE exList - Lista de Excepciones					   *
+* 					REFERENCE outesb - Referencia al mensaje esbXML de salida  *
+* 					REFERENCE env - Referencia al Environment				   *
+*					INTEGER ccs - Identificacion de conjunto de caracteresNone *
+* Output Parameters: None                                                      *
+* Description:Completa el detalle de la excepcion serializando el exceptionList*
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE PrepareErrorForHandler(IN exList REFERENCE, IN 
+					   outesb REFERENCE, IN env REFERENCE, IN ccs INTEGER) BEGIN
+		DECLARE type CHARACTER ExtractException(exList, env, type);
+		DECLARE ex REFERENCE TO env.Variables.Exception.XMLNSC;
+		DECLARE outcur REFERENCE TO outesb.Header.responseData.status.systemException;
+		IF LASTMOVE(outcur) THEN
+			SET outcur.detail = COALESCE(outcur.detail,CAST(ASBITSTREAM(ex) AS CHARACTER CCSID ccs));
+		END IF;
+		DECLARE originMsg REFERENCE TO env.Variables.OriginMsg.XMLNSC;
+		IF LASTMOVE(originMsg) THEN
+			SET outesb.OriginMsg = originMsg;
+		END IF;
+	END;
+END MODULE;
+
+/*******************************************************************************
+* Nodo Name:         SetFaultString			                                   *
+* Module Name:       ErrorAdapter_SetFaultString					           *
+* Description:       Respalda al nodo compute SetFaultString				   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+CREATE COMPUTE MODULE ErrorAdapter_SetFaultString
+/******************************************************************************
+* Function Name: Main                             							  *
+* Input Parameters:	None                          							  *
+* Output Parameters: Boolean Return               							  *
+* Description: Punto principal de entrada del Módulo						  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    04-May-2012 Oscar Bustos	   			Versión inicial				  *
+******************************************************************************/		
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL SetFaultString();
+		RETURN TRUE;
+	END;
+	
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia los encabezados del mensaje en el mensaje de salida 	   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+/*******************************************************************************
+* Procedure Name: SetFaultString	                                           *
+* Input Parameters: None                                                       *
+* Output Parameters: None                                                      *
+* Description: Completa el campo faultstring dependiendo del faultcode y los   *
+*			  parametros de la cola de configuracion						   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *
+*******************************************************************************/
+	CREATE PROCEDURE SetFaultString() BEGIN
+		DECLARE faultstring CHARACTER 'System Exception.';
+		DECLARE parameters REFERENCE TO InputLocalEnvironment.Variables.
+												   ConfigData.XMLNSC.parameters;
+		DECLARE faultcode REFERENCE TO InputRoot.XMLNSC.il:esbXML.Header.
+								  responseData.status.systemException.faultcode;
+		IF LASTMOVE(parameters) AND LASTMOVE(faultcode) THEN
+			SET faultstring = THE(SELECT ITEM FIELDVALUE(p) FROM 
+			parameters.parameter[] AS p WHERE p.name = faultcode);
+		END IF;
+		SET OutputRoot = InputRoot;
+		SET OutputRoot.XMLNSC.il:esbXML.Header.responseData.status.
+									  systemException.faultstring = faultstring;
+	END;
+END MODULE;
+/*******************************************************************************
+* Node Name: FilterAndGMO													   *
+* Module Name: ErrorAdapter_FilterAndGMO									   *
+* Description: respalda al nodo compute FilterAndGMO						   *
+* 																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	04-May-2012 Oscar Bustos	   	Versión inicial   				   *	
+*******************************************************************************/
+CREATE COMPUTE MODULE ErrorAdapter_FilterAndGMO
+/*******************************************************************************
+* Function Name: Main                             							   *
+* Input Parameters:	None                          							   *
+* Output Parameters: Boolean Return               							   *
+* Description: Ajusta los valores para el nodo MQGET de configuracion de	   *
+*			   parametros de faultstring									   *
+*    																		   *
+* Version Date		  Author	  				Description  				   *	
+* ======= =========== ========================= ============================== *
+* 1.00    04-May-2012 Oscar Bustos	   			Versión inicial				   *	
+*******************************************************************************/
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF LOOKUP_FAULTSTRING = TRUE THEN
+			SET OutputLocalEnvironment = InputLocalEnvironment;
+			SET OutputLocalEnvironment.MQ.GET.MQGMO.Options = 
+			BITOR(MQGMO_BROWSE_FIRST,MQGMO_COMPLETE_MSG,MQGMO_ALL_MSGS_AVAILABLE);
+			SET OutputLocalEnvironment.MQ.GET.MQGMO.WaitInterval = 500;
+			PROPAGATE TO TERMINAL 'out1';
+		ELSE
+			PROPAGATE TO TERMINAL 'out';
+		END IF;
+		RETURN FALSE;
+	END;
+/*******************************************************************************
+* Procedure Name: CopyEntireMessage                                            *
+* Input Parameters: None                                                       *
+* Output Parameters: None                                                      *
+* Description: Copia mensaje entero de entrada en el mensaje de salida         *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00    	04-May-2012 Oscar Bustos	   	Versión inicial					   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+/*******************************************************************************
+* Node Name: AssignRequestType												   *
+* Module Name: ErrorAdapter_AssignRequestType								   *
+* Description: Asigna el tipo de interacción a la variable de ambiente		   *
+* 																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	13-Jun-2012 Edgar González   	Versión inicial   				   *	
+*******************************************************************************/
+CREATE COMPUTE MODULE ErrorAdapter_AssignRequestType
+
+/*******************************************************************************
+* Function Name: Main                             							   *
+* Input Parameters:	None                          							   *
+* Output Parameters: Boolean Return               							   *
+* Description: Punto principal de entrada del Modulo						   *
+*    																		   *
+* Version Date		  Author	  				Description  				   *	
+* ======= =========== ========================= ============================== *
+* 1.0     13-Jun-2012  Edgar González		    Versión inicial				   *
+*******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET Environment.Variables.ErrorAdapterV2.interactionType = 'REQUEST'; 
+		RETURN TRUE;
+	END;
+
+END MODULE;
+
+
+/*******************************************************************************
+* Node Name: AssignResponseType												   *
+* Module Name: ErrorAdapter_AssignResponseType								   *
+* Description: Asigna el tipo de interacción a la variable de ambiente		   *
+* 																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00     	13-Jun-2012 Edgar González   	Versión inicial   				   *
+*******************************************************************************/
+CREATE COMPUTE MODULE ErrorAdapter_AssignResponseType
+
+/*******************************************************************************
+* Function Name: Main                             							   *
+* Input Parameters:	None                          							   *
+* Output Parameters: Boolean Return               							   *
+* Description: Punto principal de entrada del Modulo						   *
+*    																		   *
+* Version Date		  Author	  				Description  				   *	
+* ======= =========== ========================= ===============================*
+* 1.0     13-Jun-2012  Edgar González		    Versión inicial				   *
+*******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET Environment.Variables.ErrorAdapterV2.interactionType = 'RESPONSE'; 
+		RETURN TRUE;
+	END;
+
+END MODULE;

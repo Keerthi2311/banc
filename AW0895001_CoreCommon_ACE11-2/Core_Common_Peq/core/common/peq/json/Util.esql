@@ -1,0 +1,139 @@
+BROKER SCHEMA core.common.peq.json
+
+
+CREATE PROCEDURE PeqEncabezado(IN env REFERENCE, IN appOrigen CHARACTER, IN appDestino CHARACTER, IN socOrigen CHARACTER, IN socDestino CHARACTER) 
+BEGIN
+	IF COALESCE(appOrigen,'') = '' OR COALESCE(appDestino,'') = '' OR COALESCE(socOrigen,'') = '' OR COALESCE(socDestino,'') = '' THEN  
+		THROW USER EXCEPTION MESSAGE 500 VALUES ('Error: Algunos parametros encabezado PEQ vacios', 'appDestino=' || COALESCE(appOrigen,''), 'appDestino=' || COALESCE(appDestino,''), 'socOrigen=' || COALESCE(socOrigen,''), 'socDestino=' || COALESCE(socDestino,''));
+	END IF;
+	
+	DELETE FIELD env.PEQ.cache;
+	CREATE FIELD env.PEQ.cache;
+	DECLARE refEnvCachePeq REFERENCE TO env.PEQ.cache;
+
+	CREATE FIELD refEnvCachePeq.encabezadoHomologacion;
+	DECLARE refEncabezadoHom REFERENCE TO refEnvCachePeq.encabezadoHomologacion;
+	 
+	SET refEncabezadoHom.aplicacionOrigen = appOrigen;
+	SET refEncabezadoHom.aplicacionDestino = appDestino;
+	SET refEncabezadoHom.sociedadOrigen = socOrigen;
+	SET refEncabezadoHom.sociedadDestino = socDestino;
+	 
+	SET refEnvCachePeq.keyEncabezado = appOrigen || appDestino || socOrigen || socDestino;
+	SET refEnvCachePeq.exists = true;
+END;
+
+CREATE PROCEDURE PeqCriterio(IN env REFERENCE, IN tipologia CHARACTER, IN valorOrigen CHARACTER) 
+BEGIN
+	IF valorOrigen IS NULL THEN
+		RETURN;
+	END IF;
+	
+	DECLARE refEnvCachePeq REFERENCE TO env.PEQ.cache;
+	DECLARE existsCacheFieldCriteria BOOLEAN EXISTS(CACHE_PEQ.{refEnvCachePeq.keyEncabezado || tipologia || valorOrigen}[]);
+	
+	/* La variable de ambiente "exists" llega inicializada en "true", 
+	   se evalua para que si uno de los criterios no existe en el cache la variable global se actualice a false,
+	   esto para que en el subflujo del PEQ pueda ir a realizar la busqueda de los criterios al API.*/
+	IF refEnvCachePeq.exists AND NOT existsCacheFieldCriteria THEN
+		SET refEnvCachePeq.exists = existsCacheFieldCriteria;
+	END IF;
+
+	IF NOT existsCacheFieldCriteria THEN
+		IF NOT EXISTS(refEnvCachePeq.criterioParametrizacion[]) THEN
+			CREATE FIELD refEnvCachePeq.criterioParametrizacion IDENTITY(JSON.Array)criterioParametrizacion;
+		END IF;
+
+		CREATE LASTCHILD OF refEnvCachePeq.criterioParametrizacion NAME 'Item';
+		DECLARE refCriterio REFERENCE TO refEnvCachePeq.criterioParametrizacion.Item[<];
+		SET refCriterio.tipologia = tipologia;
+		SET refCriterio.valorOrigen = valorOrigen;
+	END IF;
+END;
+
+CREATE PROCEDURE PeqRequest(IN env REFERENCE, IN input REFERENCE, IN output REFERENCE, IN inLocalEnv REFERENCE, IN outLocalEnv REFERENCE, IN header REFERENCE) 
+BEGIN
+	DECLARE refEnvCachePeq REFERENCE TO env.PEQ.cache;
+	 
+	IF NOT refEnvCachePeq.exists THEN
+		SET refEnvCachePeq.localEnvironmentOrig = inLocalEnv;
+		
+		-- Se guarda el mensaje original entrante para ser devuelto a la salida.
+		CREATE FIELD refEnvCachePeq.inputOrig;
+		CALL CopyCompleteMessage(input, refEnvCachePeq.inputOrig);
+
+		-- Se fijan propiedades constantes, las propiedades "Encoding" y "CodedCharSetId" se toman del mensaje de entrada.
+		DECLARE refInProp REFERENCE TO input.Properties; 
+		DECLARE refOutProp REFERENCE TO output.Properties;
+		SET refOutProp.Encoding = refInProp.Encoding;
+		SET refOutProp.CodedCharSetId = refInProp.CodedCharSetId;
+		SET refOutProp.ReplyProtocol = PROTOCOL_SOAP_HTTP;
+		SET refOutProp.ContentType = JSON_CONTENT_TYPE;
+
+		-- Por intermedio del parametro de entrada "httpHeader" se debe recibir los datos de la cabecera a enviar al PEQ.
+		CREATE FIELD output.HTTPRequestHeader;
+		DECLARE refOutHTTPHeader REFERENCE TO output.HTTPRequestHeader; 
+		SET refOutHTTPHeader."Message-Id" = header.messageId;
+		SET refOutHTTPHeader."Consumer-Id" = header.consumerId;
+				
+		-- Crear mensaje request PEQ.
+		CREATE LASTCHILD OF output DOMAIN 'JSON';
+		CREATE FIELD output.JSON.Data;
+		DECLARE refOutJsonData REFERENCE TO output.JSON.Data;
+	
+		CREATE FIELD refOutJsonData.data;
+		DECLARE refData REFERENCE TO refOutJsonData.data;
+
+		SET refData.encabezadoHomologacion  = refEnvCachePeq.encabezadoHomologacion;
+		CREATE FIELD refData.criterioParametrizacion IDENTITY(JSON.Array)criterioParametrizacion;
+		SET refData.criterioParametrizacion = refEnvCachePeq.criterioParametrizacion;
+		
+		-- Variable utilizada como bandera al generarse un error y capturada por el flujo de catch
+		-- esto para complementar el error identificando al objeto
+		SET env.handler.object = 'PEQ';
+	ELSE
+		SET output = input;
+		SET outLocalEnv = inLocalEnv;
+	END IF;
+END;
+
+CREATE PROCEDURE CopyCompleteMessage(IN input REFERENCE, IN msg REFERENCE) BEGIN
+	DECLARE I INTEGER 1;
+	DECLARE J INTEGER;
+	SET J = CARDINALITY(input.*[]);
+	WHILE I < J DO
+		SET msg.*[I] = input.*[I];
+		SET I = I + 1;
+	END WHILE;
+	
+	DECLARE name CHARACTER FIELDNAME(input.*[I]);
+	CREATE LASTCHILD OF msg DOMAIN name;
+	SET msg.{name} = input.{name};
+END;
+
+CREATE PROCEDURE PeqPutCache(IN env REFERENCE, IN tipologia CHARACTER, IN valorOrigen CHARACTER, IN value CHARACTER, IN desc CHARACTER) 
+BEGIN ATOMIC
+	DECLARE refEnvCachePeq REFERENCE TO env.PEQ.cache;
+	SET CACHE_PEQ.{refEnvCachePeq.keyEncabezado || tipologia || valorOrigen}[1].valorDestino = value;
+	SET CACHE_PEQ.{refEnvCachePeq.keyEncabezado || tipologia || valorOrigen}[1].descripcionDatoDestino = desc;
+END;
+
+CREATE PROCEDURE PeqGetValue(IN keyEncabezado CHARACTER, IN tipologia CHARACTER, IN valorOrigen CHARACTER)
+RETURNS CHARACTER
+BEGIN ATOMIC
+	IF COALESCE(keyEncabezado, '') = '' OR COALESCE(tipologia, '') = '' or COALESCE(valorOrigen, '') = '' THEN
+		RETURN '';
+	END IF;
+
+	RETURN CACHE_PEQ.{keyEncabezado || tipologia || valorOrigen}.valorDestino;
+END;
+
+CREATE PROCEDURE PeqGetDesc(IN keyEncabezado CHARACTER, IN tipologia CHARACTER, IN valorOrigen CHARACTER)
+RETURNS CHARACTER
+BEGIN ATOMIC
+	IF COALESCE(keyEncabezado, '') = '' OR COALESCE(tipologia, '') = '' or COALESCE(valorOrigen, '') = '' THEN
+		RETURN '';
+	END IF;
+
+	RETURN CACHE_PEQ.{keyEncabezado || tipologia || valorOrigen}.descripcionDatoDestino;
+END;

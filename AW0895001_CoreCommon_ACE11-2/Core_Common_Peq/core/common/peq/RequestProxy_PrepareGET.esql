@@ -1,0 +1,31 @@
+BROKER SCHEMA core.common.peq
+
+
+CREATE COMPUTE MODULE SyncRequestProxyV2_PrepareGET
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL PrepareGet();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE PrepareGet() BEGIN
+		DECLARE incur REFERENCE TO InputRoot.XMLNSC;
+		DECLARE env REFERENCE TO Environment.Variables.OriginMsg;
+		IF NOT LASTMOVE(env) THEN
+			CALL SendOriginMsgToEnv(incur, Environment);
+		END IF;
+		
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		SET OutputLocalEnvironment.MQ.GET.MQGMO.WaitInterval = UDP_TIMEOUT_MILLIS;
+		SET OutputLocalEnvironment.MQ.GET.MQGMO.Options = BITOR(MQGMO_WAIT, 
+									  MQGMO_COMPLETE_MSG, MQMO_MATCH_CORREL_ID);
+								  
+		SET OutputRoot = InputRoot;
+		
+		IF UDP_MSGID_TO_CORRELID = TRUE THEN
+			SET OutputRoot.MQMD.CorrelId = InputLocalEnvironment.WrittenDestination.MQ.DestinationData.msgId;
+		ELSE
+			SET OutputRoot.MQMD.CorrelId = InputLocalEnvironment.WrittenDestination.MQ.DestinationData.correlId;
+		END IF;
+	END;
+END MODULE;

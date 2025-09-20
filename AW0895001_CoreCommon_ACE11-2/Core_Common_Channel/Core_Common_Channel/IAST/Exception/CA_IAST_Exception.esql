@@ -1,0 +1,300 @@
+BROKER SCHEMA Core_Common_Channel.IAST.Exception
+
+/************************************************************************
+* File Name:	 CA_IAST_REQUEST.esql							        *
+* Description:	 Se encarga de las funcionalides de manejos de excepcion*
+*				 en caso de que ocurran errores en la ejecucion de la   *
+*                operacion de request                                   *
+* Version Date		 Author	              Description                   *
+* ======= ========== ==================   ==============================*
+* 1.0     10/03/2014 Francisco Andres     Implementacion de la CA_IAST  *
+*					 Santos Conde		  								*
+*										 						        *		
+*************************************************************************/
+
+/************************************************************************
+* Node Name:	 IASTtoILException						                *
+* Module Name:	 CA_IAST_REQUEST_IASTtoILException						*
+*				 						  	    						*
+* Description:	 Hace las transformaciones del mensaje que va hacia el  *
+*				 errorAdapter										    *
+*                                                                       *
+* Version Date		 Author	              Description                   *
+* ======= ========== ==================   ==============================*
+* 1.0     10/03/2014 Francisco Andres     Implementacion de la CA_IAST	*
+*					 Santos Conde		                                *
+*										  						        *		
+*************************************************************************/
+CREATE COMPUTE MODULE CA_IAST_REQUEST_IASTtoILException
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- Conservar los encabezados de entrada
+		CALL CopyMessageHeaders();
+		
+		CALL GenerateHeader();
+		
+		RETURN TRUE;
+	END;
+
+	/*
+	 * Procedure: CopyMessageHeaders
+	 * Purpose: Copia los encabezados del mensaje de entrada
+	 */
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	
+	/*
+	 * Procedure: GenerateHeader
+	 * Purpose: Genera el Header ILo para el mensaje de error
+	 */
+	CREATE PROCEDURE GenerateHeader() BEGIN
+		
+		--Crear header de salida
+		CREATE FIELD OutputRoot.XMLNSC.nsIL:esbXML.Header;
+		CREATE FIELD OutputRoot.XMLNSC.nsIL:esbXML.Body;
+		
+		--Crear Referencias al mensaje de salida
+		DECLARE refHeaderOut REFERENCE TO OutputRoot.XMLNSC.nsIL:esbXML.Header;
+		DECLARE refBodyOut REFERENCE TO OutputRoot.XMLNSC.nsIL:esbXML.Body;
+		
+		--Generar el mensaje de excepcion en caso de que el mensaje de entrada esté bien formado
+		IF FIELDTYPE(Environment.Variables.ErrorAdapterV2) IS NOT NULL THEN 
+			SET Environment.Variables.Msg = InputRoot;
+			
+			DECLARE csParameter CHARACTER USERDEFINED||CONFIGURABLESERVICENAME;
+			
+			--Crear Referencia al mensaje de entrada
+			DECLARE refHeader REFERENCE TO InputRoot.DFDL.nsDFDL:IAST.Header;
+			
+			--Hacer las homologaciones para entregar los escenarios de error
+			DECLARE systemId CHARACTER '';
+			DECLARE elementUserName 	   CHARACTER refHeader.ENCABEZADO_CONTROL.ID_SERVIDOR||refHeader.ENCABEZADO_CONTROL.ID_APLICATIVO||refHeader.ENCABEZADO_DATOS.COD_TRANSAC||USR;
+			DECLARE userName 			   CHARACTER '';
+			DECLARE elementDestinationName CHARACTER refHeader.ENCABEZADO_CONTROL.ID_SERVIDOR||refHeader.ENCABEZADO_DATOS.COD_TRANSAC||SRV;
+			DECLARE operationName		   CHARACTER '';
+			DECLARE namespaceName		   CHARACTER '';
+			DECLARE elementOperation	   CHARACTER refHeader.ENCABEZADO_CONTROL.ID_SERVIDOR||refHeader.ENCABEZADO_DATOS.COD_TRANSAC||OPE;
+			DECLARE operation			   CHARACTER '';
+			
+			--Hacer homologaciones para los mapeos del Header
+			CALL getValue(USERDEFINED,'DefaultPolicies',CONFIGURABLESERVICENAME,refHeader.ENCABEZADO_CONTROL.ID_APLICATIVO) INTO systemId;
+			CALL getValue(USERDEFINED,'DefaultPolicies',CONFIGURABLESERVICENAME,elementUserName) INTO userName;
+			CALL getValue(USERDEFINED,'DefaultPolicies',CONFIGURABLESERVICENAME,elementDestinationName) INTO operationName;
+			CALL getValue(USERDEFINED,'DefaultPolicies',CONFIGURABLESERVICENAME,refHeader.ENCABEZADO_CONTROL.ID_SERVIDOR) INTO namespaceName;
+			CALL getValue(USERDEFINED,'DefaultPolicies',CONFIGURABLESERVICENAME,elementOperation) INTO operation;
+			
+			IF systemId IS NULL OR systemId='' THEN
+				SET refHeaderOut.systemId = UDP_SYSTEMID;
+			ELSE
+				SET refHeaderOut.systemId = systemId;
+			END IF;
+			
+			SET refHeaderOut.messageId = refHeader.SEC_TRANSACCION;
+			SET refHeaderOut.interactionData.timestamp = CAST(CURRENT_GMTTIMESTAMP AS CHARACTER FORMAT DATETIMEFORMAT);
+			
+			IF userName IS NULL OR userName='' THEN 
+				SET refHeaderOut.requestData.userId.userName = UDP_USERID;
+			ELSE 
+				SET refHeaderOut.requestData.userId.userName = userName;
+			END IF;
+			
+			IF operationName IS NULL OR operationName='' THEN 
+				SET refHeaderOut.requestData.destination.name = UDP_NAME;
+			ELSE 
+				SET refHeaderOut.requestData.destination.name = operationName;
+			END IF;
+			
+			IF namespaceName IS NULL OR namespaceName='' THEN 
+				SET refHeaderOut.requestData.destination.namespace = UDP_NAMESPACE;
+			ELSE 
+				SET refHeaderOut.requestData.destination.namespace = namespaceName;
+			END IF;
+			
+			IF operation IS NULL OR operation ='' THEN 
+				SET refHeaderOut.requestData.destination.operation = UDP_OPERATION;
+			ELSE 
+				SET refHeaderOut.requestData.destination.operation = operation;
+			END IF;
+			SET Environment.Variables.SendErrorMsg = TRUE;
+		ELSE			
+			--Armar el mensaje en caso de que el mensaje inicial venga mal formado
+			SET refHeaderOut.systemId  		 			  	   = UDP_SYSTEMID;
+			SET refHeaderOut.messageId 		 			  	   = InputRoot.MQMD.MsgId;
+			SET refHeaderOut.interactionData 			  	   = CAST(CURRENT_GMTTIMESTAMP AS CHARACTER FORMAT DATETIMEFORMAT);
+			SET refHeaderOut.requestData.userId.userName  	   = UDP_USERID;
+			SET refHeaderOut.requestData.destination.name 	   = UDP_NAME;
+			SET refHeaderOut.requestData.destination.namespace = UDP_NAMESPACE;
+			SET refHeaderOut.requestData.destination.operation = UDP_OPERATION;
+			--2016-08-23 se agrega codigo para almacenar un mensaje mal formado en la consola tecnica
+			 -- Se convierte el mensaje de entrada en BLOB
+			DECLARE rispostaBitStream BLOB 
+           		ASBITSTREAM(InputRoot.DFDL SET CA_IAST_MESSAGESETNAME TYPE CA_IAST_MESSAGETYPE FORMAT BINARY1); 
+			-- Se codifica el mensaje de entrada en Base 64
+			DECLARE encoded CHARACTER  BASE64ENCODE(rispostaBitStream);
+		
+			SET refBodyOut.IAST = encoded;	
+		
+			SET Environment.Variables.SendErrorMsg = FALSE;
+		END IF;
+	END;
+END MODULE;
+
+/************************************************************************
+* Node Name:	 GenerateIASTError						                *
+* Module Name:	 CA_IAST_REQUEST_GenerateIASTError						*
+*				 						  	    						*
+* Description:	 Hace las transformaciones del mensaje de error hacia el*
+*				 errorAdapter										    *
+*                                                                       *
+* Version Date		 Author	              Description                   *
+* ======= ========== ==================   ==============================*
+* 1.0     10/03/2014 Francisco Andres     Implementacion de la CA_IAST	*
+*					 Santos Conde		                                *
+*										  						        *		
+*************************************************************************/
+CREATE COMPUTE MODULE CA_IAST_REQUEST_GenerateIASTError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		--Validar la bandera si se debe entregar o no un mensaje de excepcion
+		IF (Environment.Variables.SendErrorMsg = FALSE) THEN
+			RETURN FALSE;
+		END IF;
+		
+		--Mantener los encabezados de entrada
+		CALL CopyMessageHeaders();
+		
+		--Crear las referencias al mensaje guardado en el environment.
+		DECLARE refEnvErrorMsg REFERENCE TO InputRoot;
+		
+		--Se declaran los datos necesarios del messageSet de response
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.Properties.MessageSet = CA_IAST_MESSAGESETNAME;
+		SET OutputRoot.Properties.MessageType = CA_IAST_MESSAGETYPE;
+		SET OutputRoot.Properties.MessageFormat = BINARY1;
+		
+		--Crear el mensaje de salida
+		CREATE FIELD OutputRoot.DFDL.nsDFDL:IAST.Header;
+		DECLARE refEncabezado REFERENCE TO OutputRoot.DFDL.nsDFDL:IAST.Header;
+		
+		SET refEncabezado = Environment.Variables.Msg.DFDL.nsDFDL:IAST.Header;
+		
+		SET refEncabezado.CODIGO_RESP  = 'I'||SUBSTRING(refEnvErrorMsg.XMLNSC.nsIL:esbXML.Header.responseData.status.systemException.faultstring FROM 1 FOR 3);
+		 
+		DECLARE descRes CHARACTER '';
+		IF LENGTH(refEnvErrorMsg.XMLNSC.nsIL:esbXML.Header.responseData.status.systemException.faultCode) > 50 THEN
+			SET descRes = SUBSTRING(refEnvErrorMsg.XMLNSC.nsIL:esbXML.Header.responseData.status.systemException.faultcode FROM 1 FOR 50);
+		ELSE 
+			SET descRes = refEnvErrorMsg.XMLNSC.nsIL:esbXML.Header.responseData.status.systemException.faultcode;
+		END IF;
+		
+		SET refEncabezado.DESCRIPCION_RESP =  descRes;
+		
+		RETURN TRUE;
+	END;
+
+	/*
+	 * Procedure: CopyMessageHeaders
+	 * Purpose: Copia los encabezados del mensaje de entrada
+	 */
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE CA_IAST_RESPONSE_GenerateIASTError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- Copiar los encabezados del mensaje de entrada
+		CALL CopyMessageHeaders();
+		
+		--Se declaran los datos necesarios del messageSet de response
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.Properties.MessageSet = CA_IAST_MESSAGESETNAME;
+		SET OutputRoot.Properties.MessageType = CA_IAST_MESSAGETYPE;
+		SET OutputRoot.Properties.MessageFormat = BINARY1;
+		
+		
+		-- referenciar el encabezado de entrada
+		DECLARE refHeaderIn REFERENCE TO InputRoot.XMLNSC.nsIL:esbXML.Header;
+		DECLARE decode CHARACTER '';
+		
+		-- Verificacion de las existencia de messageContext
+        IF CARDINALITY(refHeaderIn.messageContext.*[]) IS NOT NULL THEN 	
+        	 DECLARE i INTEGER 1;		 
+			 FOR source AS refHeaderIn.messageContext.*[] DO
+			 -- Verificacion de mensaje codificado
+        		DECLARE datoEncode CHARACTER refHeaderIn.messageContext.property[i].key;	
+        		IF datoEncode = 'CAIAST'  THEN
+        	    	DECLARE decoded BLOB BASE64DECODE(refHeaderIn.messageContext.property.value);
+        	    	SET decode = CAST(decoded AS CHARACTER CCSID CODEDCHARSETID);   
+        		END IF;		
+		   		SET  i = i + 1;	
+		 	  END FOR;
+        END IF;
+        
+        DECLARE parseOptions INTEGER BITOR(FolderBitStream, ValidateContent, ValidateValue, ValidateLocalError);
+        CREATE LASTCHILD OF Environment.Variables DOMAIN('DFDL') PARSE(decode, ENCODING, CODEDCHARSETID, CA_IAST_MESSAGESETNAME, CA_IAST_MESSAGETYPE,BINARY1,parseOptions);
+		
+		--Crear referencia a los mensajes guardados en el environment
+		DECLARE refDFDLIn 			   REFERENCE TO Environment.Variables.DFDL.nsDFDL:IAST;
+		DECLARE refEncabezadoIn REFERENCE TO refDFDLIn.Header;
+		
+		--Hacer los mapeos de salida
+		
+		CREATE FIELD OutputRoot.DFDL.nsDFDL:IAST.Header;
+		DECLARE refEncabezadoOut REFERENCE TO OutputRoot.DFDL.nsDFDL:IAST.Header;
+		
+		SET refEncabezadoOut = refEncabezadoIn;
+		
+		SET refEncabezadoOut.ENCABEZADO_DATOS.COD_RES  = 'I'||SUBSTRING(refHeaderIn.responseData.status.systemException.faultstring FROM 1 FOR 3);
+		SET refEncabezadoOut.ENCABEZADO_DATOS.DESC_RES = SUBSTRING(refHeaderIn.responseData.status.systemException.faultcode FROM 1 FOR 50);
+		
+		--Setear el contenido del routingStack 
+		DECLARE queue CHARACTER;
+		DECLARE queueMgr CHARACTER;
+		CALL core.common.util.PopRTQ (refHeaderIn, queue, queueMgr);
+		SET OutputRoot.MQMD.ReplyToQ = queue;
+		SET OutputRoot.MQMD.ReplyToQMgr = queueMgr; 
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+/*
+ * Procedure: getValue
+ * Purpose: Obtiene el valor de un servicio configurable 
+ *			Buscando por la llave devuelve el valor
+ */
+ 
+CREATE PROCEDURE getValue(IN policyType CHARACTER, IN policyProject CHARACTER, IN policyName CHARACTER, IN propertyKey CHARACTER)
+RETURNS CHARACTER
+LANGUAGE JAVA 
+EXTERNAL NAME "core.common.util2.ConfigurableServiceMultiton.getValue";
+

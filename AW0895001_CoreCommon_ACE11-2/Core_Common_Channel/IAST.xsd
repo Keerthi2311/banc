@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:ns0="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0" xmlns:recFixLengthFieldsFmt="http://www.ibm.com/dfdl/RecordFixLengthFieldFormat">
+
+    <xsd:import namespace="http://www.ibm.com/dfdl/RecordFixLengthFieldFormat" schemaLocation="IBMdefined/RecordFixLengthFieldFormat.xsd"/>
+    <xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format encoding="{$dfdl:encoding}" escapeSchemeRef="" occursCountKind="fixed" ref="recFixLengthFieldsFmt:RecordFixLengthFieldsFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+	<xsd:element dfdl:encoding="UTF-8" dfdl:lengthKind="implicit" ibmSchExtn:docRoot="true" name="IAST">
+		<xsd:complexType>
+			<xsd:sequence dfdl:encoding="UTF-8" dfdl:outputNewLine="{$dfdl:outputNewLine}" dfdl:separator="">
+				<xsd:element dfdl:encoding="UTF-8" dfdl:initiator="" dfdl:lengthKind="implicit" dfdl:outputNewLine="{$dfdl:outputNewLine}" name="Header">
+					<xsd:complexType>
+						<xsd:sequence dfdl:encoding="UTF-8" dfdl:outputNewLine="{$dfdl:outputNewLine}">
+                            							                            <xsd:element dfdl:encoding="UTF-8" dfdl:lengthKind="delimited" name="ENCABEZADO_CONTROL">
+                <xsd:complexType>
+                  <xsd:sequence dfdl:encoding="UTF-8">
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="3" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="ID_SERVIDOR" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="3" name="ID_APLICATIVO" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="16" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="ID_MENSAJE" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="10" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="DTAQ_RESP" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="10" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="LIB_DTAQ" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="1" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="ORIENTACION" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="2" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="TEMPORIZADOR" type="xsd:string"/>
+                    <xsd:element default="00000000" dfdl:encoding="UTF-8" dfdl:length="8" dfdl:lengthUnits="bytes" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="HORA_CLI_REQ" type="xsd:string"/>
+                    <xsd:element default="00000000" dfdl:encoding="UTF-8" dfdl:length="8" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="HORA_CLI_RES" type="xsd:string"/>
+                    <xsd:element default="00000000" dfdl:encoding="UTF-8" dfdl:length="8" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="HORA_SER_REQ" type="xsd:string"/>
+                    <xsd:element default="00000000" dfdl:encoding="UTF-8" dfdl:length="8" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="HORA_SER_RES" type="xsd:string"/>
+                    <xsd:element dfdl:encoding="UTF-8" dfdl:length="5" dfdl:occursCountKind="implicit" dfdl:textNumberPattern="#0" dfdl:textPadKind="padChar" ibmDfdlExtn:sampleValue="0" minOccurs="0" name="LONG_CARGA" type="xsd:integer"/>
+                    <xsd:element dfdl:encoding="UTF-8" dfdl:length="2" dfdl:occursCountKind="implicit" dfdl:textNumberPattern="#0" dfdl:textPadKind="padChar" ibmDfdlExtn:sampleValue="0" minOccurs="0" name="NUM_SEGMEN" type="xsd:integer"/>
+                    <xsd:element dfdl:encoding="UTF-8" dfdl:length="5" dfdl:occursCountKind="implicit" dfdl:textNumberPattern="#0" dfdl:textPadKind="padChar" ibmDfdlExtn:sampleValue="0" minOccurs="0" name="POS_SEGMEN" type="xsd:integer"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="1" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="LIBRE" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                            <xsd:element dfdl:encoding="UTF-8" dfdl:lengthKind="delimited" name="ENCABEZADO_DATOS">
+                <xsd:complexType>
+                  <xsd:sequence dfdl:encoding="UTF-8">
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="2" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="TIPO_MENSAJE" type="xsd:string"/>
+                    <xsd:element default="" dfdl:byteOrder="bigEndian" dfdl:encoding="UTF-8" dfdl:length="4" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="COD_TRANSAC" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="20" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="SEC_TRANSAC" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="1" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="REQUIERE_RES" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="4" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="COD_RES" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="50" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="DESC_RES" type="xsd:string"/>
+                    <xsd:element default="" dfdl:encoding="UTF-8" dfdl:length="9" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="LIBRE" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                            							                                                                                    							                                                                                                                						                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+				<xsd:element dfdl:encoding="UTF-8" dfdl:initiator="" dfdl:lengthKind="delimited" name="Body">
+					<xsd:complexType>
+						<xsd:sequence dfdl:encoding="UTF-8">
+							<xsd:element dfdl:encoding="UTF-8" dfdl:lengthKind="delimited" dfdl:occursCountKind="implicit" minOccurs="0" name="CARGA_UTIL">
+                <xsd:simpleType>
+                  <xsd:restriction base="xsd:string">
+                    <xsd:maxLength value="32000"/>
+                  </xsd:restriction>
+                </xsd:simpleType>
+              </xsd:element>
+																				</xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+                							            </xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+</xsd:schema>

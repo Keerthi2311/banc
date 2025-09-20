@@ -1,0 +1,119 @@
+BROKER SCHEMA core.common.proxy2
+DECLARE RESPONSE_PARSER_EX CONSTANT CHARACTER 
+									'Server.ESB.InvalidProviderResponseMessage';
+DECLARE REQUEST_PARSER_EX CONSTANT CHARACTER 'Client.InvalidMessage';
+
+DECLARE REQUEST_INT_EX CONSTANT CHARACTER 'Server.ESB.InternalServerError';
+DECLARE RESPONSE_INT_EX CONSTANT CHARACTER 'Server.ESB.InternalServerResponseError';
+DECLARE SYSTEM_EXCEPTION CONSTANT CHARACTER 'SystemException';
+
+CREATE FUNCTION BuildStatus(IN exList REFERENCE, IN isResponse BOOLEAN, IN env
+								REFERENCE, IN ccsid INTEGER) RETURNS CHARACTER
+BEGIN
+	DECLARE status ROW;
+	DECLARE isParserEx BOOLEAN;
+	DECLARE type CHARACTER ExtractException(exList, env, type);
+	DECLARE detailEx CHARACTER;
+	DECLARE i INTEGER;
+	DECLARE j INTEGER;
+	DECLARE ex REFERENCE TO env.Variables.Exception.XMLNSC;
+	SET isParserEx = IsParserException(type);
+	SET status.statusCode = 'SystemException';
+	IF isParserEx = true THEN
+		IF isResponse = true THEN
+			SET status.systemException.faultcode = RESPONSE_PARSER_EX;
+		ELSE
+			SET status.systemException.faultcode = REQUEST_PARSER_EX;
+		END IF;
+		SET status.systemException.faultstring VALUE = NULL;
+		SET status.systemException.faultactor VALUE = NULL;
+		SET status.systemException.detail = CAST(ASBITSTREAM(ex) AS CHARACTER 
+																   CCSID ccsid);
+	ELSE
+		IF isResponse = true THEN
+			SET status.systemException.faultcode = RESPONSE_INT_EX;
+		ELSE
+			SET status.systemException.faultcode = REQUEST_INT_EX;
+		END IF;
+		SET status.systemException.faultstring VALUE = NULL;
+		SET status.systemException.faultactor VALUE = NULL;
+		
+		SET detailEx = '';
+		SET        i = 1;
+		SET 	   j = CARDINALITY(ex.*[1].Insert[]);
+		WHILE (i <= j) DO
+			
+			SET detailEx = detailEx || ' '||COALESCE(ex.*[1].Insert[i].Text,'')
+																		 || ':';
+			SET i = i + 1;
+		END WHILE;	
+		
+		SET status.systemException.detail = type || ': ['
+		|| COALESCE(ex.*[1].Catalog,'DEFAULT') || ':'
+		|| CAST(ex.*[1].Number AS CHARACTER) || '] '
+		|| ex.*[1].Text || ': ['|| detailEx || '] ';
+	END IF;
+	SET env.Variables.Status = status;
+	RETURN type;
+END;
+
+
+CREATE FUNCTION ExtractException(IN exList REFERENCE, IN env REFERENCE, 
+										   OUT type CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE messageNumber INTEGER;
+	DECLARE type CHARACTER;
+	DECLARE ex ROW;
+	DECLARE ptrException REFERENCE TO exList.*[1];
+	WHILE LASTMOVE(ptrException) DO
+		IF ptrException.Number IS NOT null THEN
+			SET type = FIELDNAME(ptrException);
+			SET ex = ptrException;
+		END IF;
+		MOVE ptrException LASTCHILD;
+	END WHILE;
+	DELETE FIELD env.Variables.Exception;
+	CREATE FIELD env.Variables.Exception;
+	CREATE LASTCHILD OF env.Variables.Exception DOMAIN('XMLNSC');
+	CREATE LASTCHILD OF env.Variables.Exception.XMLNSC TYPE Name 
+												NAME COALESCE(type,'Exception');
+	SET env.Variables.Exception.XMLNSC.*[1] = ex;
+	RETURN type;
+END;
+
+
+CREATE FUNCTION IsParserException(IN type CHARACTER) RETURNS BOOLEAN
+BEGIN
+	DECLARE found BOOLEAN false;
+	IF type = 'ParserException' THEN
+		SET found = true;
+	END IF;
+	RETURN found;
+END;
+
+CREATE PROCEDURE SendOriginMsgToEnv(IN inx REFERENCE, IN env REFERENCE)
+BEGIN
+	DELETE FIELD env.Variables.OriginMsg;
+	CREATE FIELD env.Variables.OriginMsg TYPE Name;
+	CREATE FIRSTCHILD OF env.Variables.OriginMsg DOMAIN('XMLNSC') PARSE (
+	ASBITSTREAM(inx));
+END;
+CREATE PROCEDURE setFault (IN header REFERENCE, IN faultcode CHARACTER, IN description CHARACTER)
+BEGIN
+	IF header.responseData IS NULL THEN
+		DECLARE prev REFERENCE TO header.requestData;
+		IF LASTMOVE(prev) THEN
+			CREATE NEXTSIBLING OF prev TYPE Name NAME 'responseData';
+		ELSE
+			CREATE FIELD header.responseData;
+		END IF;
+	END IF;
+	DECLARE cursor REFERENCE TO header.responseData;
+	IF NOT EXISTS(cursor.providerData[]) THEN
+		CREATE FIELD cursor.providerData TYPE Name;
+	END IF;
+	SET cursor.status.statusCode = SYSTEM_EXCEPTION;
+	SET cursor.status.systemException.faultcode = faultcode;
+	SET cursor.status.systemException.detail = description;
+END;
+

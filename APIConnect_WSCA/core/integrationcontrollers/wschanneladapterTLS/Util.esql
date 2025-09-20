@@ -1,0 +1,58 @@
+BROKER SCHEMA core.integrationcontrollers.wschanneladapterTLS
+
+CREATE PROCEDURE RemoveMessageContext(IN esbXMLHeader REFERENCE,IN keyValue CHARACTER,
+	IN removeEmpyMessageContex BOOLEAN)
+	BEGIN
+		FOR msgCtxPorperty as esbXMLHeader.messageContext.property[] DO
+			IF msgCtxPorperty.key = keyValue THEN
+				DELETE FIELD msgCtxPorperty;
+			END IF;
+		END FOR;
+		IF removeEmpyMessageContex THEN
+			DECLARE msgCtxProperty REFERENCE TO esbXMLHeader.messageContext.property[<];
+			IF NOT LASTMOVE(msgCtxProperty) THEN
+				DELETE FIELD esbXMLHeader.messageContext;
+			END IF;
+		END IF;
+	END; 
+	
+/* This procedure transformation alws value to Hash MD5
+ * Input:
+ *   csKey: value to transformation
+ * Output:
+ *   value: Hash value MD5
+ */
+CREATE PROCEDURE hashValue(IN value CHARACTER)
+	RETURNS CHARACTER
+	LANGUAGE JAVA
+	EXTERNAL NAME "core.integrationcontrollers.wschanneladapterTLS.util.GenerateHash.getHashValue";
+	
+/*
+ * Procedure: getValue
+ * Input:
+ *	key: 		configurable service name
+ *	element: 	property name
+ * Output:
+ *	character: 	user define proeprty value
+ * Purpose: Obtiene el valor de un servicio configurable 
+ *			Buscando por la llave devuelve el valor
+ * Alert: cuando se llama el metodopor primera vez se cargan todo los valores 
+ *		  del servicio configurable
+ */
+CREATE PROCEDURE getValue(IN policyType CHARACTER, IN policyProject CHARACTER, IN key CHARACTER, IN element character)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "core.common.util2.ConfigurableServiceMultiton.getValue"; 
+
+/*
+ * Procedure: printLnConsole
+ * Input:
+ *	key: 		data to print
+ *	element: 	property name
+ * Output:
+ *	character: 	None
+ * Purpose: Imprime en consola
+  */
+CREATE PROCEDURE printLnConsole(IN data CHARACTER)
+LANGUAGE JAVA
+EXTERNAL NAME "core.common.util2.SystemUtil.printLnConsole"; 

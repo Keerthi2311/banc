@@ -1,0 +1,105 @@
+BROKER SCHEMA core.common.adapter
+
+
+CREATE COMPUTE MODULE JsonLoggingAdapter_Compute
+	DECLARE Level EXTERNAL CHARACTER '';
+	DECLARE EventType EXTERNAL CHARACTER '';
+	DECLARE EventDescription EXTERNAL CHARACTER '';
+	DECLARE Platform EXTERNAL CHARACTER '';
+	DECLARE EnvironmentTrx EXTERNAL CHARACTER '';
+	DECLARE ExecutionEnvironment EXTERNAL CHARACTER '';
+	DECLARE ServiceVersion EXTERNAL CHARACTER '';
+	DECLARE BodyTrace EXTERNAL BOOLEAN TRUE;
+	DECLARE OperationName EXTERNAL CHARACTER '';
+	DECLARE ServiceName EXTERNAL CHARACTER '';
+	
+	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		CALL BuildEnv();
+		
+		PROPAGATE TO TERMINAL 'out1' DELETE NONE; -- primero el evento
+		PROPAGATE TO TERMINAL 'out'; -- salida normal
+		RETURN FALSE;
+	END;
+	
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+
+	CREATE PROCEDURE BuildEnv() BEGIN
+		IF NOT EXISTS(Environment.monitoringEvent[]) THEN
+			CREATE FIELD Environment.monitoringEvent;
+		END IF;
+
+		DECLARE MonitoringEvent 	REFERENCE TO Environment.monitoringEvent;
+
+		IF NOT EXISTS(MonitoringEvent.runtime[]) THEN
+			CREATE FIELD MonitoringEvent.runtime;
+		END IF;
+	
+		IF NOT EXISTS(MonitoringEvent.serviceInfo[]) THEN
+			CREATE FIELD MonitoringEvent.serviceInfo;
+		END IF;
+
+		IF NOT EXISTS(MonitoringEvent.genericInfo[]) THEN
+			CREATE FIELD MonitoringEvent.genericInfo;
+		END IF;
+
+		IF NOT EXISTS(MonitoringEvent.additionalInfo[]) THEN
+			CREATE FIELD MonitoringEvent.additionalInfo;
+		END IF;
+		
+		DECLARE refMonEventRuntime 	REFERENCE TO MonitoringEvent.runtime;
+		DECLARE refMonEventSvcInfo 	REFERENCE TO MonitoringEvent.serviceInfo;
+		DECLARE refMonEventGenInfo 	REFERENCE TO MonitoringEvent.genericInfo;
+		DECLARE refMonEventInfo 	REFERENCE TO MonitoringEvent.additionalInfo;
+		
+		-- MonitoringEvent.runtime
+		SET refMonEventRuntime.integrationPlatform                = Platform;
+		SET refMonEventRuntime.environment                        = EnvironmentTrx;
+		SET refMonEventRuntime.technicalInfo.executionEnvironment = ExecutionEnvironment;
+		SET refMonEventRuntime.host                               = GetIP();
+		
+		-- MonitoringEvent.serviceInfo
+		SET refMonEventSvcInfo.version       = ServiceVersion;
+		SET refMonEventSvcInfo.messageId 	 = COALESCE(InputRoot.HTTPInputHeader."Message-Id", Environment.HttpHeader.messageId);
+		SET refMonEventSvcInfo.consumerId 	 = COALESCE(InputRoot.HTTPInputHeader."Consumer-Id", Environment.HttpHeader.consumerId);
+		SET refMonEventSvcInfo.systemId      = COALESCE(InputRoot.HTTPInputHeader."Application-Id", Environment.HttpHeader.applicationId);
+		SET refMonEventSvcInfo.operation 	 = OperationName;
+		SET refMonEventSvcInfo.name 		 = ServiceName;
+
+		-- MonitoringEvent.genericInfo
+		SET refMonEventGenInfo.level            = Level;
+		SET refMonEventGenInfo.eventType        = EventType;
+		SET refMonEventGenInfo.eventDescription = EventDescription;
+		SET refMonEventGenInfo.bodyTrace 	    = BodyTrace;
+		SET refMonEventGenInfo.jsonStandar 	    = true;
+		SET refMonEventGenInfo.timestamp 	    = CURRENT_TIMESTAMP;
+		SET refMonEventGenInfo.uuid             = COALESCE(NULLIF(refMonEventGenInfo.uuid, ''), UUIDASCHAR);
+		
+		-- MonitoringEvent.additionalInfo
+		DELETE FIELD refMonEventInfo.headers;
+		CREATE FIELD refMonEventInfo.headers;
+		IF EXISTS(InputRoot.MQMD[]) THEN
+			SET refMonEventInfo.headers.Data = InputRoot.MQMD;
+		ELSEIF EXISTS(InputRoot.HTTPInputHeader[]) THEN
+			SET refMonEventInfo.headers.Data = InputRoot.HTTPInputHeader;
+		ELSEIF EXISTS(OutputRoot.HTTPResponseHeader[]) THEN
+			SET refMonEventInfo.headers.Data = OutputRoot.HTTPResponseHeader;
+		END IF;
+	END;
+
+END MODULE;

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common/util2/PopReplyToQV2.subflow" nsPrefix="core_common_util2_PopReplyToQV2.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.POP_WITH_CORREL" name="POP_WITH_CORREL" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ROUTINGSTACK_REQUIRED" name="ROUTINGSTACK_REQUIRED" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_INTERACTION_TYPE" name="UDP_INTERACTION_TYPE" defaultValueLiteral="RESPONSE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_OPERATION_TYPE" name="UDP_OPERATION_TYPE" defaultValueLiteral="COMMAND">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="PopReplyToQV2" bundleName="core/common/util2/PopReplyToQV2" pluginId="Core_Common_Util"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Util/icons/full/obj16/PopReplyToQV2.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Util/icons/full/obj30/PopReplyToQV2.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="44,71">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/util2/PopReplyToQV2" pluginId="Core_Common_Util"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="361,73">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/util2/PopReplyToQV2" pluginId="Core_Common_Util"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="188,72" transaction="commit" computeExpression="esql://routine/core.common.util2#PopReplyToQV2_DoPop.Main">
+        <translation xmi:type="utility:ConstantString" string="DoPop"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="273,2" UDP_EXCEPTION_ID="2300" UDP_EXCEPTION_DETAIL="Error al retirar una ruta del routingStack">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.POP_WITH_CORREL">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.POP_WITH_CORREL" bundleName="core/common/util2/PopReplyToQV2" pluginId="Core_Common_Util"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ROUTINGSTACK_REQUIRED">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.ROUTINGSTACK_REQUIRED" bundleName="core/common/util2/PopReplyToQV2" pluginId="Core_Common_Util"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_INTERACTION_TYPE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_INTERACTION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_OPERATION_TYPE">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_OPERATION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.UDP_INTERACTION_TYPE" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_INTERACTION_TYPE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_OPERATION_TYPE" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_OPERATION_TYPE"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

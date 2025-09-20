@@ -1,0 +1,104 @@
+BROKER SCHEMA core.common2.adapter
+
+CREATE COMPUTE MODULE InfoEvent
+	DECLARE nsIL NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+	DECLARE Level EXTERNAL CHARACTER '';
+	DECLARE EventType EXTERNAL CHARACTER '';
+	DECLARE EventDescription EXTERNAL CHARACTER '';
+	DECLARE Platform EXTERNAL CHARACTER '';
+	DECLARE EnvironmentTrx EXTERNAL CHARACTER '';
+	DECLARE ExecutionEnvironment EXTERNAL CHARACTER '';
+	DECLARE ServiceVersion EXTERNAL CHARACTER '';
+	DECLARE BodyTrace EXTERNAL BOOLEAN TRUE;
+	
+	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		--SET OutputRoot.Properties = InputRoot.Properties;
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		IF Environment.monitoringEvent is null THEN
+			CREATE FIELD Environment.monitoringEvent;
+		END IF;
+		CALL BuildEnv();
+		
+		PROPAGATE TO TERMINAL 'out1';
+		DELETE FIELD Environment.monitoringEvent;
+		PROPAGATE TO TERMINAL 'out' MESSAGE InputRoot;
+		RETURN FALSE;
+	END;
+	
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	CREATE PROCEDURE BuildEnv() BEGIN
+		DECLARE refHeadIn REFERENCE TO InputRoot.XMLNSC.nsIL:esbXML.Header;
+		DECLARE MonitoringEvent REFERENCE TO Environment.monitoringEvent;
+		DECLARE Uuid_Env CHARACTER MonitoringEvent.genericInfo.uuid;
+		DECLARE Level_Env CHARACTER MonitoringEvent.genericInfo.level;
+		DECLARE EventType_Env CHARACTER MonitoringEvent.genericInfo.eventType;
+		DECLARE EventDescription_Env CHARACTER MonitoringEvent.genericInfo.eventDescription;
+		DECLARE IntegrationPlatform_Env CHARACTER MonitoringEvent.runtime.integrationPlatform;
+		DECLARE Environment_Env CHARACTER MonitoringEvent.runtime.environment;
+		DECLARE Version_Env CHARACTER MonitoringEvent.serviceInfo.version;
+		DECLARE ExecutionEnvironment_Env CHARACTER MonitoringEvent.runtime.technicalInfo.executionEnvironment;
+		
+		IF Level_Env = '' OR Level_Env IS NULL THEN
+			SET MonitoringEvent.genericInfo.level = Level;
+		END IF;
+		
+		IF MonitoringEvent.additionalInfo.headers = '' OR MonitoringEvent.additionalInfo.headers IS NULL THEN
+			SET MonitoringEvent.additionalInfo.headers.Data = InputRoot.MQMD;
+		END IF;
+		
+		IF EventType_Env = '' OR EventType_Env IS NULL THEN
+			SET MonitoringEvent.genericInfo.eventType = EventType;
+		END IF;
+		
+		IF EventDescription_Env = '' OR EventDescription_Env IS NULL THEN
+			SET MonitoringEvent.genericInfo.eventDescription = EventDescription;
+		END IF;
+		
+		IF IntegrationPlatform_Env = '' OR IntegrationPlatform_Env IS NULL THEN
+			SET MonitoringEvent.runtime.integrationPlatform = Platform;
+		END IF;
+		
+		IF Environment_Env = '' OR Environment_Env IS NULL THEN
+			SET MonitoringEvent.runtime.environment = EnvironmentTrx;
+		END IF;
+		
+		IF ExecutionEnvironment_Env = '' OR ExecutionEnvironment_Env IS NULL THEN
+			SET MonitoringEvent.runtime.technicalInfo.executionEnvironment = ExecutionEnvironment;
+		END IF;
+		
+		IF Version_Env = '' OR Version_Env IS NULL THEN
+			SET MonitoringEvent.serviceInfo.version = ServiceVersion;
+		END IF;
+		
+		SET MonitoringEvent.serviceInfo.name = refHeadIn.requestData.destination.name;
+		SET MonitoringEvent.serviceInfo.operation = refHeadIn.requestData.destination.operation;
+		SET MonitoringEvent.serviceInfo.systemId = refHeadIn.systemId;
+		SET MonitoringEvent.serviceInfo.messageId = refHeadIn.messageId;
+		SET MonitoringEvent.serviceInfo.consumerId = refHeadIn.requestData.userId.userName;
+		SET MonitoringEvent.serviceInfo.username = refHeadIn.requestData.userId.userName;
+		SET MonitoringEvent.serviceInfo.productName = '';
+		SET MonitoringEvent.serviceInfo.productVersion = '';
+		
+		SET MonitoringEvent.genericInfo.bodyTrace = BodyTrace;
+		
+		SET MonitoringEvent.runtime.host = GetIP();
+		
+		SET MonitoringEvent.genericInfo.timestamp = CURRENT_TIMESTAMP;
+	END;
+
+END MODULE;

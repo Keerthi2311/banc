@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://grupobancolombia.com/ents/IL/CoreExtensions/V3.1" elementFormDefault="unqualified" targetNamespace="http://grupobancolombia.com/ents/IL/CoreExtensions/V3.1" version="1.0">
+	<xsd:complexType name="Property">
+		<xsd:sequence>
+			<xsd:element name="key" type="xsd:string"/>
+			<xsd:element name="value" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MessageContext">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="1" name="property" type="tns:Property"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="SystemException">
+		<xsd:sequence>
+			<xsd:element name="faultcode" type="xsd:QName"/>
+			<xsd:element name="faultstring" type="xsd:string"/>
+			<xsd:element minOccurs="0" name="faultactor" type="xsd:anyURI"/>
+			<xsd:element minOccurs="0" name="detail" type="xsd:string">
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="StatusCode">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="Success"/>
+			<xsd:enumeration value="BusinessException"/>
+			<xsd:enumeration value="SystemException"/>
+			<xsd:enumeration value="ProviderException"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="ResponseStatus">
+		<xsd:sequence>
+			<xsd:element default="Success" minOccurs="1" name="statusCode" type="tns:StatusCode"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element name="systemException" type="tns:SystemException"/>
+				<xsd:element name="businessExceptionName" type="xsd:string"/>
+				<xsd:element name="providerExceptionName" type="xsd:string"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="UsernameToken">
+		<xsd:sequence>
+			<xsd:element minOccurs="1" name="userName" type="xsd:string"/>
+			<xsd:element minOccurs="0" name="userToken" type="xsd:anyType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Destination">
+		<xsd:sequence>
+			<xsd:element minOccurs="1" name="name" type="xsd:string"/>
+			<xsd:element minOccurs="1" name="namespace" type="xsd:anyURI"/>
+			<xsd:element minOccurs="1" name="operation" type="xsd:string">
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Classifications">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="1" name="classification" type="xsd:anyURI">
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+    <xsd:element name="Property" type="tns:Property">
+    <xsd:annotation>
+      <xsd:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/Property;XSDElementDeclaration$MRObject"/>
+      </xsd:appinfo>
+    </xsd:annotation>
+  </xsd:element>
+    <xsd:element name="MessageContext" type="tns:MessageContext">
+    <xsd:annotation>
+      <xsd:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/MessageContext;XSDElementDeclaration=1$MRObject"/>
+      </xsd:appinfo>
+    </xsd:annotation>
+  </xsd:element>
+    <xsd:element name="SystemException" type="tns:SystemException">
+    <xsd:annotation>
+      <xsd:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/SystemException;XSDElementDeclaration=2$MRObject"/>
+      </xsd:appinfo>
+    </xsd:annotation>
+  </xsd:element>
+    <xsd:element name="ResponseStatus" type="tns:ResponseStatus">
+    <xsd:annotation>
+      <xsd:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/ResponseStatus;XSDElementDeclaration=3$MRObject"/>
+      </xsd:appinfo>
+    </xsd:annotation>
+  </xsd:element>
+    <xsd:element name="UsernameToken" type="tns:UsernameToken">
+    <xsd:annotation>
+      <xsd:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/UsernameToken;XSDElementDeclaration=4$MRObject"/>
+      </xsd:appinfo>
+    </xsd:annotation>
+  </xsd:element>
+    <xsd:element name="Destination" type="tns:Destination">
+    <xsd:annotation>
+      <xsd:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/Destination;XSDElementDeclaration=5$MRObject"/>
+      </xsd:appinfo>
+    </xsd:annotation>
+  </xsd:element>
+    <xsd:element name="Classifications" type="tns:Classifications">
+    <xsd:annotation>
+      <xsd:appinfo source="WMQI_APPINFO">
+        <MRMessage messageDefinition="/0/Classifications;XSDElementDeclaration=6$MRObject"/>
+      </xsd:appinfo>
+    </xsd:annotation>
+  </xsd:element>
+</xsd:schema>

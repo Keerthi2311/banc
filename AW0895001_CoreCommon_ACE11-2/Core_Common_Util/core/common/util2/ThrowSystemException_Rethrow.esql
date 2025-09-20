@@ -1,0 +1,27 @@
+BROKER SCHEMA core.common.util2
+DECLARE UDP_INTERACTION_TYPE  EXTERNAL CHARACTER '';
+DECLARE UDP_EXCEPTION_CATALOG EXTERNAL CHARACTER '';
+DECLARE UDP_EXCEPTION_ID EXTERNAL INTEGER 0;
+DECLARE UDP_OPERATION_TYPE EXTERNAL CHARACTER '';
+DECLARE UDP_EXCEPTION_DETAIL EXTERNAL CHARACTER '';
+
+CREATE COMPUTE MODULE ThrowSystemException_Rethrow
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputExceptionList = InputExceptionList;
+		CREATE FIELD Environment.Variables.ErrorAdapterV2 TYPE Name;
+		
+		DECLARE errorAdapterV2 REFERENCE TO
+		        Environment.Variables.ErrorAdapterV2;
+		DECLARE exList REFERENCE TO InputExceptionList;        
+				 		
+	    SET errorAdapterV2.exceptionCatalog = UDP_EXCEPTION_CATALOG;
+	    SET errorAdapterV2.exceptionId = UDP_EXCEPTION_ID;
+	    SET errorAdapterV2.interactionType = UDP_INTERACTION_TYPE;
+	    SET errorAdapterV2.operationType = UDP_OPERATION_TYPE;
+	    SET errorAdapterV2.exceptionDetail = UDP_EXCEPTION_DETAIL;
+	    SET errorAdapterV2.exceptionList = exList;
+	    
+	    THROW EXCEPTION;
+	END;
+END MODULE;

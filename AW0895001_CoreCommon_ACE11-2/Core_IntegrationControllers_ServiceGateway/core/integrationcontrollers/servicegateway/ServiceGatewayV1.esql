@@ -1,0 +1,488 @@
+BROKER SCHEMA core.integrationcontrollers.servicegateway 
+PATH core.common.util, core.common.util.esbXML.il;
+
+/**********************************************************************
+* COPYRIGHT. IBM 2012. ALL RIGHTS RESERVED. NO PART OF THIS SOURCE    *
+* CODE MAY BE REPRODUCED, STORED IN A RETRIEVAL SYSTEM, OR TRANSMITTED*
+* IN ANY FORM BY ANY MEANS, ELECTRONIC, MECHANICAL, PHOTO, COPYING,   *
+* RECORDING OR OTHERWISE, WITHOUT THE PRIOR WRITTEN PERMISSION OF IBM *
+**********************************************************************/
+
+/*
+ * File name:   ServiceGateway.esql
+ * Purpose:     
+ * Author:      German Caballero Mar (germanm@mx1.ibm.com)
+ * Date:        Oct 10, 2012
+ * Version:     1.0
+ *
+ * @copyright IBM Mexico Ltd. 2012. All rights reserved.
+ * 
+ **********************************************************************
+ * Purpose:     Migracion de WSRR a version 8
+ * Date:        Abril 28, 2014
+ * Version:     1.1
+ * Detalle:     Se elimina la url de clasificacion interna de WSRR
+ *              MQCLASSIF.
+ *              Se externalizan las variables WSRR_REQQ, WSRR_REQQM,
+ *              WSRR_RESQ, WSRR_RESQM, REQUESTQNAME_INDEX y
+ *              REQUESTQMNAME_INDEX como UDPs
+ */
+/**********************************************************************
+*                  NAMESPACE                                          *
+**********************************************************************/
+
+
+/**********************************************************************
+*                  CONSTANT                                          *
+**********************************************************************/
+DECLARE COMPAT_MODE EXTERNAL BOOLEAN false;
+DECLARE SOURCE_MQ_RTQ EXTERNAL CHARACTER 'INT_MQCA_INT.QL.CBK';
+DECLARE SOURCE_SG_RTQ EXTERNAL CHARACTER 'INT_SG_INT.QL.CBK';
+DECLARE CN_PREFIX EXTERNAL CHARACTER 'http://grupobancolombia.com/clas/AplicacionesActuales#';
+
+DECLARE WSRR_REQQ EXTERNAL CHARACTER 'sm63_requestQName';
+DECLARE WSRR_REQQM EXTERNAL CHARACTER 'sm63_requestQMgr';
+DECLARE WSRR_RESQ EXTERNAL CHARACTER 'sm63_responseQName';
+DECLARE WSRR_RESQM EXTERNAL CHARACTER 'sm63_responseQMgr';
+
+DECLARE REQUESTQNAME_INDEX EXTERNAL INTEGER 4;
+DECLARE REQUESTQMNAME_INDEX EXTERNAL INTEGER 5;
+
+DECLARE QM_CLUSTER EXTERNAL CHARACTER FALSE;
+
+DECLARE il NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+DECLARE SOURCE_MQ CONSTANT CHARACTER 'MQ';
+DECLARE MQE_PREFIX CONSTANT CHARACTER 'MQE_';
+DECLARE ENLACE CONSTANT CHARACTER 'Enlace';
+DECLARE POS_REPEAT CONSTANT INTEGER 3;
+
+--Modificaciones para la propagaciones de clasificaciones y manejo de seguridad
+DECLARE CN_SC_PREFIX 		EXTERNAL CHARACTER 'http://grupobancolombia.com/clas/AplicacionesSeguras#';
+DECLARE CN_HIDDEN 			EXTERNAL CHARACTER '';
+DECLARE CN_PREFIX_BC 		CONSTANT CHARACTER 'http://grupobancolombia.com/clas/';
+
+DECLARE REQUEST				CONSTANT CHARACTER 'REQUEST';
+DECLARE ILSEv2				CONSTANT CHARACTER 'ILSEv2';
+DECLARE CODE1103			CONSTANT CHARACTER '1103';
+DECLARE COMMAND			 	CONSTANT CHARACTER 'COMMAND';
+DECLARE SEC_CONSUMER_FAULT 	CONSTANT CHARACTER 'Error peticion rechazada, debe realizar el consumo por el WS Seguro';
+DECLARE SEC_CONSUMER_FALSE 	CONSTANT CHARACTER 'Error, el servicio no esta catalogado de forma correcta para consumo seguro';
+DECLARE SECURITYCONSUMER 	CONSTANT CHARACTER 'SECURITY_CONSUMER';
+
+DECLARE WSRR_SOCIETY_TAG EXTERNAL CHARACTER 'http://grupobancolombia.com/clas/ModeloDatos';
+DECLARE WSRR_DOMAIN_TAG EXTERNAL CHARACTER 'http://grupobancolombia.com/clas/DominioDatos';
+--DECLARE ESB_SOCIETY_NAME EXTERNAL CHARACTER 'ESB:PEQ:SOCIETY';
+--DECLARE ESB_DOMAIN_NAME EXTERNAL CHARACTER 'ESB:PEQ:DOMAIN';
+
+/*******************************************************************************
+* Nodo Name:         PreRegistryQuery	                                       *
+* Module Name:       ServiceGateway_PreRegistryQuery		                   *
+* Description:       Prepara el registro de evento de INFO en el 			   *
+*					 ESBTracingManager a través del subflujo LoggingAdapter    *
+*					(inmerso en el compendio CoreCommonsV2) y prepara el lookup*
+*					 a realizar en registro de Servicios (WSRR) que se llevará *
+*					 a cabo en el nodo RegistryLookup.						   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00      10/10/2012  German Caballero    Versión inicial                    *
+*******************************************************************************/
+CREATE COMPUTE MODULE ServiceGateway_PreRegistryQuery
+/******************************************************************************
+* Function Name: Main                             							  *
+* Input Parameters:	None                          							  *
+* Output Parameters: Boolean Return               							  *
+* Description: Punto principal de entrada del Módulo						  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    10/10/2012  German Caballero	    	The initial version   		  *
+*																			  *
+******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot = InputRoot;
+		DECLARE interactionData REFERENCE TO
+			OutputRoot.XMLNSC.il:esbXML.Header.interactionData;
+		CALL ChangeTimeStamp(interactionData);
+		CALL PrepareRequest();
+		RETURN FALSE;
+	END;
+	
+/******************************************************************************
+* Function Name: PrepareRequest                             				  *
+* Input Parameters:	None                          							  *
+* Output Parameters: None		                							  *
+* Description: De presentarse fallos en la preparación de la consulta o en la * 
+*			   invocación del registro de servicios se reporta un fallo a	  * 
+*			   través del nodo ResourceNotFound.							  *
+*																			  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    10/10/2012  German Caballero	    	The initial version   		  *
+* 1.01    28/04/2014  Luis Fernando Restrepo    Migracion WSRR a version 8    *
+*																			  *
+******************************************************************************/	
+	CREATE PROCEDURE PrepareRequest() BEGIN
+		DECLARE AT_INDEX INTEGER;
+		DECLARE DESTNS CHARACTER;
+		DECLARE destination REFERENCE TO InputRoot.XMLNSC.il:esbXML.Header.
+														requestData.destination;
+		DECLARE class REFERENCE TO InputRoot.XMLNSC.il:esbXML.Header.
+													requestData.classifications;
+		DECLARE hasId BOOLEAN EXISTS(SELECT c FROM class.classification[] AS c 
+		WHERE STARTSWITH(c,CN_PREFIX));
+		IF LASTMOVE(destination) AND hasId THEN
+			SET OutputLocalEnvironment.ServiceRegistryLookupProperties.Name = 
+										   MQE_PREFIX || TRIM(destination.name);
+			DECLARE sre 
+			REFERENCE TO OutputLocalEnvironment.ServiceRegistryLookupProperties;
+			SET DESTNS = TRIM(destination.namespace);
+			SET AT_INDEX = POSITION('/' IN DESTNS REPEAT -1);
+			SET sre.Namespace = LEFT(DESTNS, AT_INDEX)
+			|| ENLACE || SUBSTRING(DESTNS FROM AT_INDEX);
+			SET sre.MatchPolicy = 'One';
+			SET sre.DepthPolicy = 'MatchOnly';
+			CALL ApplyClassifications(class,sre);			
+			PROPAGATE TO TERMINAL 'out';
+		ELSE
+			PROPAGATE TO TERMINAL 'out1';
+		END IF;
+	END;	
+	
+/******************************************************************************
+* Function Name: PrepareRequest                             				  *
+* Input Parameters:	classref referencia al clasification					  *
+* Output Parameters: None			             							  *
+* Description: Asigna el valor de los classifications						  *
+*																			  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    10/10/2012  German Caballero	    	The initial version   		  *
+* 1.01    28/04/2014  Luis Fernando Restrepo    Migracion WSRR a version 8    *
+*																			  *
+******************************************************************************/	
+	CREATE PROCEDURE ApplyClassifications(IN classref REFERENCE, IN sreref REFERENCE) BEGIN
+		SET sreref.Classification[] = classref.classification[];
+		-- No se debe agregar esta clasificación
+		--DECLARE index INTEGER CARDINALITY(sreref.Classification[]);
+		--SET index = index + 1;
+		--SET sreref.Classification[index] = MQCLASSIF;
+	END;
+END MODULE;
+
+/*******************************************************************************
+* Nodo Name:         PostRegistryQuery	                                       *
+* Module Name:       ServiceGateway_PostRegistryQuery		                   *
+* Description:       procesa el resultado de la consulta del registro de	   * 
+*					 servicios y fija el valor de Destination List  para	   *
+*					 enrutar el mensaje de request al respectivo EndPoint	   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00      10/10/2012  German Caballero    Versión inicial                    *
+*******************************************************************************/
+CREATE COMPUTE MODULE ServiceGateway_PostRegistryQuery
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL ProcessRegistryData();
+		RETURN TRUE;
+	END;
+	
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia el mensaje entero en el mensaje de salida 				   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		10/10/2012	German Caballero	Versión inicial 				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+/*******************************************************************************
+* Procedure Name: ProcessRegistryData 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Procesa el resultado de la consulta del registro de			   * 
+*			   servicios y fija el valor de Destination List  para			   *
+*			   enrutar el mensaje de request al respectivo EndPoint.		   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		10/10/2012	German Caballero	Versión inicial 				   *
+* 1.01      28/04/2014  Luis Restrepo       Migracion WSRR a version 8         *
+*******************************************************************************/
+	CREATE PROCEDURE ProcessRegistryData() BEGIN
+
+		DECLARE NSSDO NAMESPACE 'http://www.ibm.com/xmlns/prod/serviceregistry/6/0/sdo';
+		DECLARE MQENDPOINT, MQREPLYPROPS CHARACTER;
+		DECLARE REQUESTQNAME, REQUESTQMNAME, REPLYQNAME, REPLYQMNAME CHARACTER;
+		DECLARE cursor REFERENCE TO InputLocalEnvironment.ServiceRegistry.Entity;
+		DECLARE peqSocietyValue CHARACTER NULL;
+		DECLARE peqDomainModelValue CHARACTER NULL;
+		
+		IF COMPAT_MODE = false THEN
+			SET REQUESTQNAME = THE (SELECT ITEM UDP.value FROM cursor.userDefinedProperties[] AS UDP WHERE UDP.name = WSRR_REQQ);
+			SET REQUESTQMNAME = THE (SELECT ITEM UDP.value FROM cursor.userDefinedProperties[] AS UDP WHERE UDP.name = WSRR_REQQM);
+		ELSE
+			SET REQUESTQNAME = cursor.NSSDO:userDefinedProperties[REQUESTQNAME_INDEX].value;
+			SET REQUESTQMNAME = cursor.NSSDO:userDefinedProperties[REQUESTQMNAME_INDEX].value;
+		END IF;
+		
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData.queueName = REQUESTQNAME;
+        IF  QM_CLUSTER IS FALSE THEN 
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData.queueManagerName = REQUESTQMNAME;	
+	    ELSE 
+	    	SET OutputLocalEnvironment.Destination.MQ.DestinationData.queueManagerName = '';	    	
+	    END IF;
+		
+		IF Environment.Variables.Source = SOURCE_MQ THEN
+			SET OutputRoot.MQMD.ReplyToQ = SOURCE_MQ_RTQ;
+		ELSE
+			SET OutputRoot.MQMD.ReplyToQ = SOURCE_SG_RTQ;
+		END IF;
+		SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+		SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+		
+		/*
+		 * seleccionamos todas las clasificaciones "http://grupobancolombia.com/clas/"
+		 * excepto las que se encuentenn en la UDP CN_HIDDEN
+		*/
+		DECLARE refHeaderOut REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		
+		DECLARE cn_hidden_row ROW;
+		CALL tokenizar(CN_HIDDEN, ';', cn_hidden_row);
+		
+		DECLARE clasifications ROW;
+		DECLARE refClasifications REFERENCE TO clasifications;
+		SET clasifications.clasification[] = SELECT T 
+			FROM cursor.classificationURIs[] as T WHERE CONTAINS(T,CN_PREFIX_BC)
+			AND NOT (SUBSTRING(T BEFORE '#') IN (cn_hidden_row.val[]));
+			
+		/*
+		 * Agrega en el MesaggeContext todas las clasificaciones devueltas por WSRR, 
+		 * excepto las que se encuentenn en la UDP CN_HIDDEN
+		*/
+		MOVE refClasifications FIRSTCHILD;
+		DECLARE esbClasificationValue CHARACTER '';
+		DECLARE esbClasificationName CHARACTER 'WSRR:'||
+						refHeaderOut.requestData.destination.name||':';
+		DECLARE esbClasificationNameTemp CHARACTER '';
+		--recorre los elementos seleccionados
+		WHILE LASTMOVE(refClasifications) DO
+			--obtiene el nombre de la clasificacion
+			SET esbClasificationNameTemp = esbClasificationName||
+							SUBSTRING(SUBSTRING(refClasifications AFTER CN_PREFIX_BC) BEFORE '#');
+			--obtiene el valor de la clasificacion
+			SET esbClasificationValue = SUBSTRING(SUBSTRING(refClasifications AFTER CN_PREFIX_BC) AFTER '#');
+			--agrega el valor en el MessageContext
+
+		  	CALL core.common.util.esbXML.il.AddMessageContextProperty(
+		  		refHeaderOut, esbClasificationNameTemp, esbClasificationValue);
+		  	
+		  	SET esbClasificationNameTemp = '';
+		  	MOVE refClasifications NEXTSIBLING;
+		END WHILE;
+				
+		--Verifica si la clasificacion del servicio requirio conexion segura WSCA_TLS
+		DECLARE classSocietyValue CHARACTER THE(SELECT ITEM T 
+				FROM cursor.classificationURIs[] as T WHERE CONTAINS(T,CN_SC_PREFIX));
+		IF classSocietyValue IS NOT NULL THEN
+			--si lo requiere busca su clasificacion			
+			DECLARE hashValue CHARACTER core.common.util.esbXML.il.GetMessageContextProperty(refHeaderOut,SECURITYCONSUMER);
+			
+						
+			--evalua si en el message contex tiene la llave-valor
+			IF (hashValue IS NOT NULL OR hashValue <> '') THEN
+				--elimina messagecontex
+				CALL core.common.util.esbXML.il.DeleteMessageContextProperty(refHeaderOut,SECURITYCONSUMER);
+			
+				DECLARE classSocietyValue CHARACTER THE(SELECT ITEM T 
+				FROM cursor.classificationURIs[] as T WHERE CONTAINS(T,CN_SC_PREFIX||hashValue));
+			
+				--compara los valores,si es diferente levanta excepcion
+				IF(classSocietyValue IS NULL OR classSocietyValue = '') THEN
+					CALL ThrowSystemException
+					(REQUEST, ILSEv2, CODE1103, COMMAND, SEC_CONSUMER_FALSE, Environment, OutputExceptionList);
+				END IF;
+			ELSE
+				CALL ThrowSystemException
+					(REQUEST, ILSEv2, CODE1103, COMMAND, SEC_CONSUMER_FAULT, Environment, OutputExceptionList);
+			END IF;
+		END IF;
+		CALL core.common.util.esbXML.il.DeleteMessageContextProperty(refHeaderOut,SECURITYCONSUMER);
+		
+	END;
+	
+	
+END MODULE;
+/*******************************************************************************
+* Nodo Name:         ResourceNotFound	                                       *
+* Module Name:       ServiceGateway_Client_ResourceNotFound	                   *
+* Description:       Subflujo utilitario ThrowsSystemException				   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00      10/10/2012  German Caballero    Versión inicial                    *
+*******************************************************************************/
+CREATE COMPUTE MODULE ServiceGateway_Client_ResourceNotFound
+/******************************************************************************
+* Function Name: Main                             							  *
+* Input Parameters:	None                          							  *
+* Output Parameters: Boolean Return               							  *
+* Description: Punto principal de entrada del Módulo						  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    10/10/2012  German Caballero	    	The initial version   		  *
+*																			  *
+******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CreateErrorMessage();
+		CALL RouteMessage();
+		RETURN FALSE;
+	END;
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia el mensaje entero en el mensaje de salida 				   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		10/10/2012	German Caballero	Versión inicial 				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+/*******************************************************************************
+* Procedure Name: CreateErrorMessage 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Crea el mensaje de error						 				   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		10/10/2012	German Caballero	Versión inicial 				   *
+*******************************************************************************/
+	CREATE PROCEDURE CreateErrorMessage() BEGIN
+		DECLARE incur REFERENCE TO InputRoot.XMLNSC;
+		DECLARE env REFERENCE TO Environment;
+		IF env.Variables.OriginMsg IS null THEN
+			CALL SendOriginMsgToEnv(incur, env);
+		END IF;
+		
+		SET OutputRoot.XMLNSC.il:esbXML.Header = incur.il:esbXML.Header;
+		DECLARE header REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		CALL setFault(header, 'Client.ResourceNotFound', NULL);
+	END;
+/*******************************************************************************
+* Procedure Name: RouteMessage		 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Rutea el mensaje de salida					 				   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		10/10/2012	German Caballero	Versión inicial 				   *
+*******************************************************************************/
+	CREATE PROCEDURE RouteMessage() BEGIN
+		IF Environment.Variables.Source = SOURCE_MQ THEN
+			PROPAGATE TO TERMINAL 'out';
+		ELSE
+			PROPAGATE TO TERMINAL 'out1';
+		END IF;	
+	END;
+END MODULE;
+/*******************************************************************************
+* Nodo Name:         PrepareLog			                                       *
+* Module Name:       ServiceGateway_PrepareLog				                   *
+* Description:       se encarga de preparar el registro de evento de INFO en el*
+*					 ESBTracingManager a través del subflujo LoggingAdapter.   *
+*                                                                              *
+* Version   Date        Author              Description                        *
+* ========  =========== ==================  ===================================*
+* 1.00      10/10/2012  German Caballero    Versión inicial                    *
+*******************************************************************************/
+CREATE COMPUTE MODULE ServiceGateway_PrepareLog	
+/******************************************************************************
+* Function Name: Main                             							  *
+* Input Parameters:	None                          							  *
+* Output Parameters: Boolean Return               							  *
+* Description: Punto principal de entrada del Módulo						  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.0     10/10/2012  German Caballero	    	The initial version   		  *
+* 1.1     19/02/2025  Juan Esteban Piedrahita	Monitoring node fix           *
+*																			  *
+******************************************************************************/	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		-- Actualizar los objetos con la respuesa del servicio especifico
+		DECLARE refEnvVarMsgRs REFERENCE TO Environment.Variables.PutMsgQ;
+		
+		-- Copia de la mensajeria de respuesta para el monitoreo
+	    SET OutputRoot = refEnvVarMsgRs;
+	    
+	    -- Propagacion de mensajeria de respuesta para el monitoreo
+		PROPAGATE TO TERMINAL 'out1';
+		
+		-- Copia de todo el contexto del mensaje
+		SET OutputRoot = InputRoot; 
+		
+		-- Referencia a la etiqueta interactionData
+		DECLARE interactionData REFERENCE TO
+			OutputRoot.XMLNSC.il:esbXML.Header.interactionData;
+		DECLARE esbXMLHeader REFERENCE TO 
+			OutputRoot.XMLNSC.il:esbXML.Header;
+		CALL ChangeTimeStamp(interactionData);
+		
+		--Elimina los MessageContext de WSRR propagados en el request
+		DECLARE esbClasificationName CHARACTER 'WSRR:'||
+						esbXMLHeader.requestData.destination.name||':';
+		CALL core.common.util.esbXML.il.DeleteMessageContextProperty(esbXMLHeader, esbClasificationName);
+		
+		RETURN TRUE;
+	END;
+	
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia el mensaje entero en el mensaje de salida 				   *
+*																			   *
+* Version 	Date 		Author 				Description 					   *
+* ========	=========== ================== 	===================================*
+* 1.00 		10/10/2012	German Caballero	Versión inicial 				   *
+*******************************************************************************/	
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+END MODULE;

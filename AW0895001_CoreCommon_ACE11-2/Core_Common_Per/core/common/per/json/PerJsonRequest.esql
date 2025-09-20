@@ -1,0 +1,84 @@
+BROKER SCHEMA core.common.per.json
+
+CREATE FILTER MODULE PERJson_IsCached
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		RETURN CAST(Environment.PER.cache.exists AS BOOLEAN);
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PERJson_PER_RS
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.Properties = Environment.PropertiesOrig;
+		
+		DECLARE refInJsonPER REFERENCE TO InputRoot.JSON.Data.data.parametrizadorRespuestaResponse;
+		DECLARE refEnvCachePer REFERENCE TO Environment.PER.cache;
+		DECLARE cod, des CHARACTER '';
+		DECLARE httpcode INTEGER DefaultHttpCodeSuccessResponse;
+		
+		IF EXISTS(refInJsonPER.codigoCanonico[]) THEN
+			-- Si se homologa, se da respuesta y se guarda en cache
+			SET cod	= COALESCE(refInJsonPER.codigoCanonico,'');
+			SET des = COALESCE(refInJsonPER.descripcionNegocio,'');
+		END IF;
+
+		-- Si tiene politica para cambiar el codigo canonico, tanto el codigo de respuesta como el codigo http es modificado por medio del metodo EvalPercodeHttpCodePolicy
+		IF cod <> '' AND des <> '' THEN
+			CALL EvalPercodeHttpCodePolicy(cod, des, httpcode);
+			CALL core.common.per.json.PutCachePer(Environment, cod, des, httpcode);
+		ELSE
+			-- Si no se homologa, se emite la respuesta general de error del proveedor (back) y no se guarda en cache
+			-- para que la proxima vez permita volver a realizar la peticion y validar si existe una homologacion
+			SET cod = refEnvCachePer.codGeneralProveedor;
+			SET des = refEnvCachePer.descGeneralProveedor;
+			CALL EvalPercodeHttpCodePolicy(cod, des, httpcode);
+		END IF;
+	 
+		CALL CreateBusinessException(OutputLocalEnvironment, OutputRoot, Environment, cod, des, httpcode);
+
+		SET Environment.handler.object = '';
+				
+		DELETE FIELD Environment.handler;
+		DELETE FIELD Environment.per;
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PERJson_Http_Error
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refInHTTPHeader REFERENCE TO InputRoot.HTTPResponseHeader;
+		DECLARE httpStatusCode INTEGER CAST(refInHTTPHeader."X-Original-HTTP-Status-Code" AS INTEGER);
+
+		DECLARE outError ROW;
+		DECLARE dataStrcuture CHAR CAST(InputRoot.BLOB.BLOB AS CHAR CCSID InputRoot.Properties.CodedCharSetId Encoding InputRoot.Properties.Encoding);
+		
+		--Identificar que la estructura de datos entrante sea valida para buscar la informacion especifica JSON.
+		IF NOT (core.common.util.ContainsCharacters(dataStrcuture, '{}') AND CONTAINS(dataStrcuture, 'status') AND CONTAINS(dataStrcuture, 'errors')) THEN
+			THROW USER EXCEPTION MESSAGE 500 VALUES ('SPR HTTP Error: La estructura de la respuesta tiene una forma diferente a las aceptadas', CAST(InputRoot.BLOB.BLOB AS CHARACTER));
+		END IF;
+
+		CREATE LASTCHILD OF outError DOMAIN('JSON') PARSE(InputRoot.BLOB.BLOB);
+		
+		SET OutputRoot.Properties = Environment.PropertiesOrig;
+		SET OutputRoot.HTTPResponseHeader = Environment.HttpHeaderRs;
+		CREATE LASTCHILD OF OutputRoot DOMAIN('JSON');
+
+		DECLARE refOutJson REFERENCE TO OutputRoot.JSON; 
+		SET refOutJson.Data = outError.JSON.Data;
+		SET refOutJson.Data.status = CAST(refOutJson.Data.status AS INTEGER);
+		SET refOutJson.Data.meta = Environment.HttpMeta;
+		
+		CREATE FIELD refOutJson.Data.errors IDENTITY(JSON.Array)errors;
+		CREATE LASTCHILD OF refOutJson.Data.errors NAME 'Item';
+	    DECLARE RefJsonErrorsItem REFERENCE TO refOutJson.Data.errors.Item[<];
+	
+		SET RefJsonErrorsItem.code = CAST(httpStatusCode AS CHARACTER);
+		SET RefJsonErrorsItem.detail= 'SPR Invoke Error';				
+
+		SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = httpStatusCode;
+		RETURN TRUE;
+	END;
+END MODULE;

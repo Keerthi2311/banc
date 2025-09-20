@@ -1,0 +1,62 @@
+BROKER SCHEMA core.common.peq
+DECLARE UDP_MSGID_TO_CORRELID EXTERNAL BOOLEAN FALSE;
+DECLARE UDP_TIMEOUT_MILLIS EXTERNAL INTEGER 0;
+CREATE PROCEDURE GetMessageContextProperty (IN inputHeader REFERENCE, 
+											IN key         CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE refMC REFERENCE TO inputHeader.messageContext;
+	DECLARE value CHARACTER THE(SELECT ITEM FIELDVALUE(p.value) FROM refMC.property[] AS p 
+		WHERE p.key = key);
+	RETURN value;
+END;
+
+CREATE PROCEDURE CreateEncabezadoHomologacion(IN ref REFERENCE, IN appOrigen CHARACTER, IN appDestino CHARACTER, IN socOrigen CHARACTER, IN socDestino CHARACTER)
+BEGIN
+	--
+	CREATE FIELD ref.encabezadoHomologacion AS ref;
+	
+	SET ref.aplicacionOrigen = appOrigen;
+	SET ref.aplicacionDestino = appDestino;
+	SET ref.sociedadOrigen = socOrigen;
+	SET ref.sociedadDestino = socDestino;
+END;
+
+CREATE PROCEDURE tokenizar (IN texto CHARACTER, IN separador CHARACTER, IN valores REFERENCE)
+BEGIN
+	DECLARE p1 INTEGER POSITION(separador IN texto);
+	IF p1 > 0 THEN
+		X: LOOP
+			CREATE LASTCHILD OF valores TYPE NameValue
+				NAME 'val' VALUE SUBSTRING(texto FROM 1 FOR p1 - 1); --last child so that the next element will append on last row.
+			SET texto = SUBSTRING(texto FROM p1 + 1);
+			SET p1 = POSITION(separador IN texto);
+			IF p1 = 0 THEN
+				LEAVE X;
+			END IF;
+		END LOOP X;
+	END IF;
+	CREATE LASTCHILD OF valores TYPE NameValue NAME 'val' VALUE texto;
+END;
+
+CREATE PROCEDURE AddCriterioParametrizacion(IN ref REFERENCE, IN tipologia CHARACTER, IN valorOrigen CHARACTER)
+BEGIN
+	-- Verificar que no se repita
+	DECLARE c INTEGER 0;
+	SET c = THE(SELECT COUNT(*) FROM ref.criterioParametrizacion[] AS cp
+				WHERE cp.tipologia = tipologia
+				AND cp.valorOrigen = valorOrigen);
+	
+	IF c = 0 THEN
+		CREATE LASTCHILD OF ref AS ref TYPE Name NAME 'criterioParametrizacion';
+		SET ref.tipologia = tipologia;
+		SET ref.valorOrigen = valorOrigen;
+	END IF;
+END;
+
+CREATE PROCEDURE SendOriginMsgToEnv(IN inx REFERENCE, IN env REFERENCE)
+BEGIN
+	DELETE FIELD env.Variables.OriginMsg;
+	CREATE FIELD env.Variables.OriginMsg TYPE Name;
+	CREATE FIRSTCHILD OF env.Variables.OriginMsg DOMAIN('XMLNSC') PARSE (
+	ASBITSTREAM(inx));
+END;

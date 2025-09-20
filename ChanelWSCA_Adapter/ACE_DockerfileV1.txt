@@ -1,0 +1,30 @@
+FROM ${IMAGES_ACE_MQ}
+USER root
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+unzip awscliv2.zip && \
+./aws/install -i /home/aceuser/.local/aws-cli -b /home/aceuser/bin/aws
+
+COPY --chown=1001 initial-config /home/aceuser/initial-config
+COPY bars/*.bar /tmp
+COPY *.sh /usr/local/bin
+COPY --chown=1001 *.jar /home/aceuser/ace-server/custom/lib/
+COPY --chown=1001 *.ini /home/aceuser/ace-server
+
+RUN export LICENSE=accept &&\
+    ace_config_policy.sh && \
+    ace_config_setdbparms.sh && \
+    rm -R /home/aceuser/initial-config/policy && \
+    chmod -R 755 /usr/local/bin
+USER 0
+
+
+RUN export LICENSE=accept \
+    && initialconf -env=${ACE_ENV} -optimize=${OPTIMIZE_BAR} \
+    && chmod -R ugo+rwx /home/aceuser/
+	
+USER 1001	
+RUN mkdir -p /home/aceuser/initial-config/truststore
+COPY --chown=1001 *.crt /home/aceuser/initial-config/truststore/
+
+ENTRYPOINT [ "bash", "-c", "runserver"]

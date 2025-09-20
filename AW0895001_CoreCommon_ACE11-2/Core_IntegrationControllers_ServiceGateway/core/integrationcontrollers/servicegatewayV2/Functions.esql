@@ -1,0 +1,113 @@
+BROKER SCHEMA core.integrationcontrollers.servicegatewayV2
+
+/*******************************************************************************
+* File Name: Functions.esql													   *
+* Description: Este archivo contiene la declaracion de las funciones		   *
+* requeridas por el componente.							 					   *
+* 																			   *
+* Version  Date         Author             Description 						   *
+* ======== =========== ================== =====================================*
+* 1.00     03-Sept-2018 Julian Restrepo    Versión inicial                     *
+*******************************************************************************/
+
+DECLARE DEFAULT_MSGID CONSTANT CHARACTER 'NONE';
+DECLARE INDEX_BASE CONSTANT INTEGER 3;
+
+/*
+ * Function:    ChangeTimeStamp
+ * Purpose:     Cambia el timestamp para ser 
+ *				procesado por ESBTM
+ * Author:      German Caballero Mar (germanm@mx1.ibm.com)
+ * Date:        October 09, 2012
+ * Version:     1.0
+ *
+ * @copyright IBM Mexico Ltd. 2012. All rights reserved.
+ */
+ 
+CREATE PROCEDURE ChangeTimeStamp(IN interactionData REFERENCE)
+BEGIN
+	
+	--BCSWF00082184 Se cambia para que se registre siempre la fecha de sistema
+	-- y no se respete la fecha que viene en el mensaje request original
+	SET interactionData.timestamp = CAST(CURRENT_TIMESTAMP AS CHARACTER
+		FORMAT 'yyyy-MM-dd''T''HH:mm:ss.SSS');		
+END;
+
+/*
+ * Function:    ExtractMsgId
+ * Purpose:     Extrae el MessageId de una forma X'32342' y 
+ *              la convierte a 32342
+ * Author:      Agustin Altamirano (aaltamir@mx1.ibm.com)
+ * Date:        November 08, 2012
+ * Version:     1.0
+ *
+ * @copyright IBM Mexico Ltd. 2012. All rights reserved.
+ *
+ */
+CREATE FUNCTION ExtractMsgId(IN msgIdIn CHARACTER)
+RETURNS CHARACTER
+BEGIN
+	DECLARE atIndex INTEGER;
+	DECLARE msgId CHARACTER TRIM(msgIdIn);
+	DECLARE msgIdOut CHARACTER DEFAULT_MSGID;
+	
+	-- Calcula la la posición del último caracter '
+	SET atIndex = LENGTH(msgId) - INDEX_BASE;
+	
+	-- Extrae la subcadena y devuelve como resultado el msgId limpio
+	SET msgIdOut = SUBSTRING(msgId FROM INDEX_BASE FOR atIndex);
+	
+	RETURN msgIdOut;
+END;
+
+
+CREATE PROCEDURE Split (IN S CHARACTER, IN Env REFERENCE, IN Delim CHARACTER) 
+BEGIN 
+   DECLARE P INTEGER; 
+   DECLARE Idx INTEGER 1; 
+   SET Env.consumers = NULL; 
+   REPEAT 
+      SET P = POSITION(Delim IN S); 
+      IF P = 0 THEN 
+         SET Env.consumers.consume[Idx] = S; 
+      ELSE 
+         SET Env.consumers.consume[Idx] = LEFT(S, P - 1); 
+         SET S = SUBSTRING(S FROM P + LENGTH(Delim)); 
+         SET Idx = Idx + 1; 
+      END IF; 
+  UNTIL P = 0    
+  END REPEAT;    
+END;
+
+
+CREATE PROCEDURE SplitIdentifiers (IN S CHARACTER, IN Env REFERENCE, IN Delim CHARACTER) 
+BEGIN 
+   DECLARE P INTEGER; 
+   DECLARE Idx INTEGER 1; 
+   SET Env.identifiers = NULL; 
+   REPEAT 
+      SET P = POSITION(Delim IN S); 
+      IF P = 0 THEN 
+         SET Env.identifiers.identify[Idx] = S; 
+      ELSE 
+         SET Env.identifiers.identify[Idx] = LEFT(S, P - 1); 
+         SET S = SUBSTRING(S FROM P + LENGTH(Delim)); 
+         SET Idx = Idx + 1; 
+      END IF; 
+  UNTIL P = 0    
+  END REPEAT;    
+END;
+
+
+CREATE PROCEDURE GetNode (IN bsUri CHARACTER, IN refWSRR REFERENCE , IN enV REFERENCE)
+BEGIN
+	DECLARE cursor REFERENCE TO refWSRR.sdo_1:WSRR.sdo_1:artefacts[1];
+	node : WHILE LASTMOVE(cursor) DO
+		IF cursor.bsrURI = bsUri THEN
+		    SET enV.Nodo = cursor;
+		    LEAVE node;
+		ELSE
+	     	MOVE cursor NEXTSIBLING REPEAT TYPE NAME;
+		END IF;	
+	END WHILE;
+END; 		

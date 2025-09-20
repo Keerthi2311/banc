@@ -1,0 +1,15 @@
+BROKER SCHEMA core.common.util2
+
+
+CREATE COMPUTE MODULE PutMessageMementoQV2_PostMementoPut
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyEntireMessage();
+		SET OutputRoot.MQMD = Environment.Variables.IOriginMsg.MQMD;
+		RETURN TRUE;
+	END;
+	
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

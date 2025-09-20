@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policies>
+  <policy policyType="MQTTPublish" policyName="MQTTPublish_Events" policyTemplate="MQTTPublish">
+    <clientId>AceCoreCommon</clientId>
+    <topicName>${MQTT_topicName}</topicName>
+    <hostName>${MQTT_hostName}</hostName>
+    <port>7600</port>
+    <qos>0</qos>
+    <securityIdentity></securityIdentity>
+    <useSSL>false</useSSL>
+  </policy>
+</policies>

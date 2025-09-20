@@ -1,0 +1,11 @@
+BROKER SCHEMA core.common2.adapter
+
+
+CREATE COMPUTE MODULE ErrorAdapter2_SetFault
+CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET Environment.Variables.ErrorAdapterV2.exceptionId = 2205;
+		SET Environment.Variables.ErrorAdapterV2.exceptionCatalog = 'ILSEv2';
+		RETURN TRUE;
+	END;
+END MODULE;

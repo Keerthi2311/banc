@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:ns0="urn://bancolombia.com.co/iast/messages/dfdl/Cabecera_GN" xmlns:ns1="http://bancolombia.com.co/iast/messages/dfdl/Cabecera_GN" xmlns:ns2="http://grupobancolombia.com/messages/dfdl/CA_IAST" xmlns:ns3="http://grupobancolombia.com/messages/DFDL/CA_IAST" xmlns:ns4="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0" xmlns:ns5="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0" xmlns:ns6="http://grupobancolombia.com/intf/DFDL/CA_IAST/V1.0" xmlns:recFixLengthFieldsFmt="http://www.ibm.com/dfdl/RecordFixLengthFieldFormat">
+
+	<xsd:import namespace="http://www.ibm.com/dfdl/RecordFixLengthFieldFormat" schemaLocation="../IBMdefined/RecordFixLengthFieldFormat.xsd"/>
+	<xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format encoding="ISO-8859-1" escapeSchemeRef="" occursCountKind="fixed" ref="recFixLengthFieldsFmt:RecordFixLengthFieldsFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+	<xsd:element dfdl:encoding="{$dfdl:encoding}" dfdl:lengthKind="implicit" dfdl:outputNewLine="{$dfdl:outputNewLine}" ibmSchExtn:docRoot="true" name="IAST">
+		<xsd:complexType>
+			<xsd:sequence dfdl:outputNewLine="{$dfdl:outputNewLine}" dfdl:separator="" dfdl:separatorPosition="postfix" dfdl:separatorSuppressionPolicy="anyEmpty">
+				<xsd:element dfdl:lengthKind="implicit" dfdl:outputNewLine="{$dfdl:outputNewLine}" name="Header">
+					<xsd:complexType>
+						<xsd:sequence dfdl:outputNewLine="{$dfdl:outputNewLine}">
+							<xsd:element default="" dfdl:byteOrder="{$dfdl:byteOrder}" dfdl:encoding="ISO-8859-1" dfdl:length="3" ibmDfdlExtn:sampleValue="" name="ID_SERVIDOR" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="3" ibmDfdlExtn:sampleValue="" name="ID_APLICATIVO" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="16" dfdl:textPadKind="padChar" dfdl:truncateSpecifiedLengthString="yes" name="MENSAJE" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="10" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textTrimKind="none" minOccurs="0" name="DTQ_RESP" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="10" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textTrimKind="none" minOccurs="0" name="LIBDTQ" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="1" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" dfdl:textTrimKind="none" minOccurs="0" name="ORIENTACION" type="xsd:string"/>
+							<xsd:element default="" dfdl:escapeSchemeRef="recFixLengthFieldsFmt:RecordEscapeScheme" dfdl:length="2" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" dfdl:textTrimKind="none" name="TEMPORIZADOR" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="8" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" ibmDfdlExtn:sampleValue="00:00:00" minOccurs="0" name="HORACLIREQ" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="8" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" ibmDfdlExtn:sampleValue="00:00:00" minOccurs="0" name="HORACLIRES" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="8" dfdl:lengthKind="explicit" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" ibmDfdlExtn:sampleValue="00:00:00" minOccurs="0" name="HORASRVREQ" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="8" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" ibmDfdlExtn:sampleValue="00:00:00" minOccurs="0" name="HORASRVRES" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="5" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" minOccurs="0" name="LONGITUD_CARGA" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="2" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" minOccurs="0" name="NUM_SEGMENT" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="5" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textStringJustification="right" dfdl:textStringPadCharacter="0" minOccurs="0" name="POSSEGMENT" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="1" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" dfdl:textTrimKind="none" minOccurs="0" name="FIILL1" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="2" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="TIPO_MENSAJE" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="4" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="COD_TRANSACCION" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="20" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="SEC_TRANSACCION" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="1" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="REQUIERE_RESPUESTA" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="4" dfdl:occursCountKind="implicit" dfdl:textPadKind="padChar" minOccurs="0" name="CODIGO_RESP" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="50" dfdl:occursCountKind="implicit" dfdl:outputNewLine="{$dfdl:outputNewLine}" dfdl:textPadKind="padChar" dfdl:textStringJustification="left" dfdl:textTrimKind="none" minOccurs="0" name="DESCRIPCION_RESP" type="xsd:string"/>
+							<xsd:element default="" dfdl:length="9" dfdl:occursCountKind="implicit" dfdl:outputNewLine="{$dfdl:outputNewLine}" dfdl:textPadKind="padChar" dfdl:textTrimKind="none" minOccurs="0" name="FILL0" type="xsd:string"/>
+						</xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+                			<xsd:element dfdl:lengthKind="delimited" name="Body">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element dfdl:lengthKind="delimited" dfdl:occursCountKind="implicit" dfdl:textStringPadCharacter="" dfdl:textTrimKind="none" minOccurs="0" name="CARGA_UTIL">
+                <xsd:simpleType>
+                  <xsd:restriction base="xsd:string">
+                    <xsd:maxLength value="32000"/>
+                  </xsd:restriction>
+                </xsd:simpleType>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+            </xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+</xsd:schema>

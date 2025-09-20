@@ -1,0 +1,72 @@
+BROKER SCHEMA core.integrationcontrollers.servicegatewayV2
+
+DECLARE SECURITYCONSUMER 	CONSTANT CHARACTER 'SECURITY_CONSUMER';
+
+/*******************************************************************************
+* Nodo Name:         ConditionalPushRTQ                                        *
+* Module Name:       ServiceGateway_Request_ConditionalPushRTQ                 *
+* Description:       Verifica los elementos requeridos para realizar un ingreso* 
+* 					 en el elemento routingStack con los datos del elemento que*
+*					 invoca el componente ServiceGateway.					   *
+*******************************************************************************/
+CREATE COMPUTE MODULE ServiceGatewayV2_Request_ConditionalPushRTQ
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		 CALL CopyEntireMessage();
+		 
+		 IF core.common.util.IsRTQMissing(InputRoot.MQMD.ReplyToQ)THEN
+		 	PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;
+		 ELSE
+		 	CALL DoPush();
+		 END IF;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	
+/********************************************************************************
+* Procedure Name: DoPush 														*
+* Input Parameters: None 														*
+* Output Parameters: None 														*
+* Description: Agrega la información de ReplyToQ y Qmgr al routingStack			*
+*********************************************************************************/
+	CREATE PROCEDURE DoPush() BEGIN
+		DECLARE header REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		IF LASTMOVE(header) THEN
+			DECLARE queue CHARACTER InputRoot.MQMD.ReplyToQ;
+			DECLARE queueMgr CHARACTER InputRoot.MQMD.ReplyToQMgr;
+			DECLARE correlId BLOB InputRoot.MQMD.CorrelId;
+			IF correlId IS NULL or correlId = MQCI_NONE THEN
+			SET correlId = InputRoot.MQMD.MsgId;
+			END IF;			
+			CALL core.common.util.PushRTQWithCorrel(header, queue, queueMgr, correlId);			
+		END IF;
+	END;
+	
+END MODULE;
+
+/*******************************************************************************
+* Nodo Name:         PrepareError			                                   *
+* Module Name:       ServiceGateway_Request_PrepareLog		                   *
+* Description:       Se encarga de eliminar messageContext SECURITY_CONSUMER   *
+					 si hubo un error en el proceso, para no propagar al canal *
+*                    este valor                                                *
+*******************************************************************************/
+CREATE COMPUTE MODULE ServiceGatewayV2_Request_PrepareError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyEntireMessage();
+		--referencia Header de salida
+		DECLARE refHeaderOut REFERENCE TO OutputRoot.XMLNSC.il:esbXML.Header;
+		CALL core.common.util.esbXML.il.DeleteMessageContextProperty(refHeaderOut,SECURITYCONSUMER);
+		RETURN TRUE;
+	END;
+
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

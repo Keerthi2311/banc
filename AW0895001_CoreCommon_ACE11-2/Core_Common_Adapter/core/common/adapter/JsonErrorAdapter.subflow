@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmPassthru.msgnode="ComIbmPassthru.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:mbmonitor="http://www.ibm.com/wbi/2008/eflow_mbmonitor" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common/adapter/JsonErrorAdapter.subflow" nsPrefix="core_common_adapter_JsonErrorAdapter.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true" nodeLayoutStyle="RECTANGLE">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Level" name="Level" lowerBound="1" defaultValueLiteral="ERROR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventType" name="EventType" lowerBound="1" defaultValueLiteral="REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EventDescription" name="EventDescription">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Platform" name="Platform" lowerBound="1" defaultValueLiteral="ACE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EnvironmentTrx" name="EnvironmentTrx" lowerBound="1" defaultValueLiteral="Desarrollo">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ExecutionEnvironment" name="ExecutionEnvironment" lowerBound="1" defaultValueLiteral="Local">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ServiceVersion" name="ServiceVersion" lowerBound="1" defaultValueLiteral="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BodyTrace" name="BodyTrace" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.OperationName" name="OperationName" lowerBound="1" defaultValueLiteral="Ope11">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ServiceName" name="ServiceName" lowerBound="1" defaultValueLiteral="Serv11">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.GeneralErrorPrefix" name="GeneralErrorPrefix" defaultValueLiteral="SI">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SpecificErrorPrefix" name="SpecificErrorPrefix" defaultValueLiteral="SM">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ProviderErrorPrefix" name="ProviderErrorPrefix" defaultValueLiteral="SP">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="JsonErrorAdapter" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Adapter/icons/full/obj16/JsonErrorAdapter.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Adapter/icons/full/obj30/JsonErrorAdapter.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="22,21">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Catch" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="742,23">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input1" location="23,127">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Failure" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="439,21" computeExpression="esql://routine/core.common.adapter#JsonErrorAdapter_Evaluate.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="Evaluate"/>
+      </nodes>
+      <nodes xmi:type="ComIbmPassthru.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="743,114">
+        <translation xmi:type="utility:ConstantString" string="Error_Info"/>
+        <monitorEvents eventSourceDescription="In terminal" eventSourceName="Error_Info.terminal.in" eventIdentity="Error_Info.InTerminal">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent">
+            <applicationData dataLocation="$Environment/monitoringEvent" isXPath="true" complexData="true"/>
+            <applicationData dataLocation="$Environment/Exception" isXPath="true" complexData="true"/>
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator/>
+            <bitStreamData encoding="base64Binary" bitstreamContent="body"/>
+            <eventName literal="Error_Info.InTerminal"/>
+            <eventFilter dataLocation="true()" isXPath="true"/>
+          </eventXMLDoc>
+        </monitorEvents>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="371,318" computeExpression="esql://routine/core.common.adapter#JsonErrorAdapter_Passthrough_Event.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="Passthrough Event"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input2" location="24,221">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Timeout" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Error" location="29,317">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Error" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="241,222" computeExpression="esql://routine/core.common.adapter#JsonErrorAdapter_Timeout_Handler.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="Timeout Handler"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_4" sourceNode="InTerminal.Input1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_4" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Error" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="InTerminal.Input2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.Level">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.Level" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+        <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EventType">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.EventType" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+          <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EventDescription">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.EventDescription" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+            <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.Platform">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.Platform" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+              <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.EnvironmentTrx">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.EnvironmentTrx" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ExecutionEnvironment">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.ExecutionEnvironment" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                  <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ServiceVersion">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.ServiceVersion" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                    <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.BodyTrace">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.BodyTrace" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                      <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.OperationName">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.OperationName" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                        <propertyDescriptor groupName="Group.InfoEventError" configurable="true" userDefined="true" describedAttribute="Property.ServiceName">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.ServiceName" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                          <propertyDescriptor groupName="Group.ErrorCodePrefix" configurable="true" userDefined="true" describedAttribute="Property.GeneralErrorPrefix">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.GeneralErrorPrefix" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                            <propertyDescriptor groupName="Group.ErrorCodePrefix" configurable="true" userDefined="true" describedAttribute="Property.SpecificErrorPrefix">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.SpecificErrorPrefix" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                              <propertyDescriptor groupName="Group.ErrorCodePrefix" configurable="true" userDefined="true" describedAttribute="Property.ProviderErrorPrefix">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.ProviderErrorPrefix" bundleName="core/common/adapter/JsonErrorAdapter" pluginId="Core_Common_Adapter"/>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

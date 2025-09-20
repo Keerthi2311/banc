@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmWSRequest.msgnode="ComIbmWSRequest.msgnode" xmlns:core_common2_adapter_LoggingAdapter.subflow="core/common2/adapter/LoggingAdapter.subflow" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility"
+    nsURI="core/common/peq/PEQ_RequestProxy.subflow" nsPrefix="core_common_peq_PEQ_RequestProxy.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_EXCEPTION_DETAIL" name="UDP_EXCEPTION_DETAIL" defaultValueLiteral="Error al consultar el proxy PEQ HTTP">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_OPERATION_TYPE" name="UDP_OPERATION_TYPE" defaultValueLiteral="QUERY">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_INTERACTION_TYPE" name="UDP_INTERACTION_TYPE" defaultValueLiteral="REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="PEQ_RequestProxy" bundleName="core/common/peq/PEQ_RequestProxy" pluginId="Core_Common_Peq"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Peq/icons/full/obj16/PEQ_RequestProxy.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Peq/icons/full/obj30/PEQ_RequestProxy.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="20,20">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.PeqRequest" bundleName="core/common/peq/PEQ_RequestProxy" pluginId="Core_Common_Peq"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="695,24">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.PeqResponse" bundleName="core/common/peq/PEQ_RequestProxy" pluginId="Core_Common_Peq"/>
+      </nodes>
+      <nodes xmi:type="ComIbmWSRequest.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="250,20" URLSpecifier="http://acepeqadapterintegration.integration-common.svc.cluster.local:7800/ace/peqadapter/equivalencesmanager" timeoutForServer="40" httpVersion="1.1" protocol="TLSv1.2" messageDomainProperty="XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="PeqAceRequest"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="392,104" UDP_EXCEPTION_ID="2301">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="394,22" computeExpression="esql://routine/core.common.peq#PEQ_RequestProxy_RemoveHttpHeadres.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="RemoveHttpHeadres"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_LoggingAdapter.subflow:FCMComposite_1" xmi:id="FCMComposite_1_6" location="86,94" EventDescription="Loggin de entrada PEQ">
+        <translation xmi:type="utility:ConstantString" string="LoggingAdapter"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_LoggingAdapter.subflow:FCMComposite_1" xmi:id="FCMComposite_1_7" location="545,23" EventDescription="Loggin de salida PEQ">
+        <translation xmi:type="utility:ConstantString" string="LoggingAdapter1"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="106,19" computeExpression="esql://routine/core.common.peq#PEQ_RequestProxy_Compute.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="SaveMessageMEMD"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.error" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_6" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_4" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_EXCEPTION_DETAIL">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_EXCEPTION_DETAIL" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+        <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_OPERATION_TYPE">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_OPERATION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+          <propertyDescriptor groupName="Group.ErrorAdapter" configurable="true" userDefined="true" describedAttribute="Property.UDP_INTERACTION_TYPE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_INTERACTION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.UDP_EXCEPTION_DETAIL" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_EXCEPTION_DETAIL"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_OPERATION_TYPE" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_OPERATION_TYPE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_INTERACTION_TYPE" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_INTERACTION_TYPE"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

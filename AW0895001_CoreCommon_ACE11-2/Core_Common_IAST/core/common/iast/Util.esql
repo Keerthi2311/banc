@@ -1,0 +1,186 @@
+BROKER SCHEMA core.common.iast
+
+CREATE PROCEDURE ConfigurableServiceGetValue(IN policyType CHARACTER, IN policyProject CHARACTER, IN key CHARACTER, IN element character)
+RETURNS CHARACTER 
+BEGIN
+	-- parametro key = name --> nombre del UDCS
+	-- parametro element = key --> llave
+	DECLARE result CHARACTER GetIASTUDCSCache(key, element);
+	IF result = 'UDCS_NO_CACHE' THEN
+		SET result = ConfigurableServiceGetValueJava(policyType, policyProject, key, element);
+		CALL PutIASTUDCSCache(key, element, result);
+	END IF;
+	
+	RETURN result; 
+END;
+
+CREATE PROCEDURE ConfigurableServiceGetValueJava(IN policyType CHARACTER, IN policyProject CHARACTER, IN key CHARACTER, IN element character)
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "core.common.util2.ConfigurableServiceMultiton.getValue"; 
+
+CREATE PROCEDURE PutIASTUDCSCache(IN name CHARACTER, IN key CHARACTER, IN value CHARACTER)
+BEGIN ATOMIC
+	SET CACHE_IAST_UDCS.{name}.{key} = value;
+END;
+
+CREATE PROCEDURE GetIASTUDCSCache(IN name CHARACTER, IN key CHARACTER)
+RETURNS CHARACTER
+BEGIN ATOMIC
+	RETURN COALESCE(CACHE_IAST_UDCS.{name}.{key},'UDCS_NO_CACHE');
+END;
+
+CREATE PROCEDURE GetCurrentTimeFormatHHMMSS()
+RETURNS CHARACTER
+BEGIN 
+	RETURN CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT TIMEFORMAT_HHMMSS);
+END;
+
+CREATE PROCEDURE GetCurrentTimeFormatHHMMSSMS()
+RETURNS CHARACTER
+BEGIN 
+	RETURN CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT TIMEFORMAT_HHMMSSMS);
+END;
+
+CREATE PROCEDURE GetCurrentTimestamp()
+RETURNS CHARACTER
+BEGIN 
+	RETURN CAST(CURRENT_GMTTIME AS CHARACTER);
+END;
+
+CREATE PROCEDURE ValidateCacheState(IN customerId CHARACTER, IN codCache CHARACTER, IN key CHARACTER)
+RETURNS BOOLEAN 
+BEGIN ATOMIC
+	RETURN EXISTS(CACHE_IAST.{customerId}.{codCache}.{key}[]);
+END;
+
+CREATE PROCEDURE GetBlobIASTCache(IN customerId CHARACTER)
+RETURNS BLOB
+BEGIN ATOMIC
+	DECLARE refCache REFERENCE TO CACHE_IAST.{customerId};
+	
+	DECLARE cacheRow ROW;
+	CREATE FIRSTCHILD OF cacheRow DOMAIN ('DFDL');
+	
+	SET cacheRow.DFDL = refCache.DFDL;
+	DECLARE header  BLOB ASBITSTREAM(cacheRow.DFDL TYPE refCache.DFDL_MessageType FORMAT refCache.DFDL_MessageFormat);
+	
+	RETURN header;
+END;
+
+CREATE PROCEDURE PutIASTCacheDFDLField(IN customerId CHARACTER, IN key CHARACTER, IN value CHARACTER)
+BEGIN ATOMIC
+	DECLARE refCache REFERENCE TO CACHE_IAST.{customerId};
+	
+	IF NOT EXISTS(refCache.DFDL[]) THEN
+		THROW USER EXCEPTION VALUES('No se puede actualizar la llave [' || key || '] al objeto CACHE_IAST.DFDL.{' || COALESCE(customerId, UNKNOWN_DATA_OBJECT) || '}.IAST.Header del elemento customer Id = ' || COALESCE(customerId, UNKNOWN_DATA_OBJECT) || '. El objeto DFLD no está presente.');
+	END IF;
+
+	SET refCache.DFDL.*:IAST.Header.{key} = value;
+END;
+
+CREATE PROCEDURE GetIASTCacheDFDLField(IN customerId CHARACTER, IN key CHARACTER)
+RETURNS CHARACTER
+BEGIN ATOMIC
+	DECLARE refCache REFERENCE TO CACHE_IAST.{customerId};
+	
+	IF NOT EXISTS(refCache.DFDL[]) THEN
+		THROW USER EXCEPTION VALUES('No se puede consultar la llave [' || key || '] al objeto CACHE_IAST.DFDL.{' || COALESCE(customerId, UNKNOWN_DATA_OBJECT) || '}.IAST.Header del elemento customerId Id = ' || COALESCE(customerId, UNKNOWN_DATA_OBJECT) || '. El objeto DFLD no está presente.');
+	END IF;
+
+	RETURN refCache.DFDL.*:IAST.Header.{key};
+END;
+
+CREATE PROCEDURE GetDecimalRuleGeneric(IN value CHARACTER, IN decimalCount INTEGER)
+RETURNS CHARACTER
+BEGIN
+	DECLARE result CHARACTER '0';
+	
+	IF value = NULL THEN
+		RETURN result;
+	END IF;
+	
+	SET value = CAST(CAST(value AS DECIMAL) AS CHARACTER);
+	
+	DECLARE POS_DECIMAL INTEGER POSITION(DECIMAL_SEPARATOR IN value);
+	
+	DECLARE decimalValue CHARACTER '';
+	DECLARE intValue 	 CHARACTER '';
+	IF POS_DECIMAL > 0 THEN
+		SET decimalValue = SUBSTRING(value FROM POSITION(DECIMAL_SEPARATOR IN value) + 1);
+		SET intValue = SUBSTRING(value FROM 1 FOR POSITION(DECIMAL_SEPARATOR IN value) -1);
+	ELSE
+		SET intValue = value;
+	END IF;
+	
+    WHILE LENGTH(decimalValue) < decimalCount DO
+        SET decimalValue = decimalValue || '0';
+    END WHILE;
+	
+	SET result = intValue || decimalValue; 
+	
+	RETURN result;
+END;
+
+CREATE PROCEDURE GetDateTimeCompactISO8601(IN fecha TIMESTAMP)
+RETURNS CHARACTER
+BEGIN
+	RETURN CAST(fecha AS CHARACTER FORMAT FORMAT_COMPACT_ISO8601);		
+END;
+
+CREATE PROCEDURE RemoveSpecialChar(IN value CHARACTER)
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "core.common.util2.StringUtil.removeSpecialChar";
+
+CREATE PROCEDURE SetDecimalFormatFromChar(IN val CHARACTER, IN numDecimal INTEGER)
+RETURNS DECIMAL
+BEGIN
+	IF LENGTH(val) <= numDecimal THEN
+		THROW USER EXCEPTION MESSAGE 500 VALUES ('No se puede completar la transformación al valor decimal de la cadena [' || val || '] porque la cantidad de digitos decimales [' || CAST(numDecimal AS CHARACTER) || '] configurados es mayor que la longitud del valor a transforamr.');
+	END IF;
+	
+	DECLARE cifraDecimal, cifraEntera CHARACTER;
+	SET cifraDecimal = SUBSTRING(val FROM LENGTH(val)-numDecimal FOR numDecimal);
+	SET cifraEntera = SUBSTRING(val FROM 1 FOR LENGTH(val)-numDecimal);
+	
+	RETURN CAST(cifraEntera || DECIMAL_SEPARATOR || cifraDecimal AS DECIMAL);
+END; 
+
+
+/* Objetivo: Identificar y obtener el valor dinamico mediante un comodin especifico sobre un texto*/
+CREATE PROCEDURE GetDynamicValue(IN input REFERENCE, IN evalData CHARACTER)
+RETURNS CHARACTER
+BEGIN	
+	DECLARE result CHARACTER evalData;
+		
+	DECLARE rowSplit ROW;
+	CALL core.common.util.tokenizar(evalData, '|', rowSplit);
+
+	IF EXISTS(rowSplit.val[]) THEN
+		DECLARE EnumConfigurableService CHARACTER '{ConfigurableService}:';
+		DECLARE EnumJsonData CHARACTER '{JsonData}:';
+
+		IF CONTAINS(rowSplit.val[1], EnumConfigurableService) THEN
+			DECLARE configurableService CHARACTER SUBSTRING(rowSplit.val[1] AFTER EnumConfigurableService);
+			IF CONTAINS(rowSplit.val[2], EnumJsonData) THEN
+				DECLARE pathJsonData CHARACTER SUBSTRING(rowSplit.val[2] AFTER EnumJsonData);
+				DECLARE valData CHARACTER EVAL('input.JSON.Data.' || pathJsonData);
+				
+				SET result = ConfigurableServiceGetValue(UDP_POLICY_TYPE, UDP_POLICY_PROJECT, configurableService, valData);
+			ELSE 
+				DECLARE valData CHARACTER rowSplit.val[2];
+				SET result = ConfigurableServiceGetValue(UDP_POLICY_TYPE, UDP_POLICY_PROJECT, configurableService, valData);
+			END IF;
+		ELSE
+			IF CONTAINS(rowSplit.val[1], EnumJsonData) THEN
+				DECLARE pathJsonData CHARACTER SUBSTRING(rowSplit.val[1] AFTER EnumJsonData);
+				SET result = EVAL('input.JSON.Data.' || pathJsonData);
+			ELSE
+				SET result = rowSplit.val[1];
+			END IF;
+		END IF;
+	END IF;
+
+	RETURN result;
+END; 

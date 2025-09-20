@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQGet.msgnode="ComIbmMQGet.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmResetContentDescriptor.msgnode="ComIbmResetContentDescriptor.msgnode" xmlns:ComIbmSOAPExtract.msgnode="ComIbmSOAPExtract.msgnode" xmlns:ComIbmSOAPInput.msgnode="ComIbmSOAPInput.msgnode" xmlns:ComIbmSOAPReply.msgnode="ComIbmSOAPReply.msgnode" xmlns:ComIbmTryCatch.msgnode="ComIbmTryCatch.msgnode"
+    xmlns:core_common2_adapter_ErrorAdapterV2.subflow="core/common2/adapter/ErrorAdapterV2.subflow" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:core_integrationcontrollers_servicegateway_ServiceGateway_Request.subflow="core/integrationcontrollers/servicegateway/ServiceGateway_Request.subflow" xmlns:core_integrationcontrollers_servicegateway_ServiceGateway_Response.subflow="core/integrationcontrollers/servicegateway/ServiceGateway_Response.subflow"
+    xmlns:core_integrationcontrollers_wschanneladapterTLS_ErrorManager_WSCA.subflow="core/integrationcontrollers/wschanneladapterTLS/ErrorManager_WSCA.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS.msgflow" nsPrefix="core_integrationcontrollers_wschanneladapterTLS_WSChannelAdapterInTLS.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CN_PREFIX" name="CN_PREFIX" lowerBound="1" defaultValueLiteral="http://grupobancolombia.com/clas/AplicacionesActuales#">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SECURITY_ID" name="SECURITY_ID" lowerBound="1" defaultValueLiteral="SECURITY_CONSUMER">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CERTIFICATE_ERROR_MESSAGE" name="CERTIFICATE_ERROR_MESSAGE" lowerBound="1" defaultValueLiteral="Error, identidad del consumidor no configurada">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.FORCE_ISSUER" name="FORCE_ISSUER" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ALLOWED_ISSUERS" name="ALLOWED_ISSUERS">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.VALIDATE_IDENTITY" name="VALIDATE_IDENTITY" lowerBound="1" defaultValueLiteral="false">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.IDENTITY_SERVICE" name="IDENTITY_SERVICE" lowerBound="1" defaultValueLiteral="UDCS_WSCA_IDENTITYES_APIC">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.APICONNECT_IDENTIFIER" name="APICONNECT_IDENTIFIER" lowerBound="1" defaultValueLiteral="APICONNECT">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_TIMEOUT_MILLIS" name="UDP_TIMEOUT_MILLIS" lowerBound="1" defaultValueLiteral="5000">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="WSChannelAdapterInTLS" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/APIConnect_WSCA/icons/full/obj16/WSChannelAdapterInTLS.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/APIConnect_WSCA/icons/full/obj30/WSChannelAdapterInTLS.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="617,154" destinationMode="list" newMsgId="true" request="true" replyToQ="INT_APIC_WSCATLS_DEP_OCP_INT.QL.CBK" validateMaster="none" policyUrl="{DefaultPolicies}:MQEndpoint_Servicio">
+        <translation xmi:type="utility:ConstantString" string="CORE.SG.TEST"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="215,149" computeExpression="esql://routine/core.integrationcontrollers.wschanneladapterTLS#WSChannelAdapterIn_WSChannelAdapterIn.Main" computeMode="destinationAndMessage" validateMaster="inherit">
+        <translation xmi:type="utility:ConstantString" string="WSChannelAdapterIn"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Encapsula el mensaje SOAP en formato ESBxml-IL y guarda el ReplyIdentifier en el RoutingStack"/>
+      </nodes>
+      <nodes xmi:type="ComIbmSOAPInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="31,149" wsdlOperationMode="gateway" useHTTPTransport="true" urlSelector="/ESB/SOAP/Default" maxClientWaitTime="10" messageDeliveryModeSelector="persistent" securityProfileName="Default_Propagation" setDestinationList="false" parserXmlnscBuildTreeUsingXMLSchema="false" validateMaster="none">
+        <translation xmi:type="utility:ConstantString" string="SOAP Input"/>
+      </nodes>
+      <nodes xmi:type="ComIbmSOAPExtract.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="128,144">
+        <translation xmi:type="utility:ConstantString" string="SOAP Extract"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_6" location="98,222" UDP_INTERACTION_TYPE="REQUEST" UDP_EXCEPTION_ID="3200" UDP_OPERATION_TYPE="COMMAND" UDP_EXCEPTION_DETAIL="Timeout esperando la respuesta del proveedor">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException"/>
+      </nodes>
+      <nodes xmi:type="core_integrationcontrollers_wschanneladapterTLS_ErrorManager_WSCA.subflow:FCMComposite_1" xmi:id="FCMComposite_1_11" location="72,55">
+        <translation xmi:type="utility:ConstantString" string="ErrorManager_WSCA"/>
+      </nodes>
+      <nodes xmi:type="ComIbmResetContentDescriptor.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="347,150" messageDomain="XMLNSC" messageSet="Common_MsgSet" resetMessageSet="true" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="Message Validation"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_ErrorAdapterV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_8" location="429,59" UDP_INTERACTION_TYPE="REQUEST" EventDescription="Message Validation Failure">
+        <translation xmi:type="utility:ConstantString" string="ErrorAdapterV2"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_9" location="687,60" UDP_INTERACTION_TYPE="REQUEST" UDP_EXCEPTION_ID="2101" UDP_OPERATION_TYPE="COMMAND" UDP_EXCEPTION_DETAIL="The ServiceGateway component cannot deliver messages to the registered EndPoint">
+        <translation xmi:type="utility:ConstantString" string="ResourceNotAvailable2101"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQGet.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="925,220" queueName="INT_APIC_WSCATLS_LOCAL_INT.QL.CBK" messageDomainProperty="XMLNSC" generateMode="none" copyMessage="copyEntireMessage" waitInterval="60000" inputMQMDLocation="InputRoot.MQMD" getWithCorrelID="true" outputDataLocation="Environment.Variables.PutMsgQ" resultDataLocation="ResultRoot" policyUrl="{DefaultPolicies}:MQEndpoint_Servicio">
+        <translation xmi:type="utility:ConstantString" string="MQ Get"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_14" location="1199,216" computeExpression="esql://routine/core.integrationcontrollers.wschanneladapterTLS#WSChannelAdapterOut_WSChannelAdapterOut.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="WSChannelAdapterOut"/>
+        <shortDescription xmi:type="utility:ConstantString" string="Convierte el mensaje de ESBxml-IL en mensaje XMLNSC de carga útil"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_15" location="1292,146" computeExpression="esql://routine/core.integrationcontrollers.wschanneladapterTLS#WSChannelAdapterOut_SOAPFault.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="SOAPFault"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_ErrorAdapterV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_17" location="1025,122" UDP_INTERACTION_TYPE="RESPONSE" EventType="RESPONSE" EventDescription="MQ Get Failure">
+        <translation xmi:type="utility:ConstantString" string="ErrorAdapterV21"/>
+      </nodes>
+      <nodes xmi:type="ComIbmSOAPReply.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_20" location="1354,218">
+        <translation xmi:type="utility:ConstantString" string="SOAP Reply"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_21" location="1094,461" computeExpression="esql://routine/core.integrationcontrollers.wschanneladapterTLS#WSChannelAdapterIn_SOAPFault.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="SOAPFault1"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_ErrorAdapterV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_22" location="852,461" UDP_INTERACTION_TYPE="REQUEST" EventDescription="Error RQ Soap Catch">
+        <translation xmi:type="utility:ConstantString" string="ErrorAdapterV1"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_23" location="728,158" computeExpression="esql://routine/core.integrationcontrollers.wschanneladapterTLS#WSChannelAdapterInTLS_PrepareGet.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="PrepareGet"/>
+      </nodes>
+      <nodes xmi:type="core_integrationcontrollers_servicegateway_ServiceGateway_Response.subflow:FCMComposite_1" xmi:id="FCMComposite_1_13" location="1041,216">
+        <translation xmi:type="utility:ConstantString" string="ServiceGateway_Response"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTryCatch.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_18" location="841,178" rotation="TOP_TO_BOTTOM">
+        <translation xmi:type="utility:ConstantString" string="Try Catch"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_ErrorAdapterV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_19" location="844,365" UDP_INTERACTION_TYPE="RESPONSE" EventType="RESPONSE" EventDescription="Error RS Try Catch">
+        <translation xmi:type="utility:ConstantString" string="ErrorAdapterTryCatchV1"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_ErrorAdapterV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_24" location="1200,303" UDP_INTERACTION_TYPE="RESPONSE" EventType="RESPONSE" EventDescription="Error al leer mensaje de la cola de respuesta - No message">
+        <translation xmi:type="utility:ConstantString" string="ErrorAdapterNoMessage"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_ErrorAdapterV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_25" location="1436,210" UDP_INTERACTION_TYPE="RESPONSE" EventType="RESPONSE" EventDescription="SOAP Reply Error">
+        <translation xmi:type="utility:ConstantString" string="ErrorAdapterSoapReplyV1"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_26" location="525,59" UDP_INTERACTION_TYPE="REQUEST" UDP_EXCEPTION_ID="2101" UDP_OPERATION_TYPE="COMMAND" UDP_EXCEPTION_DETAIL="Processing error: A problem occurred while trying to validate the format or structure of the message. Please verify that the message conforms to the expected format and the configured schema rules">
+        <translation xmi:type="utility:ConstantString" string="ThrowMessageValidation"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_27" location="988,309" computeExpression="esql://routine/core.integrationcontrollers.wschanneladapterTLS#WSChannelAdapterInTLS_NoMessage.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="NoMessage"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTryCatch.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_28" location="1067,310">
+        <translation xmi:type="utility:ConstantString" string="Try Catch NoMessage"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_29" location="1221,380" UDP_INTERACTION_TYPE="REQUEST" UDP_EXCEPTION_ID="2101" UDP_OPERATION_TYPE="COMMAND" UDP_EXCEPTION_DETAIL="El proveedor no respondió en el tiempo esperado.">
+        <translation xmi:type="utility:ConstantString" string="ThrowNoMessage"/>
+      </nodes>
+      <nodes xmi:type="core_integrationcontrollers_servicegateway_ServiceGateway_Request.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="470,155" COMPAT_MODE="false" SOURCE_SG_RTQ="INT_OCP_SG_INT.QL.CBK" serviceVersion="">
+        <translation xmi:type="utility:ConstantString" string="ServiceGateway_Request"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.timeout" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_21" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_11" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input1"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_15" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="FCMComposite_1_15" sourceNode="FCMComposite_1_14" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_17" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_14" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_19" targetNode="FCMComposite_1_17" sourceNode="FCMComposite_1_10" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Failure"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_25" targetNode="FCMComposite_1_22" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Catch">
+        <bendPoints>25,298,-806,-14</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_26" targetNode="FCMComposite_1_20" sourceNode="FCMComposite_1_21" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in">
+        <bendPoints>230,-8,-30,235</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_27" targetNode="FCMComposite_1_21" sourceNode="FCMComposite_1_22" sourceTerminalName="OutTerminal.Output1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_29" targetNode="FCMComposite_1_23" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_13" sourceNode="FCMComposite_1_10" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_13" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_18" sourceNode="FCMComposite_1_23" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_18" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_18" sourceTerminalName="OutTerminal.try" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_20" targetNode="FCMComposite_1_19" sourceNode="FCMComposite_1_18" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Catch"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_22" targetNode="FCMComposite_1_21" sourceNode="FCMComposite_1_19" sourceTerminalName="OutTerminal.Output1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_24" targetNode="FCMComposite_1_25" sourceNode="FCMComposite_1_20" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Failure"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_28" targetNode="FCMComposite_1_26" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.Output1" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_30" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Catch"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_34" targetNode="FCMComposite_1_24" sourceNode="FCMComposite_1_28" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Failure"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_35" targetNode="FCMComposite_1_27" sourceNode="FCMComposite_1_10" sourceTerminalName="OutTerminal.noMessage" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_36" targetNode="FCMComposite_1_28" sourceNode="FCMComposite_1_27" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_37" targetNode="FCMComposite_1_29" sourceNode="FCMComposite_1_28" sourceTerminalName="OutTerminal.try" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_15" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_16" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.PEP" configurable="true" userDefined="true" describedAttribute="Property.CN_PREFIX">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.CN_PREFIX" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+        <propertyDescriptor groupName="Group.SECURITY" configurable="true" userDefined="true" describedAttribute="Property.SECURITY_ID">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.SECURITY_ID" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+          <propertyDescriptor groupName="Group.SECURITY" configurable="true" userDefined="true" describedAttribute="Property.CERTIFICATE_ERROR_MESSAGE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.CERTIFICATE_ERROR_MESSAGE" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+            <propertyDescriptor groupName="Group.SECURITY" configurable="true" userDefined="true" describedAttribute="Property.FORCE_ISSUER">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.FORCE_ISSUER" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+              <propertyDescriptor groupName="Group.SECURITY" configurable="true" userDefined="true" describedAttribute="Property.ALLOWED_ISSUERS">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.ALLOWED_ISSUERS" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+                <propertyDescriptor groupName="Group.SECURITY" configurable="true" userDefined="true" describedAttribute="Property.VALIDATE_IDENTITY">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.VALIDATE_IDENTITY" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+                  <propertyDescriptor groupName="Group.SECURITY" configurable="true" userDefined="true" describedAttribute="Property.IDENTITY_SERVICE">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.IDENTITY_SERVICE" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+                    <propertyDescriptor groupName="Group.SECURITY" configurable="true" userDefined="true" describedAttribute="Property.APICONNECT_IDENTIFIER">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.APICONNECT_IDENTIFIER" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+                      <propertyDescriptor groupName="Group.MQ" configurable="true" userDefined="true" describedAttribute="Property.UDP_TIMEOUT_MILLIS">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_TIMEOUT_MILLIS" bundleName="core/integrationcontrollers/wschanneladapterTLS/WSChannelAdapterInTLS" pluginId="APIConnect_WSCA"/>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

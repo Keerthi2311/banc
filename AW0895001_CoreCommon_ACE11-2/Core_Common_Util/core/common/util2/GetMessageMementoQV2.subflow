@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQGet.msgnode="ComIbmMQGet.msgnode" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common/util2/GetMessageMementoQV2.subflow" nsPrefix="core_common_util2_GetMessageMementoQV2.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MEMENTOQ" name="MEMENTOQ" lowerBound="1" defaultValueLiteral="INT_MEMENTOQ_INT.QL.REQ">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_INTERACTION_TYPE" name="UDP_INTERACTION_TYPE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_OPERATION_TYPE" name="UDP_OPERATION_TYPE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CORREL_FROM_ROUTING_STACK" name="UDP_CORREL_FROM_ROUTING_STACK" lowerBound="1" defaultValueLiteral="true">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="GetMessageMementoQV2" bundleName="core/common/util2/GetMessageMementoQV2" pluginId="Core_Common_Util"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Util/icons/full/obj16/GetMessageMementoQV2.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Util/icons/full/obj30/GetMessageMementoQV2.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="449,64" computeExpression="esql://routine/core.common.util2#GetMessageMementoQV2_PostMementoQ.Main">
+        <translation xmi:type="utility:ConstantString" string="PostMementoQ"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="627,66">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/util2/GetMessageMementoQV2" pluginId="Core_Common_Util"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="68,71">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/util2/GetMessageMementoQV2" pluginId="Core_Common_Util"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="162,72" computeExpression="esql://routine/core.common.util2#GetMessageMementoQV2_PreMementoQ.Main">
+        <translation xmi:type="utility:ConstantString" string="PreMementoQ"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQGet.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="302,70" messageDomainProperty="XMLNSC" generateMode="none" getWithCorrelID="true" outputDataLocation="Environment.Variables.PutMessageMementoQ" resultDataLocation="ResultRoot.XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="MEMENTOQ.GET"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="388,161" UDP_EXCEPTION_ID="2300" UDP_EXCEPTION_DETAIL="Error al intentar recuperar un mensaje de la cola de memento.">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.warning" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.noMessage" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.MEMENTOQ">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.MEMENTOQ" bundleName="core/common/util2/GetMessageMementoQV2" pluginId="Core_Common_Util"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_INTERACTION_TYPE">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_INTERACTION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_OPERATION_TYPE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_OPERATION_TYPE" bundleName="core/common/util2/ThrowSystemException" pluginId="Core_Common_Util"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_CORREL_FROM_ROUTING_STACK">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CORREL_FROM_ROUTING_STACK" bundleName="core/common/util2/GetMessageMementoQV2" pluginId="Core_Common_Util"/>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.MEMENTOQ" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="ComIbmMQGet.msgnode#Property.queueName"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_INTERACTION_TYPE" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_INTERACTION_TYPE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_OPERATION_TYPE" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_OPERATION_TYPE"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

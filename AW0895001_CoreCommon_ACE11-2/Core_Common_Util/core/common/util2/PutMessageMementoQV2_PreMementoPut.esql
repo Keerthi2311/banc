@@ -1,0 +1,40 @@
+BROKER SCHEMA core.common.util2
+DECLARE INF_ERROR CONSTANT CHARACTER 
+				'Error de infraestructura en el llamado al PutMessageMementoQ.';
+
+DECLARE UDP_TIMEOUT_S EXTERNAL INTEGER 1;
+DECLARE UDP_TIMEOUT_QUEUE EXTERNAL CHARACTER '';
+
+CREATE COMPUTE MODULE PutMessageMementoQV2_PreMementoPut
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		  CALL CopyEntireMessage();
+		
+		IF UDP_TIMEOUT_S > 0
+		THEN	
+		 SET OutputRoot.MQMD.Expiry = UDP_TIMEOUT_S * 10;
+		 SET OutputRoot.MQMD.Report = MQRO_EXPIRATION_WITH_FULL_DATA;		 
+		 SET OutputRoot.MQMD.ReplyToQ = UDP_TIMEOUT_QUEUE;		
+		END IF;		  
+
+		SET Environment.Variables.IOriginMsg.XMLNSC = InputRoot.XMLNSC;
+		SET Environment.Variables.IOriginMsg.MQMD = InputRoot.MQMD;
+		 
+ 		IF UDP_CORREL_FROM_ROUTING_STACK THEN		
+			SET OutputRoot.MQMD.CorrelId = CAST(InputRoot.XMLNSC.nsIL:esbXML.
+				    Header.routingStack.route[<].ReplyTo.correlationId AS BLOB);
+ 		ELSE
+		 SET OutputRoot.MQMD.CorrelId = InputRoot.MQMD.MsgId;
+		END IF;
+		
+		
+		SET OutputRoot.MQMD.UserIdentifier = 'mqm';
+        SET OutputRoot.MQMD.ReplyToQMgr = QueueManagerName;
+		 
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

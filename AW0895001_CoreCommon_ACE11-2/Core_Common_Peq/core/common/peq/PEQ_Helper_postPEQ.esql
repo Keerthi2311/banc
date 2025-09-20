@@ -1,0 +1,38 @@
+BROKER SCHEMA core.common.peq
+
+
+
+CREATE COMPUTE MODULE PEQ_Helper_postPEQ
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.Properties = InputRoot.Properties;
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'MQMD' FROM Environment.Variables.MQMD;
+		
+		DECLARE cursor REFERENCE TO InputRoot.XMLNSC.nsIl:esbXML.Body;
+		MOVE cursor FIRSTCHILD TYPE Name;
+		
+		IF cursor.parametrizacion.datosRespuesta.codigoRespuesta = '00' THEN
+			-- Restaurar el mensaje original
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' FROM Environment.Variables.XMLNSC;
+			
+			DECLARE refResult REFERENCE TO Environment.Variables;
+			
+			CREATE FIELD Environment.Variables.resultadosParametrizacion AS refResult;
+			FOR result AS cursor.parametrizacion.resultadosParametrizacion[] DO
+				--
+				CREATE LASTCHILD OF refResult NAME 'resultado';
+				SET refResult.resultado[<].tipologia = result.criterioParametrizacion.tipologia;
+				SET refResult.resultado[<].valorOrigen = result.criterioParametrizacion.valorOrigen;
+				SET refResult.resultado[<].valorDestino = result.valorParametrizado.valorDestino;
+			END FOR;
+			
+		ELSE
+			THROW USER EXCEPTION VALUES('La homologacion de datos no fue satisfactoria.');
+		END IF;
+		
+		DELETE FIELD Environment.Variables.MQMD;
+		DELETE FIELD Environment.Variables.XMLNSC;
+		
+		RETURN TRUE;
+	END;
+END MODULE;

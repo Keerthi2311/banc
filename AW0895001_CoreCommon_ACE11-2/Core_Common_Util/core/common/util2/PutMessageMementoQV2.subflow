@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/common/util2/PutMessageMementoQV2.subflow" nsPrefix="core_common_util2_PutMessageMementoQV2.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_TIMEOUT_S" name="UDP_TIMEOUT_S" lowerBound="1" defaultValueLiteral="-1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CORREL_FROM_ROUTING_STACK" name="UDP_CORREL_FROM_ROUTING_STACK" lowerBound="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_TIMEOUT_QUEUE" name="UDP_TIMEOUT_QUEUE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.MEMENTOQ" name="MEMENTOQ" defaultValueLiteral="INT_MEMENTOQ_INT.QL.REQ">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_INTERACTION_TYPE" name="UDP_INTERACTION_TYPE" defaultValueLiteral="REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_OPERATION_TYPE" name="UDP_OPERATION_TYPE" defaultValueLiteral="COMMAND">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="PutMessageMementoQV2" bundleName="core/common/util2/PutMessageMementoQV2" pluginId="Core_Common_Util"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Util/icons/full/obj16/PutMessageMementoQV2.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Util/icons/full/obj30/PutMessageMementoQV2.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="26,85">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/util2/PutMessageMementoQV2" pluginId="Core_Common_Util"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="537,91">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/util2/PutMessageMementoQV2" pluginId="Core_Common_Util"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="90,85" computeExpression="esql://routine/core.common.util2#PutMessageMementoQV2_PreMementoPut.Main">
+        <translation xmi:type="utility:ConstantString" string="PreMementoPut"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="224,86">
+        <translation xmi:type="utility:ConstantString" string="MQ Output"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="358,90" computeExpression="esql://routine/core.common.util2#PutMessageMementoQV2_PostMementoPut.Main">
+        <translation xmi:type="utility:ConstantString" string="PostMementoPut"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_4" location="318,2" UDP_EXCEPTION_ID="2300" UDP_EXCEPTION_DETAIL="Error al intentar guardar un mensaje en la cola de memento.">
+        <translation xmi:type="utility:ConstantString" string="ThrowSystemException"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_TIMEOUT_S">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_TIMEOUT_S" bundleName="core/common/util2/PutMessageMementoQV2" pluginId="Core_Common_Util"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_CORREL_FROM_ROUTING_STACK">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CORREL_FROM_ROUTING_STACK" bundleName="core/common/util2/PutMessageMementoQV2" pluginId="Core_Common_Util"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_TIMEOUT_QUEUE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_TIMEOUT_QUEUE" bundleName="core/common/util2/PutMessageMementoQV2" pluginId="Core_Common_Util"/>
+            <propertyDescriptor groupName="Group.Basic" propertyEditor="com.ibm.etools.mft.ibmnodes.editors.mq.MQQueueNameEditor" configurable="true" describedAttribute="Property.MEMENTOQ">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.MEMENTOQ" bundleName="core/common/utilv2/PutMessageMementoQV2" pluginId="Core_Common_UtilV2"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_INTERACTION_TYPE">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_INTERACTION_TYPE" bundleName="core/common/utilv2/ThrowSystemException" pluginId="Core_Common_UtilV2"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_OPERATION_TYPE">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_OPERATION_TYPE" bundleName="core/common/utilv2/ThrowSystemException" pluginId="Core_Common_UtilV2"/>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.MEMENTOQ" overriddenNodes="FCMComposite_1_2">
+      <overriddenAttribute href="ComIbmMQOutput.msgnode#Property.queueName"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_INTERACTION_TYPE" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_INTERACTION_TYPE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_OPERATION_TYPE" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="core/common/util2/ThrowSystemException.subflow#Property.UDP_OPERATION_TYPE"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

@@ -1,0 +1,357 @@
+/************************************************************************
+* COPYRIGHT. Accenture Inc 2015 ALL RIGHTS RESERVED. NO PART OF 		*
+* THIS SOURCE CODE MAY BE REPRODUCED, STORED IN A RETRIEVAL SYSTEM, OR	*
+* TRANSMITTED, IN ANY FORM BY ANY MEANS, ELECTRONIC, MECHANICAL, PHOTO	*
+* COPYING, RECORDING OR OTHERWISE, WITHOUT THE PRIOR WRITTEN PERMISS- 	*
+* ION OF Accenture Inc 													*
+*************************************************************************/
+/*
+*
+* File Name: UtilESBXMLil.esql
+*
+* Purpose  : Procedimiento para generar la estructura de un mensaje de petición al 
+*            Equivalences Manager
+* Authors  : Jayson S Santos
+* Date     : May 12, 2015
+* Version  : 1.0
+*
+* @copyright Accenture Philippines 2015. All rights reserved.
+*
+*/
+BROKER SCHEMA core.common.util.esbXML.il
+DECLARE il 						NAMESPACE 'http://grupobancolombia.com/intf/IL/esbXML/V3.0';
+
+DECLARE UDP_PROVIDER_SYSTEMID 	EXTERNAL CHARACTER '';
+
+DECLARE SUCCESS_STATUS 			CONSTANT CHARACTER 'Success';
+DECLARE INTTYPE_REQUEST 		CONSTANT CHARACTER 'REQUEST';
+DECLARE INTTYPE_RESPONSE 		CONSTANT CHARACTER 'RESPONSE';
+DECLARE INTTYPE_ONEWAY 		    CONSTANT CHARACTER 'ONEWAY';
+
+DECLARE SE_STATUS 			    CONSTANT CHARACTER 'SystemException';
+DECLARE FAULT_500				CONSTANT CHARACTER '500';
+DECLARE FAULT_400				CONSTANT CHARACTER '400';
+DECLARE FAULTCD_400				CONSTANT CHARACTER 'Client.BadRequest';
+DECLARE FAULTCD_500				CONSTANT CHARACTER 'Server.InternalServerError';
+DECLARE FAULTSTR_400            CONSTANT CHARACTER '400 Client.BadRequest';
+DECLARE FAULTSTR_500            CONSTANT CHARACTER '500 Server.InternalServerError';
+DECLARE FAULT_SEPARATOR         CONSTANT CHARACTER '/';
+/******************************************************************************
+ * Procedure Name:    CreateBusinessExceptionResponse
+ * Input Parameters:  inputHeader   REFERENCE - Input header				   
+ * 					  outputXML     REFERENCE - OutputRoot xml
+ *					  beName        CHARACTER - BusinessException name
+ *  				  code          CHARACTER - code
+ *                    description   CHARACTER - description
+ * Output Parameters: None
+ * Returns:           None
+ * Purpose: Procedimiento para generar un mensaje de respuesta de excepción de negocio. 
+ * 			Se envían como parámetros la cabecera esbXML de entrada y el mensaje de salida 
+ *		    (elemento il:esbXML).
+ * Version Date		   Author	  				 Description  				  
+ * ======= =========== ========================= ============================= 
+ * 1.00    05/12/2015  Jayson Santos	    	 Versión inicial 	  		  
+ ******************************************************************************/
+ CREATE PROCEDURE CreateBusinessExceptionResponse(IN inputHeader REFERENCE, IN outputXML REFERENCE,
+ 												  IN beName      CHARACTER, IN code      CHARACTER,
+ 												  IN description CHARACTER) BEGIN
+ 												  	
+    DECLARE namespace NAMESPACE FIELDVALUE(inputHeader.requestData.destination.namespace);
+ 	DECLARE refOperation           REFERENCE TO inputHeader.requestData.destination.operation;
+ 	   
+    DECLARE refHeadOut, refBodyOut REFERENCE TO outputXML; 	
+    CREATE FIELD outputXML.Header  AS refHeadOut;
+    CREATE FIELD outputXML.Body    AS refBodyOut;
+ 	CREATE FIELD refBodyOut.{namespace}:{beName}.genericException AS outputXML;
+ 	
+ 	CALL SetResponseData(refHeadOut);	 	 	 	
+	
+ 	SET refHeadOut.requestData.destination.operation         = refOperation || 'Response';
+	SET refHeadOut.responseData.status.statusCode            = 'BusinessException';
+	SET refHeadOut.responseData.status.businessExceptionName = beName;
+ 	SET outputXML.code                                       = code;
+    SET outputXML.description                                = description;  											  	
+END; 	
+
+/******************************************************************************
+ * Procedure Name:    UpdateInteractionData
+ * Input Parameters:  outputHeader     REFERENCE - esbXML output header 				   
+ * 					  providerSystemId CHARACTER - UDP_Provider_SystemId
+ *					  interaction      CHARACTER - should be "REQUEST", "RESPONSE" or "ONEWAY"
+ * Output Parameters: None
+ * Returns:           None
+ * Purpose: Procedimiento para actualizar el elemento interactionData en la cabecera esbXML-IL 
+ *          antes de generar un evento de información. Se envía entre los parámetros de entrada
+ *          la cabecera esbXML de salida (elemento il:esbXML). 
+ * Version Date		   Author	  				 Description  				  
+ * ======= =========== ========================= ============================= 
+ * 1.00    05/12/2015  Jayson Santos	    	 Versión inicial 	  		  
+ ******************************************************************************/
+CREATE PROCEDURE UpdateInteractionData(IN outputHeader REFERENCE, IN providerSystemId CHARACTER,
+ 										 IN interaction  CHARACTER) BEGIN
+	
+	DECLARE refSenderSystemId   REFERENCE TO outputHeader.interactionData.senderSystemId; 
+	DECLARE refReceiverSystemId REFERENCE TO outputHeader.interactionData.receiverSystemId ;
+	DECLARE refTimeStamp 	    REFERENCE TO outputHeader.interactionData.timestamp; 
+
+	IF interaction = INTTYPE_REQUEST OR interaction = INTTYPE_ONEWAY THEN 
+		IF LASTMOVE(refSenderSystemId) THEN
+			DELETE FIELD refSenderSystemId;  					
+		END IF;
+		IF LASTMOVE(refReceiverSystemId) THEN
+		   SET refReceiverSystemId = providerSystemId;
+		ELSE
+			CREATE FIRSTCHILD OF outputHeader.interactionData NAME 'receiverSystemId' VALUE providerSystemId;  	
+		END IF;				
+	END IF;
+	
+ 	IF interaction = INTTYPE_RESPONSE THEN
+		IF LASTMOVE(refReceiverSystemId) THEN						 
+			DELETE FIELD refReceiverSystemId;
+		END IF;
+		IF LASTMOVE(refSenderSystemId) THEN
+			SET refSenderSystemId = providerSystemId;
+		ELSE
+			CREATE FIRSTCHILD OF outputHeader.interactionData NAME 'senderSystemId' VALUE providerSystemId;  	
+		END IF;				
+ 	END IF;	
+	SET refTimeStamp       = CURRENT_TIMESTAMP;
+END;	
+ /******************************************************************************
+ * Procedure Name:    SetResponseData
+ * Input Parameters:  outputHeader     REFERENCE - esbXML output header 				   
+ * Output Parameters: None
+ * Returns:           None
+ * Purpose: Procedimiento para generar el elemento responseData, para respuesta exitosa, en la 
+ *          cabecera esbXML-IL. Se envía entre los parámetros de entrada la cabecera esbXML de
+ *          salida (elemento il:esbXML). 
+ * Version Date		   Author	  				 Description  				  
+ * ======= =========== ========================= ============================= 
+ * 1.00    05/12/2015  Jayson Santos	    	 Versión inicial 	  		  
+ ******************************************************************************/
+CREATE PROCEDURE SetResponseData(IN outputHeader REFERENCE) BEGIN
+	
+	CREATE NEXTSIBLING OF outputHeader.requestData NAME 'responseData';
+	DECLARE               refRespdata              REFERENCE TO outputHeader.responseData;
+	CREATE FIRSTCHILD OF  refRespdata              NAME 'providerData';
+	
+	SET outputHeader.responseData.status.statusCode = SUCCESS_STATUS;
+  	
+END;
+ 
+ /******************************************************************************
+ * Procedure Name:    SetExternalDestination
+ * Input Parameters:  outputHeader     REFERENCE - esbXML output header
+ *					  destination  	   CHARACTER - External Destination URN value	   
+ * Output Parameters: None
+ * Returns:           None
+ * Purpose: Procedimiento para asignar el valor del externalDestination en la 
+ *          cabecera esbXML-IL. Se envía entre los parámetros de entrada la 
+ *          cabecera esbXML de salida (elemento il:esbXML).
+ * Version Date		   Author	  				 Description  				  
+ * ======= =========== ========================= ============================= 
+ * 2.00    05/12/2015  Jayson Santos	    	 Versión inicial 	  		  
+ ******************************************************************************/
+CREATE PROCEDURE SetExternalDestination (IN outputHeader REFERENCE, 
+	                                       IN destination  CHARACTER) BEGIN
+	
+	DECLARE cursor REFERENCE TO outputHeader.interactionData.timestamp;
+	MOVE    cursor NEXTSIBLING NAME 'externalDestination';
+	
+	IF NOT LASTMOVE(cursor) THEN
+		CREATE NEXTSIBLING OF cursor AS cursor TYPE NameValue NAME 'externalDestination';
+	END IF;
+	
+	SET cursor = destination;
+END;
+	                                       
+ /******************************************************************************
+ * Procedure Name:    GetExternalDestination
+ * Input Parameters:  inputHeader      REFERENCE - esbXML output header	   
+ * Output Parameters: destination      CHARACTER - externalDestination retrieved 
+ * Returns:           None
+ * Purpose: Procedimiento para asignar el valor del externalDestination en la 
+ *          cabecera esbXML-IL. Se envía entre los parámetros de entrada la 
+ *          cabecera esbXML de salida (elemento il:esbXML).
+ * Version Date		   Author	  				 Description  				  
+ * ======= =========== ========================= ============================= 
+ * 1.00    05/12/2015  Jayson Santos	    	 Versión inicial 	  		  
+ ******************************************************************************/
+CREATE PROCEDURE GetExternalDestination(IN inputHeader REFERENCE) RETURNS CHARACTER 
+  BEGIN
+  	RETURN FIELDVALUE(inputHeader.interactionData.externalDestination);  						    		  	  							    		  	  							    		 
+END;
+ 
+/*******************************************************************************
+* Procedure Name: AddMessageContextProperty     							   *
+* Input Parameters: outputHeader REFERENCE, key CHARACTER, value CHARACTER	   *
+* Output Parameters: None			              							   *
+* Description: Adds a new property to the MessageContext structure, as		   *
+*			   specified by the key and value parameters					   *
+*    																		   *
+* Version 	Date		Author	  			Description  					   *	
+* ========	=========== ================== 	===================================*
+* 2.00     	05/12/2015  Jayson Santos	    	 Versión inicial   		       *
+*******************************************************************************/
+CREATE PROCEDURE AddMessageContextProperty(IN outputHeader REFERENCE, 
+										   IN key          CHARACTER, 
+										   IN value        CHARACTER)
+BEGIN
+	DECLARE refMC, refProp REFERENCE TO outputHeader.messageContext;
+	IF NOT LASTMOVE(refMC) THEN
+		CREATE LASTCHILD OF outputHeader AS refMC TYPE Name NAME 'messageContext';
+	END IF;
+	
+	CREATE LASTCHILD OF refMC AS refProp TYPE Name NAME 'property';
+	SET refProp.key   = key;
+	SET refProp.value = value;
+END;
+
+/*******************************************************************************
+* Procedure Name:    GetMessageContextProperty     							   *
+* Input Parameters:  inputHeader REFERENCE, key CHARACTER					   *
+* Output Parameters: value CHARACTER			              				   *
+* Purpose: Returns the value of a property in the MessageContext structure     *
+*		   as specified by the key parameter							       *
+*    																		   *
+* Version 	Date		Author	  			Description  					   *	
+* ========	=========== ================== 	===================================*
+* 2.00     	05/12/2015  Jayson Santos	    Versión inicial                    *
+*******************************************************************************/
+CREATE PROCEDURE GetMessageContextProperty (IN inputHeader REFERENCE, 
+											IN key         CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE refMC REFERENCE TO inputHeader.messageContext;
+	DECLARE value CHARACTER THE(SELECT ITEM FIELDVALUE(p.value) FROM refMC.property[] AS p 
+		WHERE p.key = key);
+	RETURN value;
+END;
+
+
+/*******************************************************************************
+* Procedure Name:    ModifyMessageContextProperty 							   *
+* Input Parameters:  inputHeader REFERENCE, key CHARACTER, value CHARACTER	   *
+* Output Parameters: Old value 			 			         				   *
+* Purpose: Modifies the value of a property in the MessageContext structure    *
+*		   as specified by the parameters								       *
+*    																		   *
+* Version 	Date		Author	  			Description  					   *	
+* ========	=========== ================== 	===================================*
+* 2.00     	05/03/2018  Luis Restrepo 	    Versión inicial                    *
+*******************************************************************************/
+CREATE PROCEDURE ModifyMessageContextProperty (IN inputHeader REFERENCE, IN key CHARACTER, IN value CHARACTER)
+BEGIN
+	DECLARE refMC, cursor REFERENCE TO inputHeader.messageContext;
+	
+	MOVE cursor FIRSTCHILD TYPE Name NAME 'property';
+	MCP: WHILE LASTMOVE(cursor) DO
+		IF cursor.key = key THEN
+			SET cursor.value = value;
+			LEAVE MCP;
+		END IF;
+		MOVE cursor NEXTSIBLING REPEAT NAME;
+	END WHILE MCP;
+END;
+
+/*******************************************************************************
+* Procedure Name:    DeleteMessageContextProperty                              *
+* Input Parameters:  inputHeader REFERENCE, key CHARACTER                      *
+* Output Parameters: value CHARACTER                                           *
+* Purpose: Delete the value and the property in the MessageContext structure   *
+*              as specified by the key parameter                               *
+*                                                                              *
+* Version   Date        Author                        Description              *  
+* ========  =========== ==================      ===============================*
+* 1.00     03/10/2016  Joachim Andres Plata 	Versión inicial                *
+*******************************************************************************/
+CREATE PROCEDURE DeleteMessageContextProperty (IN inputHeader REFERENCE, IN key CHARACTER)
+BEGIN
+	DECLARE refMCIn REFERENCE TO inputHeader.messageContext;
+    DECLARE refMC REFERENCE TO refMCIn;
+    MOVE refMC FIRSTCHILD;
+    
+    WHILE LASTMOVE(refMC) DO
+    	
+		IF  CONTAINS(refMC.key, key) THEN			
+        	DElETE FIELD refMC;        	
+        	--se mueve nuevamente al primer hijo para no perder la referencia eliminada
+	    	MOVE refMC TO refMCIn;
+			MOVE refMC FIRSTCHILD;
+			
+		ELSE			
+			MOVE refMC NEXTSIBLING;
+			
+      	END IF;
+
+	END WHILE;
+	
+	--verifica si no tiene mas hijos, si no existe eliminar el contenedor messageContext
+	MOVE refMCIn FIRSTCHILD;		
+	IF LASTMOVE(refMCIn) IS FALSE THEN
+		DELETE FIELD inputHeader.messageContext;
+	END IF;
+END;
+
+   /******************************************************************************
+ * Procedure Name:    CreateSystemExceptionResponse
+ * Input Parameters:  IN header REFERENCE - 
+ *	                  IN fault  CHARACTER -
+ *					  IN detail CHARACTER	 
+ * Output Parameters: None 
+ * Returns:           None
+ * Purpose: Procedimiento que genera un mensaje de excepción de sistema sin pasar 
+ *          por el ErrorAdapter. Se envía entre los parámetros de entrada una 
+ *			referencia al elemento il:esbXML/Header del mensaje de salida. El 
+ *			parámetro fault debe ser "400" o "500". 
+ * Version Date		   Author	  				 Description  				  
+ * ======= =========== ========================= ============================= 
+ * 1.00    05/13/2015  Jayson Santos	    	 Versión inicial 	  		  
+ ******************************************************************************/								
+CREATE PROCEDURE CreateSystemExceptionResponse(IN header REFERENCE, IN fault  CHARACTER,
+								  				 IN detail CHARACTER) BEGIN
+	DECLARE refHeadRespData REFERENCE TO header.responseData;
+	IF NOT LASTMOVE(refHeadRespData) THEN		
+		CREATE NEXTSIBLING OF header.requestData AS refHeadRespData NAME 'responseData';
+	END IF;
+	
+	DECLARE refHeadProviderData REFERENCE TO refHeadRespData.providerData;
+	IF NOT LASTMOVE(refHeadProviderData) THEN
+		CREATE FIRSTCHILD OF refHeadRespData AS refHeadProviderData NAME 'providerData';
+	END IF;
+	
+	DECLARE refHeaderStatus REFERENCE TO refHeadRespData.status;	
+	IF NOT LASTMOVE(refHeaderStatus) THEN		
+		CREATE LASTCHILD OF refHeadRespData AS refHeaderStatus NAME 'status';	
+	END IF;	
+	
+	DECLARE refHeaderStatCd REFERENCE TO refHeaderStatus.statusCode;
+	IF NOT LASTMOVE(refHeaderStatCd) THEN
+		CREATE FIRSTCHILD  OF refHeaderStatus AS refHeaderStatCd NAME 'statusCode' VALUE SE_STATUS;
+		CREATE NEXTSIBLING OF refHeaderStatCd NAME 'systemException';
+	END IF;
+	
+	DECLARE refHeaderSE     REFERENCE TO refHeaderStatus.systemException;
+    DECLARE refDestination  REFERENCE TO header.requestData.destination;
+
+    DECLARE refName,
+    		refNamespace,
+    		refOperation,
+    		refFaultActor   CHARACTER ''; 
+
+    SET refName                 = refDestination.name;
+    SET refNamespace            = refDestination.namespace;
+    SET refOperation            = refDestination.operation;
+    SET refHeaderStatCd         = SE_STATUS;
+    SET refFaultActor           = refNamespace || FAULT_SEPARATOR || refName || FAULT_SEPARATOR || refOperation;
+	
+	IF fault = FAULT_400 THEN
+		SET refHeaderSE.faultcode   = FAULTCD_400;
+		SET refHeaderSE.faultstring = FAULTSTR_400;
+	ELSEIF fault = FAULT_500 THEN
+		SET refHeaderSE.faultcode   = FAULTCD_500;
+		SET refHeaderSE.faultstring = FAULTSTR_500;
+	END IF;										  				 								  				 
+	SET refHeaderSE.faultactor  = refFaultActor;			
+	SET refHeaderSE.detail      = detail;
+
+END;

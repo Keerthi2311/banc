@@ -1,0 +1,34 @@
+BROKER SCHEMA core.common2.adapter
+
+
+CREATE COMPUTE MODULE ErrorAdapterV2_RecoverMessage
+CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.Variables.ErrorAdapterV2.propagate = true THEN
+			
+			CALL CopyMessageHeaders();
+			SET OutputRoot.XMLNSC = Environment.Variables.ExceptionMessage.XMLNSC;
+			SET Environment.Variables.ExceptionMessage = NULL;
+			SET Environment.Variables.ErrorAdapterV2 = NULL;
+			SET Environment.Variables.ExceptionEvent = NULL;
+			
+			PROPAGATE TO TERMINAL 'out';
+		END IF;
+		SET Environment.Variables.ExceptionMessage = NULL;
+		SET Environment.Variables.ErrorAdapterV2 = NULL;
+		SET Environment.Variables.ExceptionEvent = NULL;
+		
+		RETURN FALSE;		
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+END MODULE;
+

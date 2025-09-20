@@ -1,0 +1,105 @@
+BROKER SCHEMA core.integrationcontrollers.servicegatewayV2
+
+
+CREATE COMPUTE MODULE ServiceGatewayV2_Request_PostRegistry
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+        CALL ProcessRegistryData();
+		RETURN TRUE;
+	END;
+
+/*******************************************************************************
+* Procedure Name: CopyMessageHeaders 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Copia el mensaje entero en el mensaje de salida 				   *
+*******************************************************************************/
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	
+/*******************************************************************************
+* Procedure Name: ProcessRegistryData 										   *
+* Input Parameters: None 													   *
+* Output Parameters: None 													   *
+* Description: Procesa el resultado de la consulta del registro de			   * 
+*			   servicios y fija el valor de Destination List  para			   *
+*			   enrutar el mensaje de request al respectivo EndPoint.		   *
+*******************************************************************************/
+	CREATE PROCEDURE ProcessRegistryData() BEGIN
+	
+		--Referencia campos de entrada del envolvente
+		DECLARE refMsResp  	 REFERENCE TO InputRoot.SOAP.Body.p244:executeNamedQueryWithParametersResponse;
+		DECLARE refWSRR      REFERENCE TO refMsResp.results.sdo:datagraph[1];
+		DECLARE Variables    REFERENCE TO Environment.Variables;
+		DECLARE namespaceIn  CHARACTER Environment.RequestOrigin.Header.requestData.destination.namespace;
+		
+		WHILE LASTMOVE(refWSRR) DO
+			DECLARE gep63_consumes CHARACTER;
+			DECLARE gep63_sourceIdentifiers CHARACTER;
+			DECLARE bsrURIRoot REFERENCE TO refWSRR.sdo_1:WSRR.sdo_1:artefacts;
+			
+			--SLA	
+			SET Variables.SLD.SLA.ApplicationId = THE (SELECT ITEM UDP.value FROM bsrURIRoot.sdo_1:userDefinedProperties[] AS UDP WHERE UDP.name = 'gep63_consumerIdentifier');
+
+			--CONSUMER IDENTIFIER
+			SET gep63_sourceIdentifiers = THE (SELECT ITEM UDP.targets FROM bsrURIRoot.sdo_1:userDefinedRelationships[] AS UDP WHERE UDP.name = 'gep63_sourceIdentifiers');
+			IF (gep63_sourceIdentifiers <> '' AND gep63_sourceIdentifiers IS NOT NULL) THEN
+				CALL SplitIdentifiers(gep63_sourceIdentifiers,Variables.identifiers.identify[],' '); 
+				DECLARE refIdentifiers      REFERENCE TO Variables.identifiers.identify[1];
+				DECLARE id INTEGER 1;
+				WHILE LASTMOVE(refIdentifiers) DO
+					CALL GetNode(refIdentifiers ,refWSRR , Variables);
+					SET Variables.SLD.SLA.ConsumerIdentifiers.ConsumerIdentifier[id].type = THE (SELECT ITEM UDP.value FROM Variables.Nodo.sdo_1:userDefinedProperties[] AS UDP WHERE UDP.name = 'bcpol_type'); 
+					SET Variables.SLD.SLA.ConsumerIdentifiers.ConsumerIdentifier[id].value = THE (SELECT ITEM UDP.value FROM Variables.Nodo.sdo_1:userDefinedProperties[] AS UDP WHERE UDP.name = 'bcpol_value');
+					SET id = id + 1;
+					MOVE refIdentifiers NEXTSIBLING REPEAT TYPE NAME;
+				END WHILE;
+			END IF;	
+				
+			--SLD
+			SET gep63_consumes = THE (SELECT ITEM UDP.targets FROM bsrURIRoot.sdo_1:userDefinedRelationships[] AS UDP WHERE UDP.name = 'gep63_consumes');
+			CALL Split(gep63_consumes,Variables.consumers.consume[],' '); 
+			
+			DECLARE I INTEGER 1;
+			DECLARE J INTEGER;
+			SET J = CARDINALITY( Variables.consumers.*[]);
+			
+			WHILE I < J DO
+					DECLARE refConsumes CHARACTER;
+					DECLARE gep63_agreedEndpoints CHARACTER;
+					DECLARE gep63_serviceNamespace CHARACTER;
+					SET refConsumes = Variables.consumers.consume[I];
+					
+					CALL GetNode(refConsumes ,refWSRR , Variables);
+					SET gep63_agreedEndpoints = THE (SELECT ITEM UDP.targets FROM Variables.Nodo.sdo_1:userDefinedRelationships[] AS UDP WHERE UDP.name = 'gep63_agreedEndpoints');
+					IF (gep63_agreedEndpoints <> '' AND gep63_agreedEndpoints IS NOT NULL) THEN
+						SET Variables.nodoAux = Variables.Nodo;
+						CALL GetNode(gep63_agreedEndpoints ,refWSRR , Variables);
+						SET gep63_serviceNamespace = THE (SELECT ITEM UDP.value FROM Variables.Nodo.sdo_1:userDefinedProperties[] AS UDP WHERE UDP.name = 'gep63_serviceNamespace');
+						IF namespaceIn = gep63_serviceNamespace THEN
+								SET Variables.SLD.SLA.sourceDataDomain = THE (SELECT ITEM UDP.value FROM Variables.Nodo.sdo_1:userDefinedProperties[] AS UDP WHERE UDP.name = 'gep63_serviceNamespace');
+								SET Variables.SLD.SLA.sourceSystem = '';
+								SET Variables.SLD.SLA.environment = '';
+						END IF;	
+						
+					END IF;
+					
+					SET I = I + 1;	
+			END WHILE;
+			
+
+			MOVE refWSRR NEXTSIBLING REPEAT TYPE NAME;
+			
+		END WHILE;
+END;
+		
+
+END MODULE;

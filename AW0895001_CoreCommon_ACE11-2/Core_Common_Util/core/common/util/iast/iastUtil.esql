@@ -1,0 +1,273 @@
+/************************************************************************
+* COPYRIGHT. Accenture Inc 2015 ALL RIGHTS RESERVED. NO PART OF 		*
+* THIS SOURCE CODE MAY BE REPRODUCED, STORED IN A RETRIEVAL SYSTEM, OR	*
+* TRANSMITTED, IN ANY FORM BY ANY MEANS, ELECTRONIC, MECHANICAL, PHOTO	*
+* COPYING, RECORDING OR OTHERWISE, WITHOUT THE PRIOR WRITTEN PERMISS- 	*
+* ION OF Accenture Inc 													*
+*************************************************************************/
+/*
+*
+* File Name: iastUtil.esql
+*
+* Purpose  : Procedimiento para generar la estructura de un mensaje de petición al 
+*            Equivalences Manager
+* Authors  : Jayson S Santos
+* Date     : May 12, 2015
+* Version  : 1.0
+*
+* @copyright Accenture Philippines 2015. All rights reserved.
+*
+*/
+
+BROKER SCHEMA core.common.util.iast
+
+DECLARE decIASTFormat        CONSTANT CHARACTER '+0000000000000000.00;-000000000000000.00';
+DECLARE dateIASTFormat       CONSTANT CHARACTER 'MM/dd/yyyy';
+DECLARE dateTimeIASTFormat   CONSTANT CHARACTER 'MM/dd/yyyy hh:mm:ss'; 
+DECLARE intIASTFormat        CONSTANT CHARACTER '0000000000000000';
+
+/******************************************************************************
+* Procedure Name: 	ToIASTDecimal			                 				  *
+* Input Parameters:	DECIMAL num - number to cast	 						  *
+*																		 	  *
+* Output Parameters: CHARACTER	result										  *
+* Returns: None																  *
+* Description:Procedimiento que serializa un número dado como un decimal en   *
+*			  formato de última.	  										  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE ToIASTDecimal(IN num DECIMAL) RETURNS CHARACTER
+BEGIN
+	DECLARE temp, result CHARACTER ''; 
+	SET temp = CAST(num AS CHARACTER FORMAT decIASTFormat);
+	IF num < 0 THEN
+		SET result = 'p' || SUBSTRING(temp AFTER '-' FOR 15) || SUBSTRING(temp AFTER '.');
+	ELSE
+		SET result =  SUBSTRING(temp AFTER '+' FOR 16) || SUBSTRING(temp AFTER '.');
+	END IF;
+	RETURN result;
+END;
+
+/******************************************************************************
+* Procedure Name: ToIASTDate			                 					  *
+* Input Parameters:	DATE inDate - date to cast	 							  *
+*																		 	  *
+* Output Parameters: CHARACTER	result										  *
+* Returns: None																  *
+* Description:Procedimiento que serializa una fecha determinada como la fecha *
+*			  en formato de última.	  										  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE ToIASTDate(IN inDate DATE) RETURNS CHARACTER
+BEGIN
+	DECLARE result CHARACTER ''; 
+	SET result = CAST(inDate AS CHARACTER FORMAT dateIASTFormat);
+	RETURN result;
+END;
+
+/******************************************************************************
+* Procedure Name: ToIASTDateTime			                 				  *
+* Input Parameters:	TIMESTAMP inDateTime - timestamp to cast				  *
+*																		 	  *
+* Output Parameters: CHARACTER	result										  *
+* Returns: None																  *
+* Description: Procedimiento que serializa una determinada fecha y hora como  *
+*			   la fecha y hora en formato de última.  						  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE ToIASTDateTime(IN inDateTime TIMESTAMP) RETURNS CHARACTER
+BEGIN
+	DECLARE result CHARACTER ''; 
+	SET result = CAST(inDateTime AS CHARACTER FORMAT dateTimeIASTFormat);
+	RETURN result;
+END;
+
+/******************************************************************************
+* Procedure Name: ToIASTInteger			                 					  *
+* Input Parameters:	INTEGER num - integer to cast							  *
+*																		 	  *
+* Output Parameters: CHARACTER	result										  *
+* Returns: None																  *
+* Description: Procedimiento que serializa un número dado como un entero en   *
+*			   formato de última. 											  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE ToIASTInteger(IN num INTEGER) RETURNS CHARACTER
+BEGIN
+	DECLARE result CHARACTER ''; 
+	SET result = CAST(num AS CHARACTER FORMAT intIASTFormat);
+	RETURN result;
+END;
+
+
+/******************************************************************************
+* Procedure Name: ToIASTBoolean			         	        				  *
+* Input Parameters:	BOOLEAN bool - value to cast							  *
+*																		 	  *
+* Output Parameters: CHARACTER	result										  *
+* Returns: None																  *
+* Description: Procedimiento que serializa un booleano dado como en formato   *
+*			   de última. 													  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE ToIASTBoolean(IN bool BOOLEAN) RETURNS CHARACTER
+BEGIN
+	DECLARE result CHARACTER ''; 
+	IF (bool = TRUE) THEN
+		SET result = '1';
+	ELSE
+		SET result = '0';
+	END IF;
+	RETURN result;	
+END;
+
+/******************************************************************************
+* Procedure Name: FromIASTDecimal			                 				  *
+* Input Parameters:	CHARACTER num - value to cast							  *
+*																		 	  *
+* Output Parameters: DECIMAL	result										  *
+* Returns: None																  *
+* Description: Procedimiento que deserializa un número dado en formato pasado *
+*			   como un decimal.												  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE FromIASTDecimal(IN num CHARACTER) RETURNS DECIMAL
+BEGIN
+	DECLARE result DECIMAL; 
+	DECLARE temp CHARACTER '';
+	
+	IF STARTSWITH(num, 'p') THEN 	-- negative number p00000000008765403
+		SET temp = '-' || SUBSTRING(num AFTER 'p' FOR 15) || '.' || SUBSTRING(num FROM 17 FOR 2);
+	ELSE	-- 000000000008765403
+		SET temp = '+' || SUBSTRING(num FROM 1 FOR 16) || '.' || SUBSTRING(num FROM 17 FOR 2);
+	END IF;
+	SET result = CAST(temp  AS DECIMAL FORMAT decIASTFormat);
+	RETURN result;
+END;
+
+/******************************************************************************
+* Procedure Name: FromIASTDate				                 				  *
+* Input Parameters:	CHARACTER inDate - value to cast						  *
+*																		 	  *
+* Output Parameters: DATE	result											  *
+* Returns: None																  *
+* Description: Procedimiento que deserializa una fecha en formato de la última*
+*			   fecha.														  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE FromIASTDate(IN inDate CHARACTER) RETURNS DATE
+BEGIN
+	DECLARE result DATE; 
+	SET result = CAST(inDate AS DATE FORMAT dateIASTFormat);
+	RETURN result;
+END;
+
+
+/******************************************************************************
+* Procedure Name: FromIASTDateTime				                 			  *
+* Input Parameters:	CHARACTER inDateTime - value to cast					  *
+*																		 	  *
+* Output Parameters: TIMESTAMP	result										  *
+* Returns: None																  *
+* Description: Procedimiento que deserializa una determinada fecha y hora en  *
+*			   formato de última como fecha y hora.							  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE FromIASTDateTime(IN inDateTime  CHARACTER) RETURNS TIMESTAMP
+BEGIN
+	DECLARE result TIMESTAMP; 
+	SET result = CAST(inDateTime  AS TIMESTAMP FORMAT dateTimeIASTFormat);
+	RETURN result;
+END;
+
+
+/******************************************************************************
+* Procedure Name: FromIASTInteger				                 			  *
+* Input Parameters:	CHARACTER num  - value to cast							  *
+*																		 	  *
+* Output Parameters: INTEGER	result										  *
+* Returns: None																  *
+* Description: Procedimiento que se deserializa un número dado en formato de  *
+*			   última como entero											  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE FromIASTInteger(IN num  CHARACTER) RETURNS INTEGER
+BEGIN
+	DECLARE result INTEGER; 
+	SET result = CAST(num  AS INTEGER FORMAT intIASTFormat);
+	RETURN result;
+END;
+
+
+/******************************************************************************
+* Procedure Name: FromIASTBoolean				                 			  *
+* Input Parameters:	CHARACTER bool - value to cast							  *
+*																		 	  *
+* Output Parameters: INTEGER	result										  *
+* Returns: None																  *
+* Description: Procedimiento que deserializa un booleano en formato de última.*										  *
+*    																		  *
+* Version Date		  Author	  				Description  				  *	
+* ======= =========== ========================= ============================= *
+* 1.00    12/05/2011  Myron Perez		    	Versión inicial 	  		  *
+******************************************************************************/
+CREATE PROCEDURE FromIASTBoolean(IN bool  CHARACTER) RETURNS BOOLEAN
+BEGIN
+	DECLARE result BOOLEAN; 
+	IF bool = 0 THEN
+		SET result = FALSE;
+	ELSE
+		SET result = TRUE;
+	END IF;
+	RETURN result;	
+END;
+
+ /******************************************************************************
+ * Procedure Name:    ReadIASTHeader
+ * Input Parameters:  iastString CHARACTER - 
+ *	                  result     REFERENCE - 
+ * Output Parameters: None 
+ * Returns:           None
+ * Purpose: Procedimiento que lee una cabecera IAST y la deja parseada en la ubicación
+ *          indicada. 
+ * Version Date		   Author	  				 Description  				  
+ * ======= =========== ========================= ============================= 
+ * 1.00    05/13/2015  Jayson Santos	    	 Versión inicial 	  		  
+ ******************************************************************************/				
+  CREATE PROCEDURE ReadIASTHeader(IN iastString CHARACTER,
+								  IN result     REFERENCE, IN refccsid INTEGER)BEGIN
+								  		    
+	    DECLARE refValue BLOB CAST(iastString AS BLOB CCSID refccsid);
+
+      	DECLARE options  INTEGER BITOR(RootBitStream, ValidateContent, ValidateValue);
+      	
+		CREATE LASTCHILD OF result DOMAIN 'MRM' PARSE(refValue OPTIONS options CCSID refccsid 
+		                                            SET 'FVTL4B8002001' TYPE 'IAST' FORMAT 'Binary1');                                                	  	                                                   				
+  END;	  	                                                   

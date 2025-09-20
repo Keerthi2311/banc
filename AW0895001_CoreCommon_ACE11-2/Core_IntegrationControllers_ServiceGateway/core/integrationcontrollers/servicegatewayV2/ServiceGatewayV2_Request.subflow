@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmJavaCompute.msgnode="ComIbmJavaCompute.msgnode" xmlns:ComIbmSOAPRequest.msgnode="ComIbmSOAPRequest.msgnode" xmlns:core_common2_adapter_LoggingAdapter.subflow="core/common2/adapter/LoggingAdapter.subflow" xmlns:core_common_util2_ThrowSystemException.subflow="core/common/util2/ThrowSystemException.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow"
+    xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request.subflow" nsPrefix="core_integrationcontrollers_servicegatewayV2_ServiceGatewayV2_Request.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_REGISTRY_URL_V2" name="UDP_REGISTRY_URL_V2" lowerBound="1" defaultValueLiteral="https://10.8.64.212:9445/WSRR8_0/services/WSRRCoreSDOPort">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_BANCOLOMBIA_WSRRLOOKUP" name="UDP_BANCOLOMBIA_WSRRLOOKUP" defaultValueLiteral="Bancolombia_WSRRLookupConsumer">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_SOAP_ACTION" name="UDP_SOAP_ACTION" defaultValueLiteral="executeNamedQueryWithParameters">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CACHE_MAX_ELEMNTS" name="UDP_CACHE_MAX_ELEMNTS" defaultValueLiteral="10000000">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CACHE_MAX_CONCURRENT_THREADS" name="UDP_CACHE_MAX_CONCURRENT_THREADS" defaultValueLiteral="10">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CACHE_EXPIRY_TIME_SECONDS" name="UDP_CACHE_EXPIRY_TIME_SECONDS" defaultValueLiteral="3600">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_UNAUTHORIZED_CLIENT_MSG" name="UDP_UNAUTHORIZED_CLIENT_MSG" defaultValueLiteral="El consumidor no está autorizado para consumir el servicio o la operación">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UPD_INVALID_SERVICE_NAME_MSG" name="UPD_INVALID_SERVICE_NAME_MSG" defaultValueLiteral="El nombre del servicio enviado ({0}) no coincide con el nombre del servicio en el Regitry ({1})">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="ServiceGatewayV2_Request" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_IntegrationControllers_ServiceGateway/icons/full/obj16/ServiceGatewayV2_Request.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_IntegrationControllers_ServiceGateway/icons/full/obj30/ServiceGatewayV2_Request.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="68,78">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="966,10">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="187,79" computeExpression="esql://routine/core.integrationcontrollers.servicegatewayV2#ServiceGatewayV2_Request_Log_PreRegsitryQuery.Main">
+        <translation xmi:type="utility:ConstantString" string="Log_PreRegsitryQuery"/>
+      </nodes>
+      <nodes xmi:type="ComIbmJavaCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="413,82" javaClass="core.integrationcontrollers.servicegateway.sg.cache.ValidationServiceGatewayCache">
+        <translation xmi:type="utility:ConstantString" string="ValidationCache"/>
+      </nodes>
+      <nodes xmi:type="ComIbmJavaCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="694,9" javaClass="core.integrationcontrollers.servicegateway.sg.ServiceGatewayV2Request_MF_PostRegistry">
+        <translation xmi:type="utility:ConstantString" string="PostRegistry"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="840,8" computeExpression="esql://routine/core.integrationcontrollers.servicegatewayV2#ServiceGatewayV2Request_MF_Compute.Main">
+        <translation xmi:type="utility:ConstantString" string="restoreEnvelope"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_LoggingAdapter.subflow:FCMComposite_1" xmi:id="FCMComposite_1_6" location="258,207">
+        <translation xmi:type="utility:ConstantString" string="LoggingAdapter"/>
+      </nodes>
+      <nodes xmi:type="core_common_util2_ThrowSystemException.subflow:FCMComposite_1" xmi:id="FCMComposite_1_7" location="795,191">
+        <translation xmi:type="utility:ConstantString" string="ResourceNotFound"/>
+      </nodes>
+      <nodes xmi:type="ComIbmSOAPRequest.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="588,88" wsdlOperationMode="gateway" useHTTPTransport="true" webServiceURL="https://10.4.33.114:9449/WSRR8_0/services/WSRRCoreSDOPort/WSRR8_0/services/WSRRCoreSDOPort" requestTimeout="60" sslProtocol="TLSv1" requestTimeoutJMS="10" parserXmlnscBuildTreeUsingXMLSchema="false" validateMaster="none">
+        <translation xmi:type="utility:ConstantString" string="WSRR"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.alternate" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.fault" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_REGISTRY_URL_V2">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_REGISTRY_URL_V2" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_BANCOLOMBIA_WSRRLOOKUP">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_BANCOLOMBIA_WSRRLOOKUP" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_SOAP_ACTION">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_SOAP_ACTION" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+            <propertyDescriptor groupName="Group.Cache" configurable="true" userDefined="true" describedAttribute="Property.UDP_CACHE_MAX_ELEMNTS">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CACHE_MAX_ELEMNTS" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+              <propertyDescriptor groupName="Group.Cache" configurable="true" userDefined="true" describedAttribute="Property.UDP_CACHE_MAX_CONCURRENT_THREADS">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CACHE_MAX_CONCURRENT_THREADS" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                <propertyDescriptor groupName="Group.Cache" configurable="true" userDefined="true" describedAttribute="Property.UDP_CACHE_EXPIRY_TIME_SECONDS">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CACHE_EXPIRY_TIME_SECONDS" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                  <propertyDescriptor groupName="Group.Messages" configurable="true" userDefined="true" describedAttribute="Property.UDP_UNAUTHORIZED_CLIENT_MSG">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_UNAUTHORIZED_CLIENT_MSG" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                    <propertyDescriptor groupName="Group.Messages" configurable="true" userDefined="true" describedAttribute="Property.UPD_INVALID_SERVICE_NAME_MSG">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.UPD_INVALID_SERVICE_NAME_MSG" bundleName="core/integrationcontrollers/servicegatewayV2/ServiceGatewayV2_Request" pluginId="Core_IntegrationControllers_ServiceGateway"/>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

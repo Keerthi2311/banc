@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmTryCatch.msgnode="ComIbmTryCatch.msgnode" xmlns:core_common2_adapter_ErrorAdapterV2.subflow="core/common2/adapter/ErrorAdapterV2.subflow" xmlns:core_common_proxy2_SyncRequestProxyV2.subflow="core/common/proxy2/SyncRequestProxyV2.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility"
+    nsURI="core/common/per/CheckResponseCode.subflow" nsPrefix="core_common_per_CheckResponseCode.subflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" useDefaults="true" udpSupport="true">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_PATH_TO_RESPONSE_CODE" name="UDP_PATH_TO_RESPONSE_CODE">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CODIGO_IDIOMA" name="UDP_CODIGO_IDIOMA">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_CODIGO_PROVEEDOR" name="UDP_CODIGO_PROVEEDOR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_ESTADO_RESPUESTA" name="UDP_ESTADO_RESPUESTA">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_OPERATION_TYPE" name="UDP_OPERATION_TYPE" defaultValueLiteral="QUERY">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.UDP_TIMEOUT_MILLIS" name="UDP_TIMEOUT_MILLIS" lowerBound="1" defaultValueLiteral="1000">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="CheckResponseCode" bundleName="core/common/per/CheckResponseCode" pluginId="Core_Common_Per"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Per/icons/full/obj16/CheckResponseCode.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Core_Common_Per/icons/full/obj30/CheckResponseCode.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="600,56">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="core/common/per/CheckResponseCode" pluginId="Core_Common_Per"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="192,56" computeExpression="esql://routine/core.common.per#CheckResponseCode_CheckResponse.Main">
+        <translation xmi:type="utility:ConstantString" string="CheckResponse"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="69,55">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.Input" bundleName="core/common/per/CheckResponseCode" pluginId="Core_Common_Per"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTryCatch.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="318,-12">
+        <translation xmi:type="utility:ConstantString" string="Try Catch"/>
+      </nodes>
+      <nodes xmi:type="core_common_proxy2_SyncRequestProxyV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_4" location="406,-9">
+        <translation xmi:type="utility:ConstantString" string="SyncRequestProxyV2"/>
+      </nodes>
+      <nodes xmi:type="core_common2_adapter_ErrorAdapterV2.subflow:FCMComposite_1" xmi:id="FCMComposite_1_1" location="391,96" UDP_INTERACTION_TYPE="RESPONSE">
+        <translation xmi:type="utility:ConstantString" string="ErrorAdapterV2"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_2" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.try" targetTerminalName="InTerminal.Input1"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Catch"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.Output1" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_PATH_TO_RESPONSE_CODE">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_PATH_TO_RESPONSE_CODE" bundleName="core/common/per/CheckResponseCode" pluginId="Core_Common_Per"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_CODIGO_IDIOMA">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CODIGO_IDIOMA" bundleName="core/common/per/CheckResponseCode" pluginId="Core_Common_Per"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_CODIGO_PROVEEDOR">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_CODIGO_PROVEEDOR" bundleName="core/common/per/CheckResponseCode" pluginId="Core_Common_Per"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_ESTADO_RESPUESTA">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_ESTADO_RESPUESTA" bundleName="core/common/per/CheckResponseCode" pluginId="Core_Common_Per"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_OPERATION_TYPE">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_OPERATION_TYPE" bundleName="core/common/adapter2/ErrorAdapterV2" pluginId="Core_Common_Adapter"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.UDP_TIMEOUT_MILLIS">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.UDP_TIMEOUT_MILLIS" bundleName="core/common/proxy2/SyncRequestProxyV2" pluginId="Core_Common_Proxy"/>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <attributeLinks promotedAttribute="Property.UDP_OPERATION_TYPE" overriddenNodes="FCMComposite_1_1">
+      <overriddenAttribute href="core/common2/adapter/ErrorAdapterV2.subflow#Property.UDP_OPERATION_TYPE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_OPERATION_TYPE" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="core/common/proxy2/SyncRequestProxyV2.subflow#Property.UDP_OPERATION_TYPE"/>
+    </attributeLinks>
+    <attributeLinks promotedAttribute="Property.UDP_TIMEOUT_MILLIS" overriddenNodes="FCMComposite_1_4">
+      <overriddenAttribute href="core/common/proxy2/SyncRequestProxyV2.subflow#Property.UDP_TIMEOUT_MILLIS"/>
+    </attributeLinks>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

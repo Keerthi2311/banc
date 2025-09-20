@@ -1,0 +1,14 @@
+BROKER SCHEMA core.common.per
+
+
+CREATE COMPUTE MODULE PER_RequestProxy_RemoveHttpHeadres
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+        SET OutputRoot.Properties = InputRoot.Properties;
+        SET OutputRoot.MQMD  = Environment.msgInMQMD;
+        SET OutputRoot.XMLNSC= InputRoot.XMLNSC;
+        -- SE LIMPIA LA GARBARGE
+        SET Environment.msgInMQMD=NULL;
+	RETURN TRUE;
+	END;
+END MODULE;

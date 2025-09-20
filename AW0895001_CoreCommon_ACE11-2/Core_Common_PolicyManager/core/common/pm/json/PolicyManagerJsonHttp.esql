@@ -1,0 +1,122 @@
+BROKER SCHEMA core.common.pm.json
+
+CREATE FILTER MODULE PolicyManagerJsonHttp_IsCached
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		RETURN CAST(Environment.POLICY_MANAGER.cache.exists AS BOOLEAN);
+	END;
+
+END MODULE;
+
+CREATE COMPUTE MODULE PolicyManagerJsonHttp_PolicyManager_RS
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refJsonData REFERENCE TO InputRoot.JSON.Data;
+		IF EXISTS(refJsonData.errors[]) THEN
+			THROW USER EXCEPTION MESSAGE refJsonData.errors[1].code VALUES (refJsonData.errors[1].detail);
+			RETURN FALSE;
+		END IF;
+
+		-- Devolver el mensaje original de entrada al subflujo
+		DECLARE refEnvCachePm REFERENCE TO Environment.POLICY_MANAGER.cache;
+
+		DECLARE refResult REFERENCE TO refJsonData.data.service.consumers.Item;
+		
+		WHILE LASTMOVE(refResult) DO
+			CALL PolicyManagerPutCache(UDP_CACHE_KEYNAME, refResult.application.id, SOURCE_SYSTEM, refResult.sourceSystem);
+			CALL PolicyManagerPutCache(UDP_CACHE_KEYNAME, refResult.application.id, DATA_DOMAIN, refResult.dataDomain);
+			
+			MOVE refResult NEXTSIBLING;
+		END WHILE;
+		
+		CALL CopyCompleteMessage(refEnvCachePm.inputOrig, OutputRoot);
+		SET OutputLocalEnvironment = refEnvCachePm.localEnvironmentOrig;
+
+		DELETE FIELD Environment.POLICY_MANAGER.localEnvironmentOrig;
+		DELETE FIELD Environment.POLICY_MANAGER.inputOrig;
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PolicyManagerJsonHttp_HTTP_Error
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refInHTTPHeader REFERENCE TO InputRoot.HTTPResponseHeader;
+		DECLARE httpStatusCode INTEGER CAST(refInHTTPHeader."X-Original-HTTP-Status-Code" AS INTEGER);
+		
+		DECLARE outError ROW;
+		CREATE LASTCHILD OF outError DOMAIN('JSON');			
+		SET outError.JSON.(XMLNSC.CDataField)Data = CAST(InputRoot.BLOB.BLOB AS CHARACTER CCSID 1208);
+		
+		-- Identificar si corresponde a un mensaje JSON con el campo que se requiere mapear
+		-- Si no corresponde devuelve el mensaje como BLOB con el HTTPCODE de respuesta
+		IF CONTAINS(outError.JSON.Data,'{') AND CONTAINS(outError.JSON.Data,'}') AND CONTAINS(outError.JSON.Data,'message') THEN
+			CREATE LASTCHILD OF OutputRoot DOMAIN('JSON') PARSE(InputRoot.BLOB.BLOB);
+			THROW USER EXCEPTION MESSAGE httpStatusCode VALUES (OutputRoot.JSON.Data.message.Item[<]);
+		END IF;
+ 
+		THROW USER EXCEPTION MESSAGE httpStatusCode VALUES ('PolicyManager HTTP Error', COALESCE(CAST(InputRoot.BLOB.BLOB AS CHARACTER), refInHTTPHeader."X-Original-HTTP-Status-Line"));
+		
+		RETURN FALSE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PolicyManagerJsonHttp_PolicyManager_Request
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE consumerId, messageId CHARACTER '';	
+		-- COALESCE evalua el primer elemento o variable, si es nulo asigna el segundo parámetro.
+		-- La variable del segundo parámetro es opcional llegado el caso que la información del "Message-Id" o "Consumer-Id" no se enucentre en las cabeceras, se deja la opción de asignarlas a través del Environment.
+		SET messageId = COALESCE(InputRoot.HTTPInputHeader."Message-Id", Environment.Variables.messageId);
+		SET consumerId = COALESCE(InputRoot.HTTPInputHeader."Consumer-Id", Environment.Variables.consumerId);
+		
+		IF messageId IS NULL OR consumerId IS NULL THEN
+			THROW USER EXCEPTION VALUES ('PolicyManager data validation:', 'Las variables messageId o consumerId no pueden ser nulas', 'Valores: [messageId=' || COALESCE(messageId,'null') || '], [consumerId=' || COALESCE(consumerId,'null') || ']');
+		END IF; 
+		
+		DELETE FIELD Environment.POLICY_MANAGER.cache;
+		CREATE FIELD Environment.POLICY_MANAGER.cache;
+		DECLARE refEnvCachePm REFERENCE TO Environment.POLICY_MANAGER.cache;
+		SET refEnvCachePm.exists = EXISTS(CACHE_POLICY_MANAGER.{UDP_CACHE_KEYNAME || consumerId}[]);
+			
+		IF NOT refEnvCachePm.exists THEN
+			SET refEnvCachePm.localEnvironmentOrig = InputLocalEnvironment;
+			
+			-- Se guarda el mensaje original entrante para ser devuelto a la salida.
+			CREATE FIELD refEnvCachePm.inputOrig;
+			CALL CopyCompleteMessage(InputRoot, refEnvCachePm.inputOrig);
+	
+			-- Se fijan propiedades constantes, las propiedades "Encoding" y "CodedCharSetId" se toman del mensaje de entrada.
+			DECLARE refInProp REFERENCE TO InputRoot.Properties; 
+			DECLARE refOutProp REFERENCE TO OutputRoot.Properties;
+			SET refOutProp.Encoding = refInProp.Encoding;
+			SET refOutProp.CodedCharSetId = refInProp.CodedCharSetId;
+			SET refOutProp.ReplyProtocol = PROTOCOL_SOAP_HTTP;
+			SET refOutProp.ContentType = JSON_CONTENT_TYPE;
+	
+			-- Por intermedio del parametro de entrada "httpHeader" se debe recibir los datos de la cabecera a enviar al PolicyManager.
+			CREATE FIELD OutputRoot.HTTPRequestHeader;
+			DECLARE refOutHTTPHeader REFERENCE TO OutputRoot.HTTPRequestHeader; 
+			SET refOutHTTPHeader.messageId = messageId;
+			SET refOutHTTPHeader.includeRoutes = false; -- No muestra la configuración de enrutamientos.
+					
+			-- Crear mensaje request PoliciManager.
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			CREATE FIELD OutputRoot.JSON.Data;
+			DECLARE refOutJsonData REFERENCE TO OutputRoot.JSON.Data;
+		
+			CREATE FIELD refOutJsonData.data;
+			DECLARE refData REFERENCE TO refOutJsonData.data;
+	
+			SET refData.namespace = UDP_NAMESPACE;
+			SET refData.applicationId = consumerId; 
+		ELSE
+			SET OutputRoot = InputRoot;
+			SET OutputLocalEnvironment = InputLocalEnvironment;
+		END IF;
+
+		RETURN TRUE;
+	END;
+END MODULE;
+
